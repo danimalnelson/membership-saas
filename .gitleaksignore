@@ -1,0 +1,11 @@
+# Gitleaks ignore file
+# Add known false positives or intentionally committed test values here
+
+# Example test values in documentation (not real secrets)
+ENV_VARIABLES_FOR_VERCEL.txt:*
+
+# Pattern for test fixtures (if you have mock data)
+**/fixtures/**
+**/mocks/**
+**/__tests__/**/*.mock.*
+

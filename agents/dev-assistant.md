@@ -64,3 +64,6 @@ Never push broken code or secrets.
 Summarize progress clearly before continuing.
 
 Agent recommendation complete. Awaiting next Cursor action.
+
+When a Vercel build or deployment fails, load `/agents/mission.build-fix.md`
+and execute it autonomously until the build completes successfully.

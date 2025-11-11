@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Scanning for secrets before commit..."
+
+# Check for common secret patterns
+if git diff --cached --name-only | xargs grep -E "(sk_live_|sk_test_|pk_live_|pk_test_|whsec_|re_[A-Za-z0-9]{20,}|npg_[A-Za-z0-9]+)" 2>/dev/null; then
+  echo "❌ ERROR: Possible API secret detected in staged files!"
+  echo "Please remove secrets and use environment variables instead."
+  exit 1
+fi
+
+# Check for hardcoded database URLs with credentials
+if git diff --cached --name-only | xargs grep -E "postgresql://[^:]+:[^@]+@" 2>/dev/null; then
+  echo "⚠️  WARNING: Database URL with credentials detected!"
+  echo "Consider using environment variables for DATABASE_URL"
+fi
+
+echo "✅ No secrets detected in commit"
+

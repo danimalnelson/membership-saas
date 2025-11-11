@@ -1,0 +1,61 @@
+# Cursor AI Rules for This Project
+
+## 🔴 CRITICAL: Secret Management
+
+**NEVER include in any code or config files:**
+- API keys (Stripe: sk_*, pk_*, Resend: re_*, etc.)
+- Database URLs with credentials (postgresql://user:pass@host)
+- OAuth secrets or client secrets
+- Session secrets, JWT tokens, or NextAuth secrets
+- Any values from ENV_VARIABLES_FOR_VERCEL.txt
+
+**ALWAYS:**
+- Reference `process.env.VARIABLE_NAME` without fallback values
+- Document "Set in .env.local" for local development
+- Use environment variables for ALL sensitive configuration
+
+## Test Configuration Pattern
+
+```typescript
+// ✅ CORRECT
+env: {
+  DATABASE_URL: process.env.DATABASE_URL,
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+}
+
+// ❌ WRONG - Never use fallback values with real secrets
+env: {
+  DATABASE_URL: process.env.DATABASE_URL || "postgresql://...",
+}
+```
+
+## Pre-Commit Checklist
+
+Before any git commit:
+1. ✅ No hardcoded API keys or secrets
+2. ✅ No database credentials in files
+3. ✅ Environment variables used correctly
+4. ✅ All tests passing
+5. ✅ No console.logs with sensitive data
+
+## Code Review Focus
+
+When reviewing code:
+- 🔍 Check for secret patterns: `sk_`, `pk_`, `whsec_`, `re_`, `postgresql://`
+- 🔍 Verify `.env` files are gitignored
+- 🔍 Ensure test configs use env vars only
+- 🔍 Check for TODO comments about secrets
+
+## Development Workflow
+
+1. **Setup:** Copy ENV_VARIABLES_FOR_VERCEL.txt → .env.local
+2. **Code:** Use process.env.* everywhere
+3. **Test:** Ensure tests pass with env vars set
+4. **Commit:** Pre-commit hook scans for secrets
+5. **Push:** GitHub secret scanning validates
+
+---
+
+**Remember:** One exposed secret = security incident + key rotation + history rewrite
+**Prevention:** Always use environment variables, never hardcode secrets
+
