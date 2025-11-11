@@ -62,3 +62,17 @@ export const connectAccountSchema = z.object({
 
 export type ConnectAccountInput = z.infer<typeof connectAccountSchema>;
 
+// ===== Business Profile Update =====
+export const updateBusinessProfileSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100).optional(),
+  logoUrl: z.string().url("Invalid URL format").optional().nullable(),
+  description: z.string().max(1000, "Description must be less than 1000 characters").optional().nullable(),
+  website: z.string().url("Invalid website URL").optional().nullable(),
+  contactEmail: z.string().email("Invalid email format").optional().nullable(),
+  contactPhone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format").optional().nullable(),
+  brandColorPrimary: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color format").optional().nullable(),
+  brandColorSecondary: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color format").optional().nullable(),
+});
+
+export type UpdateBusinessProfileInput = z.infer<typeof updateBusinessProfileSchema>;
+

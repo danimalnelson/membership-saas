@@ -69,16 +69,22 @@ model VerificationToken {
 
 // ===== Business (Tenant) =====
 model Business {
-  id              String   @id @default(cuid())
-  name            String
-  slug            String   @unique
-  logoUrl         String?
-  country         String   @default("US")
-  currency        String   @default("USD")
-  timeZone        String   @default("America/New_York")
-  stripeAccountId String?  @unique
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  name                 String
+  slug                 String   @unique
+  logoUrl              String?
+  description          String?
+  website              String?
+  contactEmail         String?
+  contactPhone         String?
+  brandColorPrimary    String?  @default("#6366f1")
+  brandColorSecondary  String?
+  country              String   @default("US")
+  currency             String   @default("USD")
+  timeZone             String   @default("America/New_York")
+  stripeAccountId      String?  @unique
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   users           BusinessUser[]
   locations       Location[]

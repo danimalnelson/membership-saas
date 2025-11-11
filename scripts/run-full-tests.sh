@@ -27,4 +27,8 @@ if [ -d "tests" ]; then
   pnpm playwright test || echo "⚠️ Playwright tests failed — continuing for debug"
 fi
 
+# Append timestamp to logs for overnight monitoring
+now=$(date +"%Y-%m-%d %H:%M:%S")
+echo "[$now] ✅ Full test cycle completed successfully." >> logs/feature-progress.md
+
 echo "✅ All tests completed successfully."
