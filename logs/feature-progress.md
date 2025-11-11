@@ -19,8 +19,8 @@
 1. ✅ Business Profile Management
 2. ✅ Analytics Dashboard
 3. ✅ Email Notifications
-4. ⏳ Public Business Page Enhancements
-5. ⏸️ Member Portal Improvements
+4. ✅ Public Business Page Enhancements
+5. ⏳ Member Portal Improvements
 6. ⏸️ Developer Experience
 
 ---
