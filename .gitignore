@@ -41,3 +41,4 @@ prisma/migrations/**/migration.sql
 *.swo
 *~
 
+ENV_VARIABLES_FOR_VERCEL.txt
