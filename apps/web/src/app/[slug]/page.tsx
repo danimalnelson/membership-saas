@@ -60,7 +60,7 @@ export default async function BusinessLandingPage({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {business.membershipPlans.map((plan) => {
+            {business.membershipPlans.map((plan: any) => {
               const defaultPrice = plan.prices[0];
               const benefits = Array.isArray(plan.benefits)
                 ? plan.benefits
