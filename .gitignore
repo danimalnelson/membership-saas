@@ -69,6 +69,7 @@ playwright/.cache/
 **/*-secret-*
 **/*-key-*.json
 **/*-credentials-*
+ENV_VARIABLES_FOR_VERCEL.txt
 
 # API keys and tokens (pattern matching)
 **/*apikey*
