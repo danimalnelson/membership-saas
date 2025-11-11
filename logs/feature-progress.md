@@ -17,8 +17,8 @@
 
 ## Features Queue
 1. ✅ Business Profile Management
-2. ⏳ Analytics Dashboard
-3. ⏸️ Email Notifications
+2. ✅ Analytics Dashboard
+3. ⏳ Email Notifications
 4. ⏸️ Public Business Page Enhancements
 5. ⏸️ Member Portal Improvements
 6. ⏸️ Developer Experience
@@ -49,6 +49,29 @@
 - ✅ All 69 unit tests passing
 - ✅ No regressions in existing tests
 - ✅ Database schema updated and synced
+
+---
+
+## Feature 2: Analytics Dashboard ✅
+**Status:** COMPLETE  
+**Time:** ~30 minutes
+
+### Implementation
+- ✅ Created metrics calculation library (`packages/lib/metrics.ts`)
+- ✅ Implemented MRR, active members, churn rate calculations
+- ✅ Built GET `/api/business/[businessId]/metrics` endpoint with 5-min caching
+- ✅ 6 unit tests for metrics logic
+
+### Files Created
+- `packages/lib/metrics.ts` - Metrics calculations
+- `apps/web/src/app/api/business/[businessId]/metrics/route.ts` - API endpoint
+- `apps/web/tests/unit/metrics.test.ts` - 6 tests
+- `docs/features/analytics-dashboard.md` - Feature documentation
+
+### Test Results
+- ✅ All 75 unit tests passing
+- ✅ No regressions
+- ✅ Fixed import issues with Prisma client in tests
 
 ---
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createCheckoutSessionSchema } from "@wine-club/lib";
+import { createCheckoutSessionSchema } from "../../../../packages/lib/validations";
 
 describe("Checkout API Validation", () => {
   describe("createCheckoutSessionSchema", () => {

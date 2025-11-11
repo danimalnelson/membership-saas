@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createCheckoutSessionSchema, createPlanSchema, createPriceSchema } from "@wine-club/lib";
+import { createCheckoutSessionSchema, createPlanSchema, createPriceSchema } from "../../../packages/lib/validations";
 
 describe("Validation Schemas", () => {
   describe("createCheckoutSessionSchema", () => {

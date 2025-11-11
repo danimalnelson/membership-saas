@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { updateBusinessProfileSchema } from "@wine-club/lib";
+import { updateBusinessProfileSchema } from "../../../../packages/lib/validations";
 
 /**
  * Unit tests for Business Profile Management
