@@ -33,7 +33,7 @@ export async function POST(
       );
     }
 
-    // Verify price belongs to this business
+    // Verify price belongs to this business (CRITICAL: Prevents cross-tenant price usage)
     const price = await prisma.price.findFirst({
       where: {
         id: priceId,
@@ -48,6 +48,12 @@ export async function POST(
     });
 
     if (!price || !price.stripePriceId) {
+      return NextResponse.json({ error: "Invalid price" }, { status: 400 });
+    }
+
+    // Double-check: Ensure price's plan belongs to requested business
+    if (price.membershipPlan.businessId !== business.id) {
+      console.error(`[SECURITY] Cross-tenant price access attempt: price ${priceId} for business ${business.id}`);
       return NextResponse.json({ error: "Invalid price" }, { status: 400 });
     }
 
