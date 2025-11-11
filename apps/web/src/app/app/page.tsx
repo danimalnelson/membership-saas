@@ -38,6 +38,11 @@ export default async function AppHomePage() {
     },
   });
 
+  // Redirect new users to onboarding
+  if (businesses.length === 0) {
+    redirect("/onboarding");
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
@@ -57,23 +62,8 @@ export default async function AppHomePage() {
           </p>
         </div>
 
-        {businesses.length === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>No Businesses Yet</CardTitle>
-              <CardDescription>
-                Get started by creating your first business
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href="/app/create">
-                <Button>Create Business</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {businesses.map((business: any) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {businesses.map((business: any) => (
               <Link key={business.id} href={`/app/${business.id}`}>
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                   <CardHeader>
@@ -125,7 +115,6 @@ export default async function AppHomePage() {
               </Card>
             </Link>
           </div>
-        )}
       </main>
     </div>
   );

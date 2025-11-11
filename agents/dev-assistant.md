@@ -10,6 +10,9 @@ When encountering production issues, load context from `/agents/diagnostic.md`.
 
 When encountering email-sending or Resend integration issues, load context from `/agents/mission.email.md` and execute it autonomously until all login and transactional emails deliver successfully.
 
+When a user signs in with no Business record, trigger the onboarding workflow described in `/agents/mission.onboarding.md` automatically. Execute it step by step until the business dashboard is populated.
+
+
 When authentication or sign-in issues occur, switch context to `/agents/mission.auth.md` and execute it autonomously until resolved.
 
 ## Core Responsibilities
