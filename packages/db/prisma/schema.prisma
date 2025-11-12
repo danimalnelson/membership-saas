@@ -69,23 +69,35 @@ model VerificationToken {
 
 // ===== Business (Tenant) =====
 model Business {
-  id                   String   @id @default(cuid())
-  name                 String
-  slug                 String   @unique
-  status               BusinessStatus @default(CREATED)
-  logoUrl              String?
-  description          String?
-  website              String?
-  contactEmail         String?
-  contactPhone         String?
-  brandColorPrimary    String?  @default("#6366f1")
-  brandColorSecondary  String?
-  country              String   @default("US")
-  currency             String   @default("USD")
-  timeZone             String   @default("America/New_York")
-  stripeAccountId      String?  @unique
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                      String   @id @default(cuid())
+  name                    String
+  slug                    String?  @unique // Nullable until onboarding complete
+  status                  BusinessStatus @default(CREATED)
+  logoUrl                 String?
+  description             String?
+  website                 String?
+  contactEmail            String?
+  contactPhone            String?
+  brandColorPrimary       String?  @default("#6366f1")
+  brandColorSecondary     String?
+  country                 String   @default("US")
+  currency                String   @default("USD")
+  timeZone                String   @default("America/New_York")
+  
+  // Stripe Connect fields
+  stripeAccountId         String?  @unique
+  stripeChargesEnabled    Boolean  @default(false)
+  stripeDetailsSubmitted  Boolean  @default(false)
+  stripeRequirements      Json?    // currently_due, eventually_due, etc.
+  stripeAccountStatus     String?  // Stripe's account.status field
+  
+  // State tracking
+  stateTransitions        Json?    // Array of {from, to, reason, timestamp, eventId}
+  lastWebhookEventId      String?  // For webhook idempotency
+  onboardingAbandonedAt   DateTime?
+  
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   users           BusinessUser[]
   locations       Location[]
@@ -96,14 +108,24 @@ model Business {
   auditLogs       AuditLog[]
 
   @@index([slug])
+  @@index([status])
+  @@index([stripeAccountId])
   @@map("businesses")
 }
 
 enum BusinessStatus {
-  CREATED
-  ONBOARDING_PENDING
-  ONBOARDING_COMPLETE
-  SUSPENDED
+  CREATED                      // Initial state
+  DETAILS_COLLECTED            // Business details form completed
+  STRIPE_ACCOUNT_CREATED       // Stripe Connect account created
+  STRIPE_ONBOARDING_REQUIRED   // Needs to go through Stripe onboarding
+  STRIPE_ONBOARDING_IN_PROGRESS // Currently in Stripe onboarding flow
+  ONBOARDING_PENDING           // Legacy: in onboarding process (will migrate to specific states)
+  PENDING_VERIFICATION         // Waiting for Stripe verification
+  RESTRICTED                   // Account has restrictions/requirements
+  ONBOARDING_COMPLETE          // Fully onboarded and ready
+  FAILED                       // Onboarding failed
+  ABANDONED                    // User abandoned onboarding
+  SUSPENDED                    // Account suspended
 }
 
 // ===== Business User (Join Table with Role) =====

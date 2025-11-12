@@ -2,6 +2,7 @@ export * from "./stripe";
 export * from "./validations";
 export * from "./auth-helpers";
 export * from "./email";
+export * from "./business-state-machine";
 
 // Export metrics separately to avoid pulling in Prisma during tests
 export { calculateMetrics } from "./metrics";

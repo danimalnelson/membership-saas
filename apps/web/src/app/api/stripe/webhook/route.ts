@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
 async function handleWebhookEvent(event: Stripe.Event, accountId?: string) {
   switch (event.type) {
     case "account.updated":
-      await handleAccountUpdated(event.data.object as Stripe.Account);
+      await handleAccountUpdated(event.data.object as Stripe.Account, event.id);
       break;
 
     case "checkout.session.completed":
@@ -466,8 +466,9 @@ async function handleChargeRefunded(charge: Stripe.Charge, accountId?: string) {
   }
 }
 
-async function handleAccountUpdated(account: Stripe.Account) {
+async function handleAccountUpdated(account: Stripe.Account, eventId?: string) {
   if (!account.id) {
+    console.log("[Webhook] account.updated: missing account.id");
     return;
   }
 
@@ -481,28 +482,77 @@ async function handleAccountUpdated(account: Stripe.Account) {
   });
 
   if (!business) {
+    console.log(`[Webhook] account.updated: no business found for account ${account.id}`);
     return;
   }
 
-  const isComplete = Boolean(account.details_submitted && account.charges_enabled);
-  const updateData: any = {
-    contactEmail: account.business_profile?.support_email || account.email || undefined,
-    contactPhone: account.business_profile?.support_phone || undefined,
-    website: account.business_profile?.url || undefined,
-  };
-
-  if (isComplete && business.status !== "ONBOARDING_COMPLETE") {
-    updateData.status = "ONBOARDING_COMPLETE";
-  } else if (!isComplete && business.status === "CREATED") {
-    updateData.status = "ONBOARDING_PENDING";
+  // Check for duplicate webhook (idempotency)
+  if (eventId && business.lastWebhookEventId === eventId) {
+    console.log(`[Webhook] account.updated: duplicate event ${eventId}, skipping`);
+    return;
   }
 
+  // Import state machine utilities
+  const { determineBusinessState, createStateTransition, appendTransition, isValidTransition } = await import("@wine-club/lib");
+
+  // Determine new state based on Stripe account
+  const stripeAccountState = {
+    id: account.id,
+    charges_enabled: account.charges_enabled,
+    details_submitted: account.details_submitted,
+    payouts_enabled: account.payouts_enabled,
+    requirements: account.requirements,
+    capabilities: account.capabilities,
+  };
+
+  const newStatus = determineBusinessState(business.status, stripeAccountState);
+  const statusChanged = newStatus !== business.status;
+
+  console.log(`[Webhook] account.updated: ${account.id} | status: ${business.status} → ${newStatus} | charges: ${account.charges_enabled} | details: ${account.details_submitted}`);
+
+  // Validate transition
+  if (statusChanged && !isValidTransition(business.status, newStatus)) {
+    console.warn(`[Webhook] account.updated: invalid transition ${business.status} → ${newStatus}, allowing anyway for webhook-driven updates`);
+  }
+
+  // Prepare update data
+  const updateData: any = {
+    contactEmail: account.business_profile?.support_email || account.email || business.contactEmail,
+    contactPhone: account.business_profile?.support_phone || business.contactPhone,
+    website: account.business_profile?.url || business.website,
+    stripeChargesEnabled: account.charges_enabled,
+    stripeDetailsSubmitted: account.details_submitted,
+    stripeRequirements: account.requirements || null,
+    stripeAccountStatus: account.status || null,
+    lastWebhookEventId: eventId || business.lastWebhookEventId,
+  };
+
+  // Update status if changed
+  if (statusChanged) {
+    updateData.status = newStatus;
+    
+    // Create state transition record
+    const transition = createStateTransition(
+      business.status,
+      newStatus,
+      `Webhook account.updated: charges=${account.charges_enabled}, details=${account.details_submitted}`,
+      eventId
+    );
+    
+    updateData.stateTransitions = appendTransition(
+      business.stateTransitions as any,
+      transition
+    );
+  }
+
+  // Update business
   await prisma.business.update({
     where: { id: business.id },
     data: updateData,
   });
 
-  if (isComplete && business.users.length > 0) {
+  // Create audit log for significant events
+  if (statusChanged && newStatus === "ONBOARDING_COMPLETE" && business.users.length > 0) {
     await prisma.auditLog.create({
       data: {
         businessId: business.id,
@@ -512,9 +562,28 @@ async function handleAccountUpdated(account: Stripe.Account) {
           accountId: account.id,
           charges_enabled: account.charges_enabled,
           details_submitted: account.details_submitted,
+          previous_status: business.status,
+          new_status: newStatus,
         },
       },
     });
+    
+    console.log(`[Webhook] account.updated: ✅ Onboarding complete for business ${business.id}`);
+  } else if (statusChanged && newStatus === "RESTRICTED") {
+    await prisma.auditLog.create({
+      data: {
+        businessId: business.id,
+        actorUserId: business.users[0]?.userId ?? undefined,
+        type: "STRIPE_ACCOUNT_RESTRICTED",
+        metadata: {
+          accountId: account.id,
+          requirements: account.requirements,
+          previous_status: business.status,
+        },
+      },
+    });
+    
+    console.log(`[Webhook] account.updated: ⚠️  Account restricted for business ${business.id}`);
   }
 }
 
