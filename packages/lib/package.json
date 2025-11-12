@@ -5,6 +5,7 @@
   "main": "./index.ts",
   "types": "./index.ts",
   "dependencies": {
+    "@wine-club/db": "workspace:*",
     "stripe": "^14.9.0",
     "zod": "^3.22.4"
   },

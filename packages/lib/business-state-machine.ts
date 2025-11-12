@@ -6,21 +6,14 @@
 import type Stripe from "stripe";
 import { BusinessStatus } from "@wine-club/db";
 
+// Simplified interface compatible with Stripe's Account type
 export interface StripeAccountState {
   id: string;
   charges_enabled: boolean;
   details_submitted: boolean;
   payouts_enabled?: boolean;
-  requirements?: {
-    currently_due?: string[] | null;
-    eventually_due?: string[] | null;
-    past_due?: string[] | null;
-    disabled_reason?: string | null;
-  } | null;
-  capabilities?: {
-    card_payments?: { status: string };
-    transfers?: { status: string };
-  } | null;
+  requirements?: any; // Flexible for Stripe's complex Requirements type
+  capabilities?: any; // Flexible for Stripe's complex Capabilities type
 }
 
 export interface StateTransition {

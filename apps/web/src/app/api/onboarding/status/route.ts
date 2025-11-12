@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch fresh Stripe account state if account exists
-    let stripeAccountState: any = null;
+    let stripeAccountState = null;
     if (business.stripeAccountId) {
       try {
         const account = await stripe.accounts.retrieve(business.stripeAccountId);
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
 
     // Determine current state (prefer live Stripe data over cached)
     const currentStatus = stripeAccountState
-      ? determineBusinessState(business.status, stripeAccountState as any)
+      ? determineBusinessState(business.status, stripeAccountState)
       : business.status;
 
     // Get next action guidance

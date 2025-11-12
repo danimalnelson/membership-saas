@@ -135,6 +135,9 @@ importers:
 
   packages/lib:
     dependencies:
+      '@wine-club/db':
+        specifier: workspace:*
+        version: link:../db
       stripe:
         specifier: ^14.9.0
         version: 14.25.0

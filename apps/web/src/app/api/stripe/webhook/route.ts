@@ -496,7 +496,7 @@ async function handleAccountUpdated(account: Stripe.Account, eventId?: string) {
   const { determineBusinessState, createStateTransition, appendTransition, isValidTransition } = await import("@wine-club/lib");
 
   // Determine new state based on Stripe account
-  const stripeAccountState: any = {
+  const stripeAccountState = {
     id: account.id,
     charges_enabled: account.charges_enabled,
     details_submitted: account.details_submitted,
@@ -505,7 +505,7 @@ async function handleAccountUpdated(account: Stripe.Account, eventId?: string) {
     capabilities: account.capabilities,
   };
 
-  const newStatus = determineBusinessState(business.status, stripeAccountState as any);
+  const newStatus = determineBusinessState(business.status, stripeAccountState);
   const statusChanged = newStatus !== business.status;
 
   console.log(`[Webhook] account.updated: ${account.id} | status: ${business.status} → ${newStatus} | charges: ${account.charges_enabled} | details: ${account.details_submitted}`);
@@ -523,7 +523,6 @@ async function handleAccountUpdated(account: Stripe.Account, eventId?: string) {
     stripeChargesEnabled: account.charges_enabled,
     stripeDetailsSubmitted: account.details_submitted,
     stripeRequirements: account.requirements || null,
-    stripeAccountStatus: account.status || null,
     lastWebhookEventId: eventId || business.lastWebhookEventId,
   };
 
@@ -577,7 +576,7 @@ async function handleAccountUpdated(account: Stripe.Account, eventId?: string) {
         type: "STRIPE_ACCOUNT_RESTRICTED",
         metadata: {
           accountId: account.id,
-          requirements: account.requirements,
+          requirements: account.requirements ? JSON.parse(JSON.stringify(account.requirements)) : null,
           previous_status: business.status,
         },
       },
