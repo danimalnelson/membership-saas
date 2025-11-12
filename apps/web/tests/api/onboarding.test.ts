@@ -163,7 +163,10 @@ describe("Business onboarding API", () => {
       expect(prismaMock.business.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "biz_3" },
-          data: expect.objectContaining({ status: "ONBOARDING_PENDING" }),
+          data: expect.objectContaining({ 
+            status: "STRIPE_ACCOUNT_CREATED",
+            stripeAccountId: "acct_mock_biz_3"
+          }),
         })
       );
     });

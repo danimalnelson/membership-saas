@@ -66,6 +66,59 @@ export const authOptions: NextAuthOptions = {
     error: "/auth/error",
   },
   callbacks: {
+    async signIn({ user, account, profile, email, credentials }) {
+      // Check if this is a new user (first sign-in)
+      if (user && user.id) {
+        try {
+          const existingUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            include: {
+              businesses: true,
+            },
+          });
+
+          // If user has no previous accounts or businesses, this is their first sign-in
+          if (existingUser && existingUser.businesses.length === 0) {
+            const accounts = await prisma.account.findMany({
+              where: { userId: user.id },
+            });
+
+            // Only one account means this is the first sign-in
+            if (accounts.length === 1) {
+              console.log(`[AUTH] New user detected: ${user.email}, sending welcome email`);
+              
+              // Send welcome email (non-blocking)
+              if (resend && user.email) {
+                resend.emails.send({
+                  from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+                  to: user.email,
+                  subject: "Welcome to Vintigo!",
+                  html: `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                      <h2>Welcome to Vintigo!</h2>
+                      <p>Your account has been successfully created.</p>
+                      <p>Get started by creating your first wine club business and begin accepting members.</p>
+                      <a href="${process.env.NEXTAUTH_URL || "http://localhost:3000"}/onboarding" 
+                         style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+                        Get Started
+                      </a>
+                      <p style="color: #666; font-size: 14px;">Need help? Contact our support team.</p>
+                    </div>
+                  `,
+                }).catch((error) => {
+                  console.error("[AUTH] Failed to send welcome email:", error);
+                });
+              }
+            }
+          }
+        } catch (error) {
+          console.error("[AUTH] Error checking new user status:", error);
+          // Don't block sign-in if welcome email fails
+        }
+      }
+
+      return true; // Allow sign-in
+    },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.sub!;
