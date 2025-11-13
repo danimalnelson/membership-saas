@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@wine-club/db";
 import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, formatCurrency } from "@wine-club/ui";
@@ -35,7 +36,14 @@ export default async function BusinessLandingPage({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {business.logoUrl && (
-                <img src={business.logoUrl} alt={business.name} className="h-12 w-12 rounded" />
+                <Image 
+                  src={business.logoUrl} 
+                  alt={business.name} 
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 rounded object-cover" 
+                  priority
+                />
               )}
               <h1 className="text-2xl font-bold">{business.name}</h1>
             </div>

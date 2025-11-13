@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@wine-club/db";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@wine-club/ui";
@@ -77,10 +78,13 @@ export default async function AppHomePage() {
                   <CardHeader>
                     <div className="flex items-center gap-3 mb-2">
                       {business.logoUrl && (
-                        <img
+                        <Image
                           src={business.logoUrl}
                           alt={business.name}
-                          className="h-10 w-10 rounded"
+                          width={40}
+                          height={40}
+                          className="h-10 w-10 rounded object-cover"
+                          loading="lazy"
                         />
                       )}
                       <div>
