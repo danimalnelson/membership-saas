@@ -1,61 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@wine-club/db";
-import { calculateMetrics, createCache, CACHE_TTL, type BusinessMetrics } from "@wine-club/lib";
+import {
+  calculateMetrics,
+  CACHE_TTL,
+  requireBusinessAuth,
+  withMiddleware,
+  getCache,
+  cacheKey,
+  type BusinessMetrics,
+} from "@wine-club/lib";
 
-// Type-safe in-memory cache for metrics
-const cache = createCache<BusinessMetrics>();
+// Redis-backed cache with in-memory fallback
+const metricsCache = getCache<BusinessMetrics>("metrics");
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ businessId: string }> }
-) {
-  const session = await getServerSession(authOptions);
+export const GET = withMiddleware(async (req: NextRequest, context) => {
+  const { businessId } = await (
+    req as any
+  ).params as { businessId: string };
 
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Authenticate and authorize
+  const authResult = await requireBusinessAuth(
+    authOptions,
+    prisma,
+    businessId
+  );
+
+  if ("error" in authResult) {
+    return authResult.error;
   }
 
-  try {
-    const { businessId } = await params;
-
-    // Verify user has access to business
-    const business = await prisma.business.findFirst({
-      where: {
-        id: businessId,
-        users: {
-          some: {
-            userId: session.user.id,
-          },
-        },
-      },
-    });
-
-    if (!business) {
-      return NextResponse.json({ error: "Business not found" }, { status: 404 });
+  // Get or compute metrics with automatic caching
+  const metrics = await metricsCache.getOrCompute(
+    cacheKey("metrics", businessId),
+    CACHE_TTL.MEDIUM,
+    async () => {
+      return calculateMetrics(prisma, businessId);
     }
+  );
 
-    // Check cache
-    const cacheKey = `metrics:${businessId}`;
-    const cached = cache.get(cacheKey, CACHE_TTL.MEDIUM);
-    if (cached) {
-      return NextResponse.json(cached);
-    }
-
-    // Calculate metrics
-    const metrics = await calculateMetrics(prisma, businessId);
-
-    // Update cache
-    cache.set(cacheKey, metrics);
-
-    return NextResponse.json(metrics);
-  } catch (error: any) {
-    console.error("Metrics calculation error:", error);
-    return NextResponse.json(
-      { error: error?.message || "Failed to calculate metrics" },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json(metrics);
+});
 

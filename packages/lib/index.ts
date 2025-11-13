@@ -8,6 +8,8 @@ export * from "./api-errors";
 export * from "./api-auth";
 export * from "./cache";
 export * from "./api-middleware";
+export * from "./rate-limit";
+export * from "./redis-cache";
 
 // Export metrics separately to avoid pulling in Prisma during tests
 export { calculateMetrics } from "./metrics";
