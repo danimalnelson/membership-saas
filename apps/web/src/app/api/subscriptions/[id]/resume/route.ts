@@ -12,13 +12,13 @@ import { requireAuth, ApiErrors, withMiddleware } from "@wine-club/lib";
  * Resumes billing for a paused subscription.
  * Per product decisions: billing date resets to resume date.
  */
-export const POST = withMiddleware(async (req: NextRequest, context) => {
+export const POST = withMiddleware(async (req: NextRequest, context): Promise<NextResponse> => {
   const { id } = await (req as any).params as { id: string };
 
   // Authenticate user
   const authResult = await requireAuth(authOptions);
   if ("error" in authResult) {
-    return authResult.error;
+    return authResult.error as NextResponse;
   }
 
   const { session } = authResult;
@@ -37,23 +37,23 @@ export const POST = withMiddleware(async (req: NextRequest, context) => {
   });
 
   if (!subscription) {
-    return ApiErrors.notFound("Subscription not found");
+    return ApiErrors.notFound("Subscription not found") as NextResponse;
   }
 
   // Verify user owns this subscription
   if (subscription.consumer.userId !== session.user.id) {
-    return ApiErrors.forbidden("You don't have access to this subscription");
+    return ApiErrors.forbidden("You don't have access to this subscription") as NextResponse;
   }
 
   // Check if currently paused
   if (subscription.status !== "paused") {
     return ApiErrors.badRequest(
       `Cannot resume subscription with status: ${subscription.status}`
-    );
+    ) as NextResponse;
   }
 
   if (!subscription.stripeSubscriptionId) {
-    return ApiErrors.internalError("Missing Stripe subscription ID");
+    return ApiErrors.internalError("Missing Stripe subscription ID") as NextResponse;
   }
 
   // Resume in Stripe
@@ -89,7 +89,7 @@ export const POST = withMiddleware(async (req: NextRequest, context) => {
     console.error("Failed to resume subscription:", error);
     return ApiErrors.internalError(
       error instanceof Error ? error.message : "Failed to resume subscription"
-    );
+    ) as NextResponse;
   }
 });
 
