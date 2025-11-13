@@ -169,9 +169,36 @@ The challenge: Dynamic pricing requires business input each interval.
 ### **Recommendation:**
 Start with **Option 1 (Manual)** for MVP, add **Option 2 (Queue)** for v2.
 
-### **Decision Made:**
+### **Decisions Made:**
+
+#### **Pricing Decisions:**
 - **Dynamic Pricing:** Start with Manual (Option 1), add Queue (Option 2) in V2
+  - Email reminders: 7 days before + 1 day before billing
+  - If not set: Block billing (don't charge incorrect amount)
 - **Fixed Pricing:** When price changes, give business option to notify active subscribers
+
+#### **Billing Architecture:**
+- **Billing Anchor:** Set at MEMBERSHIP level (IMMEDIATE vs NEXT_INTERVAL)
+  - IMMEDIATE: Start immediately, bill on member's anniversary date
+  - NEXT_INTERVAL: Start at next cohort date (e.g., 1st of month), bill with cohort
+  - Same-day signup rule: If signup on billing day, start NEXT interval (e.g., Feb 1 signup → March 1 start)
+- **Intervals:** Set at PLAN level (each plan can have different frequency)
+  - Enables monthly, quarterly, annual plans in same membership
+  - Example: Monthly ($40), Quarterly ($110), Annual ($400)
+
+#### **Member Experience:**
+- **Multiple Subscriptions:** Member can subscribe to multiple plans in one membership (if allowed)
+- **Proration:** None - members wait for next interval start (no partial period charges)
+- **Plan Changes:** Can happen anytime, takes effect at next billing interval
+- **Pausing:** Subscription status becomes PAUSED, billing stops
+  - On resume: Billing date resets to resume date (not original date)
+- **Status Tracking:** On Subscription model (not Membership)
+
+#### **Scope Decisions:**
+- **Currency:** USD only for MVP
+- **Inventory:** No physical inventory tracking
+- **Fulfillment:** No shipping/delivery time tracking
+- **Plan-Membership:** Each plan belongs to ONE membership only (1:many relationship)
 
 ---
 
@@ -201,8 +228,12 @@ model Membership {
   slug              String   @unique
   
   // Rules
-  exclusivityRule   MembershipExclusivity @default(ONE_PLAN_ONLY)
-  maxMembers        Int?
+  allowMultiplePlans Boolean @default(false)  // Can member subscribe to multiple plans?
+  maxMembers        Int?                      // Capacity limit
+  
+  // Billing Settings (MEMBERSHIP LEVEL)
+  billingAnchor     BillingAnchor @default(IMMEDIATE)
+  cohortBillingDay  Int?          // 1-31, required if NEXT_INTERVAL
   
   // Status
   status            MembershipStatus @default(ACTIVE)
@@ -213,6 +244,10 @@ model Membership {
   waitlistEnabled   Boolean  @default(false)
   membersOnlyAccess Boolean  @default(false)
   
+  // Member Experience
+  pauseEnabled      Boolean  @default(false)  // Can members pause?
+  skipEnabled       Boolean  @default(false)  // Can members skip?
+  
   // Metadata
   benefits          Json?    // Array of benefit strings
   images            Json?    // Array of image URLs
@@ -221,11 +256,13 @@ model Membership {
   
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  
+  @@index([businessId, status])
 }
 
-enum MembershipExclusivity {
-  ONE_PLAN_ONLY
-  MULTIPLE_PLANS_ALLOWED
+enum BillingAnchor {
+  IMMEDIATE       // Start immediately, bill on anniversary
+  NEXT_INTERVAL   // Start at next cohort date, bill with cohort
 }
 
 enum MembershipStatus {
@@ -242,8 +279,8 @@ model Plan {
   id                String      @id @default(cuid())
   businessId        String
   business          Business    @relation(...)
-  membershipId      String?
-  membership        Membership? @relation(...)
+  membershipId      String      // Required - each plan belongs to ONE membership
+  membership        Membership  @relation(...)
   
   // Core
   name              String
@@ -255,9 +292,15 @@ model Plan {
   basePrice         Int?        // In cents (for fixed pricing)
   currency          String      @default("usd")
   
-  // Subscription Details
-  interval          PriceInterval
-  intervalCount     Int         @default(1)
+  // Subscription Details (PLAN LEVEL - each plan sets its own frequency)
+  interval          PriceInterval  // week, month, year
+  intervalCount     Int         @default(1)  // every 1, 2, 3, etc.
+  
+  // Examples:
+  // Monthly: interval=MONTH, intervalCount=1
+  // Quarterly: interval=MONTH, intervalCount=3
+  // Bi-weekly: interval=WEEK, intervalCount=2
+  // Annual: interval=YEAR, intervalCount=1
   
   // Product Details
   quantityPerShipment Int?
@@ -271,15 +314,6 @@ model Plan {
   // Trial & Commitment
   trialPeriodDays   Int?
   minimumCommitmentMonths Int?
-  
-  // Scheduling
-  billingAnchor     BillingAnchor @default(SUBSCRIPTION_START)
-  fulfillmentLeadDays Int       @default(0)
-  
-  // Member Options
-  pauseEnabled      Boolean     @default(false)
-  skipEnabled       Boolean     @default(false)
-  maxConsecutiveSkips Int?
   
   // Inventory
   stockStatus       StockStatus @default(AVAILABLE)
@@ -300,6 +334,9 @@ model Plan {
   
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+  
+  @@index([membershipId, status])
+  @@index([businessId, status])
 }
 
 enum PricingType {
@@ -314,11 +351,7 @@ enum ShippingType {
   FREE_OVER_AMOUNT
 }
 
-enum BillingAnchor {
-  SUBSCRIPTION_START
-  FIRST_OF_MONTH
-  CUSTOM_DAY
-}
+// NOTE: BillingAnchor moved to Membership model (see above)
 
 enum StockStatus {
   AVAILABLE
@@ -335,6 +368,55 @@ enum PlanStatus {
 }
 ```
 
+**Subscription Table (member's subscription to a plan):**
+```prisma
+model Subscription {
+  id                  String   @id @default(cuid())
+  planId              String
+  plan                Plan     @relation(...)
+  userId              String   // The member/customer
+  user                User     @relation(...)
+  
+  // Status (DECISION: Status tracked here, not on Membership)
+  status              SubscriptionStatus @default(ACTIVE)
+  
+  // Billing dates
+  currentPeriodStart  DateTime
+  currentPeriodEnd    DateTime
+  billingCycleAnchor  Int?     // Day of month (1-31) for IMMEDIATE billing
+  nextBillingDate     DateTime
+  
+  // Pause/Resume tracking (DECISION: Resume resets billing date)
+  pausedAt            DateTime?
+  resumedAt           DateTime?
+  canceledAt          DateTime?
+  
+  // Stripe
+  stripeSubscriptionId String? @unique
+  stripeCustomerId     String?
+  
+  // Pricing
+  currentPrice        Int      // In cents
+  currency            String   @default("usd")
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@index([userId, status])
+  @@index([planId, status])
+  @@index([nextBillingDate])
+}
+
+enum SubscriptionStatus {
+  ACTIVE          // Currently active and billing
+  PAUSED          // Member paused (no billing)
+  CANCELED        // Canceled by member
+  PAST_DUE        // Payment failed
+  INCOMPLETE      // Stripe failed to create subscription
+  EXPIRED         // Ended naturally (if not auto-renew)
+}
+```
+
 **Price Queue (for dynamic pricing):**
 ```prisma
 model PriceQueueItem {
@@ -344,8 +426,11 @@ model PriceQueueItem {
   
   effectiveAt  DateTime // When this price takes effect
   price        Int      // In cents
-  notified     Boolean  @default(false)
-  applied      Boolean  @default(false)
+  
+  // Notification tracking (DECISION: Email 7 days + 1 day before)
+  notifiedAt7Days  DateTime?
+  notifiedAt1Day   DateTime?
+  applied          Boolean  @default(false)
   
   stripePriceId String? // Created price in Stripe
   
@@ -398,49 +483,63 @@ model PriceQueueItem {
 
 ---
 
-## ❓ Questions for Product Refinement
+## ✅ Product Decisions - FINALIZED
 
-### Membership Rules
-1. Can a membership have zero plans (placeholder)?
-2. ✅ **DECIDED:** Can a plan belong to multiple memberships? **NO** - Each plan belongs to exactly one membership
-3. How to handle changing exclusivity rules with active subscribers?
+### Core Architecture
+1. ✅ **Billing Anchor:** Set at MEMBERSHIP level (IMMEDIATE vs NEXT_INTERVAL)
+2. ✅ **Intervals:** Set at PLAN level (monthly, quarterly, annual in same membership)
+3. ✅ **Plan-Membership:** Each plan belongs to ONE membership (1:many)
+4. ✅ **Multiple Subscriptions:** Members can subscribe to multiple plans if membership allows
+5. ✅ **Currency:** USD only for MVP
+6. ✅ **Inventory Tracking:** Not needed
 
-### Pricing
-4. ✅ **DECIDED:** Should we support multiple currencies per plan? **NO** - USD only for now
-5. How far in advance can dynamic prices be set? (Depends on Manual vs Queue approach)
-6. What happens if business forgets to set dynamic price? (Block billing? Use last price? Email reminder?)
-7. ✅ **DECIDED:** Should customers be notified of ALL price changes or just increases? **For fixed plans, give business the option to notify subscribers when changing price**
-8. Can customers lock in a price for X months?
+### Billing & Pricing
+7. ✅ **Dynamic Pricing:** Manual input (MVP) → Queue system (V2)
+8. ✅ **Dynamic Pricing Fallback:** Block billing + email reminders (7 days + 1 day before)
+9. ✅ **Fixed Price Changes:** Business can optionally notify subscribers
+10. ✅ **Proration:** None - members wait for next interval
+11. ✅ **Same-Day Signup:** If signup on billing day, start NEXT interval (Feb 1 → March 1)
 
 ### Member Experience
-9. Can members downgrade mid-cycle or only at renewal?
-10. Prorated refunds for downgrades?
-11. How many times can a member pause before cancellation?
-12. Should skipped months extend the subscription or just not charge?
+12. ✅ **Plan Changes:** Can happen anytime, takes effect at next billing interval
+13. ✅ **Pausing:** Status = PAUSED, billing stops
+14. ✅ **Resume:** Billing date resets to resume date (not original)
+15. ✅ **Status Tracking:** On Subscription model (not Membership)
+16. ✅ **Fulfillment:** No shipping/delivery time tracking needed
 
-### Inventory
-13. ✅ **DECIDED:** Do we need physical inventory tracking integration? **NO** - Not needed for MVP
-14. Overselling protection (charge card but no inventory)? (Not needed if no inventory tracking)
-15. Allocation strategy if demand > supply? (Can use maxSubscribers limit on Plan)
-
-### Business Operations
-16. Multi-user access (owner + staff)?
-17. Role-based permissions (who can set prices)?
-18. Reporting requirements (MRR, churn, lifetime value)?
-19. Integration with fulfillment/shipping software?
+### Remaining Questions (Low Priority)
+1. Can a membership have zero plans (draft/placeholder state)?
+2. How to handle changing allowMultiplePlans with active subscribers?
+3. Can customers lock in a price for X months?
+4. Multi-user access (owner + staff)?
+5. Role-based permissions (who can set prices)?
+6. Reporting requirements (MRR, churn, LTV)?
 
 ---
 
 ## 🎯 Success Criteria
 
 ### MVP (Minimum Viable Product)
-- [ ] Create memberships with multiple plans
-- [ ] Set exclusivity rules (one vs many)
-- [ ] Fixed pricing fully working
-- [ ] Dynamic pricing with manual updates
-- [ ] Stripe subscription integration
-- [ ] Basic checkout flow
-- [ ] Member can view/manage subscription
+- [ ] **Membership Model:**
+  - Create memberships with billing anchor (IMMEDIATE vs NEXT_INTERVAL)
+  - Set allowMultiplePlans (one vs many plans)
+  - Configure cohortBillingDay for NEXT_INTERVAL
+  - Enable/disable pause and skip features
+- [ ] **Plan Model:**
+  - Create plans with intervals (weekly, monthly, quarterly, annual)
+  - Fixed pricing fully working
+  - Dynamic pricing with manual updates (email reminders 7d + 1d)
+  - Support for setup fees, shipping costs
+- [ ] **Subscription Flow:**
+  - NEXT_INTERVAL: Calculate correct start date (not same day as billing day)
+  - IMMEDIATE: Start immediately, bill on anniversary
+  - Stripe subscription integration
+  - Multiple plan subscriptions (if membership allows)
+- [ ] **Member Portal:**
+  - View active subscriptions
+  - Pause/resume (resets billing date)
+  - Change plans (takes effect next interval)
+  - Cancel subscription
 
 ### V1 (Version 1)
 - [ ] Price queue for dynamic pricing
