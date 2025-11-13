@@ -4,6 +4,7 @@ import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@wine-club/db";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, formatCurrency } from "@wine-club/ui";
+import { PlanStatusBadge } from "@/components/plans/PlanStatusBadge";
 
 export default async function PlansPage({
   params,
@@ -32,55 +33,52 @@ export default async function PlansPage({
     notFound();
   }
 
-  const plans = await prisma.membershipPlan.findMany({
-    where: {
-      businessId: business.id,
-    },
+  // Fetch memberships with their plans
+  const memberships = await prisma.membership.findMany({
+    where: { businessId: business.id },
     include: {
-      prices: {
-        orderBy: { unitAmount: "asc" },
-      },
-      _count: {
-        select: {
-          subscriptions: true,
+      plans: {
+        include: {
+          _count: {
+            select: {
+              planSubscriptions: true,
+            },
+          },
         },
+        orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
       },
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
   });
+
+  const totalPlans = memberships.reduce((acc, m) => acc + m.plans.length, 0);
+  const activePlans = memberships.reduce(
+    (acc, m) => acc + m.plans.filter((p) => p.status === "ACTIVE").length,
+    0
+  );
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">{business.name} - Plans</h1>
-            <Link href="/app">
-              <button className="text-sm text-muted-foreground hover:text-foreground">
-                ← Back
-              </button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Membership Plans</h2>
+            <h1 className="text-3xl font-bold mb-2">Subscription Plans</h1>
             <p className="text-muted-foreground">
-              Create and manage your wine club membership plans
+              Manage your membership plans and pricing
             </p>
           </div>
-          {business.stripeAccountId && (
-            <Link href={`/app/${business.id}/plans/create`}>
-              <Button>Create Plan</Button>
+          <div className="flex gap-3">
+            <Link href={`/app/${businessId}`}>
+              <Button variant="outline">← Back to Dashboard</Button>
             </Link>
-          )}
+            <Link href={`/app/${businessId}/memberships`}>
+              <Button variant="outline">Manage Memberships</Button>
+            </Link>
+          </div>
         </div>
 
+        {/* Stripe Check */}
         {!business.stripeAccountId && (
           <Card className="mb-8 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
             <CardHeader>
@@ -90,111 +88,188 @@ export default async function PlansPage({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href={`/app/${business.id}/settings`}>
+              <Link href={`/app/${businessId}/settings`}>
                 <Button>Go to Settings</Button>
               </Link>
             </CardContent>
           </Card>
         )}
 
-        {plans.length === 0 ? (
+        {/* No Memberships Warning */}
+        {memberships.length === 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>No Plans Yet</CardTitle>
+              <CardTitle>Create a Membership First</CardTitle>
               <CardDescription>
-                Create your first membership plan to start accepting members
+                Plans are organized within memberships. Create a membership before adding plans.
               </CardDescription>
             </CardHeader>
-            {business.stripeAccountId && (
-              <CardContent>
-                <Link href={`/app/${business.id}/plans/create`}>
-                  <Button>Create Your First Plan</Button>
-                </Link>
-              </CardContent>
-            )}
+            <CardContent>
+              <Link href={`/app/${businessId}/memberships/create`}>
+                <Button>Create Your First Membership</Button>
+              </Link>
+            </CardContent>
           </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {plans.map((plan: any) => {
-              const benefits = Array.isArray(plan.benefits)
-                ? plan.benefits
-                : (plan.benefits as any)?.items || [];
+        )}
 
-              return (
-                <Card key={plan.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle>{plan.name}</CardTitle>
-                        <CardDescription className="mt-1">{plan.description}</CardDescription>
-                      </div>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          plan.status === "ACTIVE"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
+        {/* Plans Grouped by Membership */}
+        {memberships.length > 0 && (
+          <div className="space-y-8">
+            {memberships.map((membership) => (
+              <div key={membership.id}>
+                {/* Membership Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold">{membership.name}</h2>
+                    {membership.description && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {membership.description}
+                      </p>
+                    )}
+                  </div>
+                  <Link href={`/app/${businessId}/plans/create?membershipId=${membership.id}`}>
+                    <Button size="sm">+ Add Plan</Button>
+                  </Link>
+                </div>
+
+                {/* Plans Grid */}
+                {membership.plans.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-8 text-center">
+                      <p className="text-muted-foreground mb-4">
+                        No plans in this membership yet
+                      </p>
+                      <Link href={`/app/${businessId}/plans/create?membershipId=${membership.id}`}>
+                        <Button size="sm">Create First Plan</Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {membership.plans.map((plan) => (
+                      <Link
+                        key={plan.id}
+                        href={`/app/${businessId}/plans/${plan.id}/edit`}
                       >
-                        {plan.status}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <div className="text-sm font-medium mb-2">Pricing:</div>
-                      {plan.prices.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No prices set</p>
-                      ) : (
-                        <div className="space-y-1">
-                          {plan.prices.map((price: any) => (
-                            <div key={price.id} className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">
-                                {price.interval}ly{price.isDefault && " (default)"}
+                        <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                          <CardHeader>
+                            <div className="flex items-start justify-between mb-2">
+                              <CardTitle className="text-xl">{plan.name}</CardTitle>
+                              <PlanStatusBadge status={plan.status} />
+                            </div>
+                            {plan.description && (
+                              <CardDescription className="line-clamp-2">
+                                {plan.description}
+                              </CardDescription>
+                            )}
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            {/* Pricing */}
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-muted-foreground">
+                                Price:
                               </span>
-                              <span className="font-medium">
-                                {formatCurrency(price.unitAmount, price.currency)}
+                              <span className="text-lg font-bold">
+                                {plan.pricingType === "FIXED" && plan.basePrice
+                                  ? formatCurrency(plan.basePrice, plan.currency)
+                                  : "Dynamic"}
                               </span>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
 
-                    {benefits.length > 0 && (
-                      <div>
-                        <div className="text-sm font-medium mb-2">Benefits:</div>
-                        <ul className="space-y-1">
-                          {benefits.slice(0, 3).map((benefit: string, idx: number) => (
-                            <li key={idx} className="text-sm text-muted-foreground flex items-start gap-1">
-                              <span className="text-primary">•</span>
-                              <span className="line-clamp-1">{benefit}</span>
-                            </li>
-                          ))}
-                          {benefits.length > 3 && (
-                            <li className="text-xs text-muted-foreground">
-                              +{benefits.length - 3} more
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
+                            {/* Interval */}
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">
+                                Frequency:
+                              </span>
+                              <span className="font-medium">
+                                Every {plan.intervalCount}{" "}
+                                {plan.interval.toLowerCase()}
+                                {plan.intervalCount > 1 ? "s" : ""}
+                              </span>
+                            </div>
 
-                    <div className="pt-2 border-t text-sm text-muted-foreground">
-                      {plan._count.subscriptions} active subscriptions
-                    </div>
+                            {/* Quantity */}
+                            {plan.quantityPerShipment && (
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">
+                                  Quantity:
+                                </span>
+                                <span className="font-medium">
+                                  {plan.quantityPerShipment} per shipment
+                                </span>
+                              </div>
+                            )}
 
-                    <Link href={`/app/${business.id}/plans/${plan.id}`}>
-                      <Button variant="outline" className="w-full">
-                        Manage Plan
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                            {/* Subscriptions */}
+                            <div className="pt-3 border-t flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">
+                                Subscriptions:
+                              </span>
+                              <span className="font-medium">
+                                {plan._count.planSubscriptions}
+                              </span>
+                            </div>
+
+                            {/* Features */}
+                            <div className="flex flex-wrap gap-2 pt-2">
+                              {plan.trialPeriodDays && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  {plan.trialPeriodDays}d trial
+                                </span>
+                              )}
+                              {plan.setupFee && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                  Setup fee
+                                </span>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
-      </main>
+
+        {/* Quick Stats */}
+        {totalPlans > 0 && (
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-2xl font-bold">{totalPlans}</div>
+                <div className="text-sm text-muted-foreground">Total Plans</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-2xl font-bold">{activePlans}</div>
+                <div className="text-sm text-muted-foreground">Active Plans</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-2xl font-bold">
+                  {memberships.reduce(
+                    (acc, m) =>
+                      acc +
+                      m.plans.reduce(
+                        (sum, p) => sum + p._count.planSubscriptions,
+                        0
+                      ),
+                    0
+                  )}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Total Subscriptions
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
