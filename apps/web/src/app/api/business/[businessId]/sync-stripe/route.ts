@@ -67,7 +67,10 @@ export async function POST(
     const updateData: Prisma.BusinessUpdateInput = {
       stripeChargesEnabled: account.charges_enabled,
       stripeDetailsSubmitted: account.details_submitted,
-      stripeRequirements: account.requirements || Prisma.JsonNull,
+      // Serialize Stripe requirements object to JSON
+      stripeRequirements: account.requirements 
+        ? JSON.parse(JSON.stringify(account.requirements))
+        : Prisma.JsonNull,
     };
 
     if (statusChanged) {

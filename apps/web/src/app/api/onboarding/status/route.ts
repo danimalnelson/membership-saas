@@ -70,7 +70,8 @@ export async function GET(req: NextRequest) {
           id: business.stripeAccountId,
           charges_enabled: business.stripeChargesEnabled,
           details_submitted: business.stripeDetailsSubmitted,
-          requirements: business.stripeRequirements,
+          // Cast JSON from DB back to Stripe type
+          requirements: business.stripeRequirements as any,
         };
       }
     }
