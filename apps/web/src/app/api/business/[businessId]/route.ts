@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@wine-club/db";
+import { ApiErrors, CACHE_TTL } from "@wine-club/lib";
 
 // Simple in-memory cache
 const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
 export async function GET(
   _req: Request,
@@ -14,7 +14,7 @@ export async function GET(
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return ApiErrors.unauthorized();
   }
 
   const { businessId } = await context.params;
@@ -22,7 +22,7 @@ export async function GET(
   // Check cache
   const cacheKey = `business:${businessId}:${session.user.id}`;
   const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL.SHORT) {
     return NextResponse.json(cached.data);
   }
 
@@ -38,7 +38,7 @@ export async function GET(
   });
 
   if (!business) {
-    return NextResponse.json({ error: "Business not found" }, { status: 404 });
+    return ApiErrors.notFound("Business", { businessId });
   }
 
   // Update cache
