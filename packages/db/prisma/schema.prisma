@@ -260,6 +260,8 @@ model Member {
   @@index([businessId])
   @@index([consumerId])
   @@index([status])
+  @@index([updatedAt])
+  @@index([businessId, status, updatedAt])
   @@map("members")
 }
 
