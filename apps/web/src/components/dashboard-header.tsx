@@ -8,7 +8,7 @@ interface DashboardHeaderProps {
   business: {
     id: string;
     name: string;
-    slug: string;
+    slug: string | null;
     logoUrl?: string | null;
   };
   userEmail?: string;
@@ -29,7 +29,9 @@ export function DashboardHeader({ business, userEmail }: DashboardHeaderProps) {
             )}
             <div>
               <h1 className="text-2xl font-bold">{business.name}</h1>
-              <p className="text-sm text-muted-foreground">@{business.slug}</p>
+              {business.slug && (
+                <p className="text-sm text-muted-foreground">@{business.slug}</p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-4">
