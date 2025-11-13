@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@wine-club/db";
+import { prisma, Prisma } from "@wine-club/db";
 import { stripe, determineBusinessState, createStateTransition, appendTransition } from "@wine-club/lib";
 
 export async function POST(
@@ -63,11 +63,11 @@ export async function POST(
 
     console.log(`[SYNC] Status: ${business.status} → ${newStatus}`);
 
-    // Update database
-    const updateData: any = {
+    // Update database with type-safe updates
+    const updateData: Prisma.BusinessUpdateInput = {
       stripeChargesEnabled: account.charges_enabled,
       stripeDetailsSubmitted: account.details_submitted,
-      stripeRequirements: account.requirements || null,
+      stripeRequirements: account.requirements || Prisma.JsonNull,
     };
 
     if (statusChanged) {
