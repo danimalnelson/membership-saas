@@ -6,14 +6,17 @@
 import type Stripe from "stripe";
 import { BusinessStatus } from "@wine-club/db";
 
-// Simplified interface compatible with Stripe's Account type
+/**
+ * Simplified interface compatible with Stripe's Account type.
+ * Uses Stripe's official types for requirements and capabilities.
+ */
 export interface StripeAccountState {
   id: string;
   charges_enabled: boolean;
   details_submitted: boolean;
   payouts_enabled?: boolean;
-  requirements?: any; // Flexible for Stripe's complex Requirements type
-  capabilities?: any; // Flexible for Stripe's complex Capabilities type
+  requirements?: Stripe.Account.Requirements;
+  capabilities?: Stripe.Account.Capabilities;
 }
 
 export interface StateTransition {

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@wine-club/db";
-import { CACHE_TTL, requireBusinessAuth } from "@wine-club/lib";
+import { prisma, Business } from "@wine-club/db";
+import { CACHE_TTL, requireBusinessAuth, createCache } from "@wine-club/lib";
 
-// Simple in-memory cache
-const cache = new Map<string, { data: any; timestamp: number }>();
+// Type-safe in-memory cache
+const cache = createCache<Business>();
 
 export async function GET(
   _req: Request,
@@ -20,16 +20,13 @@ export async function GET(
 
   // Check cache
   const cacheKey = `business:${businessId}:${session.user.id}`;
-  const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL.SHORT) {
-    return NextResponse.json(cached.data);
+  const cached = cache.get(cacheKey, CACHE_TTL.SHORT);
+  if (cached) {
+    return NextResponse.json(cached);
   }
 
   // Update cache
-  cache.set(cacheKey, {
-    data: business,
-    timestamp: Date.now(),
-  });
+  cache.set(cacheKey, business);
 
   return NextResponse.json(business);
 }

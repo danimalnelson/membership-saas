@@ -155,7 +155,7 @@ export async function requireBusinessAuth(
   // Check authentication
   const authResult = await requireAuth(authOptions);
   if ("error" in authResult) {
-    return authResult;
+    return { error: authResult.error, session: undefined, business: undefined };
   }
 
   // Check business access
@@ -165,7 +165,7 @@ export async function requireBusinessAuth(
     businessId
   );
   if ("error" in businessResult) {
-    return businessResult;
+    return { error: businessResult.error, session: undefined, business: undefined };
   }
 
   return {
