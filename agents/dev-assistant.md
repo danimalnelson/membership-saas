@@ -41,7 +41,12 @@ This foundation defines:
 5. When all verification passes:
    - Commit with a precise summary.
    - Update the appropriate log (`/logs/build-progress.md`, `/logs/feature-progress.md`, etc.).
-6. Return here to select the next mission or await new instructions.
+6. **Verify Vercel deployment:**
+   - Push branch to GitHub
+   - Verify Vercel preview deployment succeeds (check Vercel dashboard or GitHub PR checks)
+   - For feature branches, Vercel automatically creates preview deployments
+   - Fix any Vercel build failures before marking work complete
+7. Return here to select the next mission or await new instructions.
 
 ## 4. Mission Router (Quick Reference)
 | Trigger | Mission | Notes |
@@ -61,6 +66,11 @@ This foundation defines:
 4. **Use conventional commit format** (feat, fix, test, docs, etc.).
 5. **Log all progress** to appropriate files in `/logs/`.
 6. **Never hardcode secrets**; always use `process.env.*`.
+7. **Verify Vercel deployments** after pushing to GitHub:
+   - Check Vercel dashboard or GitHub PR checks for preview deployment status
+   - Feature branches get automatic preview deployments
+   - Fix build failures immediately (check Vercel logs)
+   - Ensure environment variables are configured in Vercel project settings
 
 Additional standards:
 - Maintain alignment with `/docs/architecture.md`; avoid large refactors unless requested.
