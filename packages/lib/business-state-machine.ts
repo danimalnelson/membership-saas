@@ -25,7 +25,39 @@ export interface StateTransition {
 }
 
 /**
- * Determine the appropriate BusinessStatus based on Stripe account state
+ * Determines the appropriate BusinessStatus based on current state and Stripe account data.
+ * 
+ * This is the core function of the onboarding state machine. It evaluates the Stripe
+ * account's capabilities and requirements to determine what status the business should
+ * have in our system.
+ * 
+ * @param currentStatus - The current BusinessStatus in our database
+ * @param stripeAccount - Live data from Stripe account (null if no account yet)
+ * @returns The new BusinessStatus that should be applied
+ * 
+ * @example
+ * // New business with no Stripe account yet
+ * const status = determineBusinessState('CREATED', null);
+ * // Returns 'CREATED'
+ * 
+ * @example
+ * // Business with complete Stripe account
+ * const status = determineBusinessState('PENDING_VERIFICATION', {
+ *   id: 'acct_123',
+ *   charges_enabled: true,
+ *   details_submitted: true
+ * });
+ * // Returns 'ONBOARDING_COMPLETE'
+ * 
+ * @example
+ * // Business with restricted Stripe account
+ * const status = determineBusinessState('ONBOARDING_COMPLETE', {
+ *   id: 'acct_123',
+ *   charges_enabled: false,
+ *   details_submitted: true,
+ *   requirements: { disabled_reason: 'rejected.fraud' }
+ * });
+ * // Returns 'RESTRICTED'
  */
 export function determineBusinessState(
   currentStatus: BusinessStatus,
@@ -68,7 +100,18 @@ export function determineBusinessState(
 }
 
 /**
- * Check if a state transition is valid
+ * Validates if a state transition is allowed according to business rules.
+ * 
+ * Checks if transitioning from one BusinessStatus to another is permitted.
+ * Helps prevent invalid state changes and maintains data integrity.
+ * 
+ * @param from - The current BusinessStatus
+ * @param to - The target BusinessStatus to transition to
+ * @returns true if transition is valid, false otherwise
+ * 
+ * @example
+ * isValidTransition('CREATED', 'DETAILS_COLLECTED'); // true
+ * isValidTransition('ONBOARDING_COMPLETE', 'CREATED'); // false (invalid backward transition)
  */
 export function isValidTransition(
   from: BusinessStatus,
@@ -107,7 +150,18 @@ export function isValidTransition(
 }
 
 /**
- * Get next action for user based on current state
+ * Provides user-facing guidance on what action to take next based on onboarding status.
+ * 
+ * Returns a structured object with the next action, user message, and dashboard access permission.
+ * Used to drive UI/UX for onboarding flow and status pages.
+ * 
+ * @param status - Current BusinessStatus
+ * @param stripeAccount - Stripe account state (used for requirement details)
+ * @returns Object containing action type, user message, and dashboard access flag
+ * 
+ * @example
+ * const guidance = getNextAction('PENDING_VERIFICATION', { id: 'acct_123', charges_enabled: false, details_submitted: true });
+ * // Returns: { action: 'wait_verification', message: '...', canAccessDashboard: true }
  */
 export function getNextAction(status: BusinessStatus, stripeAccount: StripeAccountState | null): {
   action: "complete_details" | "start_stripe_onboarding" | "resume_stripe_onboarding" | "wait_verification" | "fix_requirements" | "contact_support" | "none";
@@ -192,7 +246,24 @@ export function getNextAction(status: BusinessStatus, stripeAccount: StripeAccou
 }
 
 /**
- * Create a state transition record
+ * Creates a structured state transition record for audit trail.
+ * 
+ * Generates a timestamped record of business status changes, including the reason
+ * for the transition and optional webhook event ID for traceability.
+ * 
+ * @param from - Previous BusinessStatus
+ * @param to - New BusinessStatus
+ * @param reason - Human-readable explanation for the transition
+ * @param eventId - Optional Stripe webhook event ID that triggered this transition
+ * @returns StateTransition object ready to be appended to stateTransitions JSON field
+ * 
+ * @example
+ * const transition = createStateTransition(
+ *   'STRIPE_ONBOARDING_IN_PROGRESS',
+ *   'ONBOARDING_COMPLETE',
+ *   'Webhook account.updated: charges=true, details=true',
+ *   'evt_123'
+ * );
  */
 export function createStateTransition(
   from: BusinessStatus,
@@ -210,7 +281,25 @@ export function createStateTransition(
 }
 
 /**
- * Append a transition to the existing transitions array
+ * Safely appends a new transition to the existing transitions array stored in JSON field.
+ * 
+ * Handles the JSON field from Prisma which may be null or empty.
+ * Ensures the returned value is always a valid array.
+ * 
+ * @param existingTransitions - Current stateTransitions value from database (may be null)
+ * @param newTransition - New StateTransition to append
+ * @returns Updated array of transitions with the new transition appended
+ * 
+ * @example
+ * const updated = appendTransition(
+ *   business.stateTransitions,
+ *   createStateTransition('CREATED', 'DETAILS_COLLECTED', 'User submitted form')
+ * );
+ * // Use in Prisma update:
+ * await prisma.business.update({
+ *   where: { id },
+ *   data: { stateTransitions: updated }
+ * });
  */
 export function appendTransition(
   existingTransitions: StateTransition[] | null,

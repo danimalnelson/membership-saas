@@ -1,13 +1,45 @@
 import type { PrismaClient } from "@prisma/client";
 
+/**
+ * Business performance metrics for dashboard display.
+ * All monetary values are in cents to avoid floating-point precision issues.
+ */
 export interface BusinessMetrics {
-  mrr: number; // Monthly Recurring Revenue in cents
+  /** Monthly Recurring Revenue in cents */
+  mrr: number;
+  /** Current count of active members */
   activeMembers: number;
-  churnRate: number; // Percentage
-  totalRevenue: number; // All-time in cents
+  /** Churn rate as a percentage (0-100) calculated over last 30 days */
+  churnRate: number;
+  /** All-time total revenue in cents */
+  totalRevenue: number;
+  /** Revenue breakdown by month for charting (last 12 months) */
   monthlyRevenue: Array<{ month: string; revenue: number }>;
 }
 
+/**
+ * Calculates comprehensive business metrics for a given business.
+ * 
+ * Aggregates data from members, subscriptions, and payments to provide:
+ * - MRR (Monthly Recurring Revenue) from active subscriptions
+ * - Active member count
+ * - 30-day churn rate
+ * - All-time total revenue
+ * - Monthly revenue breakdown (last 12 months)
+ * 
+ * This function performs multiple database queries and should be cached
+ * when possible to avoid performance impacts.
+ * 
+ * @param prisma - Prisma client instance
+ * @param businessId - ID of the business to calculate metrics for
+ * @returns Promise resolving to BusinessMetrics object
+ * 
+ * @example
+ * const metrics = await calculateMetrics(prisma, 'biz_123');
+ * console.log(`MRR: $${metrics.mrr / 100}`);
+ * console.log(`Active Members: ${metrics.activeMembers}`);
+ * console.log(`Churn Rate: ${metrics.churnRate}%`);
+ */
 export async function calculateMetrics(
   prisma: PrismaClient,
   businessId: string
