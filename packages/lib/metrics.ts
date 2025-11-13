@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { MEMBER_STATUS, SUBSCRIPTION_STATUS, PRICE_INTERVAL } from "./constants";
 
 /**
  * Business performance metrics for dashboard display.
@@ -48,7 +49,7 @@ export async function calculateMetrics(
   const activeMembers = await prisma.member.count({
     where: {
       businessId,
-      status: "ACTIVE",
+      status: MEMBER_STATUS.ACTIVE,
     },
   });
 
@@ -59,7 +60,7 @@ export async function calculateMetrics(
         businessId,
       },
       status: {
-        in: ["active", "trialing"],
+        in: [SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.TRIALING],
       },
     },
     include: {
@@ -70,9 +71,9 @@ export async function calculateMetrics(
   let mrr = 0;
   for (const sub of activeSubscriptions) {
     const amount = sub.price.unitAmount;
-    if (sub.price.interval === "month") {
+    if (sub.price.interval === PRICE_INTERVAL.MONTH) {
       mrr += amount;
-    } else if (sub.price.interval === "year") {
+    } else if (sub.price.interval === PRICE_INTERVAL.YEAR) {
       mrr += Math.floor(amount / 12); // Convert yearly to monthly
     }
   }
@@ -84,7 +85,7 @@ export async function calculateMetrics(
   const canceledMembers = await prisma.member.count({
     where: {
       businessId,
-      status: "CANCELED",
+      status: MEMBER_STATUS.CANCELED,
       updatedAt: {
         gte: thirtyDaysAgo,
       },
