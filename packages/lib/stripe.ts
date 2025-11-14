@@ -170,7 +170,8 @@ export async function createConnectedPrice(
     productId: string;
     unitAmount: number;
     currency: string;
-    interval: "month" | "year";
+    interval: "day" | "week" | "month" | "year";
+    intervalCount?: number;
     nickname?: string;
     trialPeriodDays?: number;
     metadata?: Record<string, string>;
@@ -183,6 +184,7 @@ export async function createConnectedPrice(
     currency: params.currency,
     recurring: {
       interval: params.interval,
+      interval_count: params.intervalCount || 1,
       trial_period_days: params.trialPeriodDays,
     },
     nickname: params.nickname,

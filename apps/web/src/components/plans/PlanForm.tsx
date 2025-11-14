@@ -26,18 +26,18 @@ interface PlanFormData {
   pricingType: "FIXED" | "DYNAMIC";
   basePrice: string; // In dollars for form
   currency: string;
-  interval: "DAY" | "WEEK" | "MONTH" | "YEAR";
+  interval: "WEEK" | "MONTH" | "YEAR";
   intervalCount: number;
   quantityPerShipment: string;
   productType: string;
   setupFee: string;
-  shippingType: "INCLUDED" | "SEPARATE" | "PICKUP";
+  shippingType: "INCLUDED" | "FLAT_RATE" | "CALCULATED" | "FREE_OVER_AMOUNT";
   shippingCost: string;
   trialPeriodDays: string;
   minimumCommitmentMonths: string;
-  stockStatus: "AVAILABLE" | "LIMITED" | "WAITLIST" | "SOLD_OUT";
+  stockStatus: "AVAILABLE" | "SOLD_OUT" | "COMING_SOON" | "WAITLIST";
   maxSubscribers: string;
-  status: "DRAFT" | "ACTIVE" | "PAUSED" | "ARCHIVED";
+  status: "DRAFT" | "ACTIVE" | "ARCHIVED";
 }
 
 interface PlanFormProps {
@@ -231,7 +231,6 @@ export function PlanForm({
             >
               <option value="DRAFT">Draft (not visible to customers)</option>
               <option value="ACTIVE">Active (available for signup)</option>
-              <option value="PAUSED">Paused (no new signups)</option>
               <option value="ARCHIVED">Archived</option>
             </select>
           </div>
@@ -313,10 +312,9 @@ export function PlanForm({
                 }
                 className="w-full px-3 py-2 border rounded-md"
               >
-                <option value="DAY">Day</option>
-                <option value="WEEK">Week</option>
-                <option value="MONTH">Month</option>
-                <option value="YEAR">Year</option>
+              <option value="WEEK">Week</option>
+              <option value="MONTH">Month</option>
+              <option value="YEAR">Year</option>
               </select>
             </div>
 
@@ -452,12 +450,13 @@ export function PlanForm({
               className="w-full px-3 py-2 border rounded-md"
             >
               <option value="INCLUDED">Included in price</option>
-              <option value="SEPARATE">Charged separately</option>
-              <option value="PICKUP">Local pickup only</option>
+              <option value="FLAT_RATE">Flat rate</option>
+              <option value="CALCULATED">Calculated at checkout</option>
+              <option value="FREE_OVER_AMOUNT">Free over amount</option>
             </select>
           </div>
 
-          {formData.shippingType === "SEPARATE" && (
+          {(formData.shippingType === "FLAT_RATE" || formData.shippingType === "FREE_OVER_AMOUNT") && (
             <div>
               <label
                 htmlFor="shippingCost"
@@ -555,7 +554,7 @@ export function PlanForm({
               className="w-full px-3 py-2 border rounded-md"
             >
               <option value="AVAILABLE">Available</option>
-              <option value="LIMITED">Limited availability</option>
+              <option value="COMING_SOON">Coming soon</option>
               <option value="WAITLIST">Waitlist only</option>
               <option value="SOLD_OUT">Sold out</option>
             </select>
