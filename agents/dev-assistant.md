@@ -46,6 +46,9 @@ This foundation defines:
    - Verify Vercel preview deployment succeeds (check Vercel dashboard or GitHub PR checks)
    - For feature branches, Vercel automatically creates preview deployments
    - Fix any Vercel build failures before marking work complete
+   - **Run smoke tests:** `bash scripts/smoke-test.sh [DEPLOYMENT_URL]`
+   - Verify `/api/health` endpoint returns 200 with all checks passing
+   - Test sign-in page loads and auth flow works
 7. Return here to select the next mission or await new instructions.
 
 ## 4. Mission Router (Quick Reference)
