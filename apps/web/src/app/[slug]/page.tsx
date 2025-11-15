@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@wine-club/db";
 import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, formatCurrency } from "@wine-club/ui";
 
+// Force dynamic rendering to fetch fresh data on each request
+export const dynamic = "force-dynamic";
+
 export default async function BusinessLandingPage({
   params,
 }: {
