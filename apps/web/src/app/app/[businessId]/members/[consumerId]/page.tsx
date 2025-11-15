@@ -56,11 +56,7 @@ export default async function MemberDetailPage({
       },
     },
     include: {
-      plan: {
-        include: {
-          membership: true,
-        },
-      },
+      plan: true,
     },
     orderBy: {
       createdAt: "desc",
@@ -162,11 +158,7 @@ export default async function MemberDetailPage({
                           </span>
                         </div>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <div className="text-muted-foreground">Membership</div>
-                            <div className="font-medium">{sub.plan.membership.name}</div>
-                          </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                           <div>
                             <div className="text-muted-foreground">Price</div>
                             <div className="font-medium">
@@ -241,11 +233,7 @@ export default async function MemberDetailPage({
                           </span>
                         </div>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <div className="text-muted-foreground">Membership</div>
-                            <div className="font-medium">{sub.plan.membership.name}</div>
-                          </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
                             <div className="text-muted-foreground">Ended</div>
                             <div className="font-medium">{formatDate(sub.currentPeriodEnd)}</div>
