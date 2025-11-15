@@ -18,11 +18,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  businesses BusinessUser[]
-  auditLogs  AuditLog[]
-  Consumer   Consumer?
-  accounts   Account[]
-  sessions   Session[]
+  businesses  BusinessUser[]
+  auditLogs   AuditLog[]
+  Consumer    Consumer?
+  accounts    Account[]
+  sessions    Session[]
+  memberNotes MemberNote[]
 
   @@map("users")
 }
@@ -244,9 +245,27 @@ model Consumer {
   paymentMethods    PaymentMethod[]
   transactions      Transaction[]
   planSubscriptions PlanSubscription[]  // New subscription models
+  memberNotes       MemberNote[]        // Internal business notes
 
   @@index([email])
   @@map("consumers")
+}
+
+// ===== Member Notes =====
+model MemberNote {
+  id          String   @id @default(cuid())
+  consumerId  String
+  content     String   @db.Text
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  consumer  Consumer @relation(fields: [consumerId], references: [id], onDelete: Cascade)
+  createdBy User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([consumerId])
+  @@index([createdById])
+  @@map("member_notes")
 }
 
 // ===== Member (Business-Consumer relationship) =====

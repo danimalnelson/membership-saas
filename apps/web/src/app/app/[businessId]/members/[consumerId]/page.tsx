@@ -3,8 +3,11 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@wine-club/db";
-import { Card, CardContent, CardHeader, CardTitle, formatDate, formatCurrency } from "@wine-club/ui";
-import { ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, formatDate, formatCurrency, Button } from "@wine-club/ui";
+import { ArrowLeft, ExternalLink } from "lucide-react";
+import { EditMemberInfoDialog } from "@/components/members/EditMemberInfoDialog";
+import { SubscriptionActions } from "@/components/members/SubscriptionActions";
+import { MemberNotes } from "@/components/members/MemberNotes";
 
 export default async function MemberDetailPage({
   params,
@@ -71,6 +74,20 @@ export default async function MemberDetailPage({
     (sub) => sub.status !== "active" && sub.status !== "trialing"
   );
 
+  // Get member notes
+  const notes = await prisma.memberNote.findMany({
+    where: { consumerId: consumer.id },
+    include: {
+      createdBy: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
@@ -95,7 +112,16 @@ export default async function MemberDetailPage({
         {/* Member Info Card */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Member Information</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Member Information</CardTitle>
+              <EditMemberInfoDialog
+                businessId={businessId}
+                consumerId={consumer.id}
+                initialName={consumer.name}
+                initialPhone={consumer.phone}
+                email={consumer.email}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -169,10 +195,27 @@ export default async function MemberDetailPage({
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t text-xs text-muted-foreground">
-                      Stripe Subscription ID: {sub.stripeSubscriptionId} • 
-                      Created {formatDate(sub.createdAt)} •
-                      Last synced {formatDate(sub.lastSyncedAt)}
+                    {/* Actions */}
+                    <div className="mt-4 pt-4 border-t flex items-center justify-between flex-wrap gap-3">
+                      <div className="flex items-center gap-4">
+                        <a
+                          href={`https://dashboard.stripe.com/${business.stripeAccountId ? 'connect/accounts/' + business.stripeAccountId + '/' : ''}subscriptions/${sub.stripeSubscriptionId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                        >
+                          View in Stripe <ExternalLink className="h-3 w-3" />
+                        </a>
+                        <span className="text-xs text-muted-foreground">
+                          Created {formatDate(sub.createdAt)}
+                        </span>
+                      </div>
+                      <SubscriptionActions
+                        subscriptionId={sub.id}
+                        stripeSubscriptionId={sub.stripeSubscriptionId}
+                        status={sub.status}
+                        cancelAtPeriodEnd={sub.cancelAtPeriodEnd}
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -233,6 +276,11 @@ export default async function MemberDetailPage({
             </CardContent>
           </Card>
         )}
+
+        {/* Internal Notes */}
+        <div className="mt-6">
+          <MemberNotes consumerId={consumer.id} notes={notes} />
+        </div>
       </main>
     </div>
   );
