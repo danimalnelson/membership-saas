@@ -34,46 +34,31 @@ export async function POST(
       return NextResponse.json({ error: "Consumer not found" }, { status: 404 });
     }
 
-    // Find member
-    const member = await prisma.member.findUnique({
+    // Find active PlanSubscription for this consumer and business
+    const planSubscription = await prisma.planSubscription.findFirst({
       where: {
-        businessId_consumerId: {
+        consumerId: consumer.id,
+        plan: {
           businessId: business.id,
-          consumerId: consumer.id,
+        },
+        status: {
+          in: ["active", "trialing", "past_due", "incomplete"],
         },
       },
       include: {
-        subscriptions: {
-          where: {
-            status: {
-              in: ["active", "trialing", "past_due"],
-            },
-          },
-          take: 1,
-        },
+        plan: true,
       },
     });
 
-    if (!member || member.subscriptions.length === 0) {
+    if (!planSubscription) {
       return NextResponse.json(
         { error: "No active subscription found" },
         { status: 404 }
       );
     }
 
-    // Get Stripe customer ID from subscription
-    const Stripe = require("stripe");
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2023-10-16",
-      stripeAccount: business.stripeAccountId,
-    });
-
-    const subscription = await stripe.subscriptions.retrieve(
-      member.subscriptions[0].stripeSubscriptionId
-    );
-    const customerId = typeof subscription.customer === "string"
-      ? subscription.customer
-      : subscription.customer.id;
+    // Use stripeCustomerId from PlanSubscription
+    const customerId = planSubscription.stripeCustomerId;
 
     const publicAppUrl = process.env.PUBLIC_APP_URL || "http://localhost:3000";
     
