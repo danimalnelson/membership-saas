@@ -35,25 +35,47 @@ export async function POST(req: NextRequest) {
   const accountId = headersList.get("stripe-account") || undefined;
 
   // Try to verify with appropriate secret
-  // Connected account events use STRIPE_CONNECT_WEBHOOK_SECRET
-  // Platform events use STRIPE_WEBHOOK_SECRET
+  // Connected account events may or may not have Stripe-Account header
+  // Try both secrets if first one fails
+  let verificationError: any = null;
+  
   try {
-    if (accountId && process.env.STRIPE_CONNECT_WEBHOOK_SECRET) {
-      // This is a connected account event, use connect webhook secret
-      console.log("[Webhook] Verifying connected account event with connect secret");
+    // First, try the connect webhook secret (most common for customer transactions)
+    if (process.env.STRIPE_CONNECT_WEBHOOK_SECRET) {
+      try {
+        console.log("[Webhook] Trying connect webhook secret");
+        event = verifyWebhookSignature(
+          body,
+          signature,
+          process.env.STRIPE_CONNECT_WEBHOOK_SECRET
+        );
+        console.log("[Webhook] ✅ Verified with connect secret");
+      } catch (err) {
+        verificationError = err;
+        // Try platform secret as fallback
+        if (process.env.STRIPE_WEBHOOK_SECRET) {
+          console.log("[Webhook] Connect secret failed, trying platform secret");
+          event = verifyWebhookSignature(
+            body,
+            signature,
+            process.env.STRIPE_WEBHOOK_SECRET
+          );
+          console.log("[Webhook] ✅ Verified with platform secret");
+        } else {
+          throw err;
+        }
+      }
+    } else if (process.env.STRIPE_WEBHOOK_SECRET) {
+      // No connect secret configured, use platform secret
+      console.log("[Webhook] Using platform webhook secret");
       event = verifyWebhookSignature(
         body,
         signature,
-        process.env.STRIPE_CONNECT_WEBHOOK_SECRET
+        process.env.STRIPE_WEBHOOK_SECRET
       );
+      console.log("[Webhook] ✅ Verified with platform secret");
     } else {
-      // This is a platform event, use platform webhook secret
-      console.log("[Webhook] Verifying platform event with platform secret");
-      event = verifyWebhookSignature(
-        body,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET!
-      );
+      throw new Error("No webhook secrets configured");
     }
   } catch (err: any) {
     console.error("[Webhook] Signature verification failed:", {
