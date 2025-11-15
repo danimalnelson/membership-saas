@@ -8,15 +8,11 @@ export async function POST(
 ) {
   try {
     const { slug, planId } = await context.params;
+    
+    // Email is optional now - Stripe Checkout will collect it
+    // This eliminates the redundant email collection step
     const body = await req.json();
     const { email } = body;
-
-    if (!email || typeof email !== "string" || !email.includes("@")) {
-      return NextResponse.json(
-        { error: "Valid email is required" },
-        { status: 400 }
-      );
-    }
 
     // Find plan and verify it's active
     const plan = await prisma.plan.findFirst({
@@ -78,7 +74,8 @@ export async function POST(
 
     const sessionParams: any = {
       mode: "subscription",
-      customer_email: email,
+      // Only pre-fill email if provided (optional now - Stripe will collect it)
+      ...(email && { customer_email: email }),
       line_items: [
         {
           price: plan.stripePriceId,
