@@ -23,7 +23,7 @@ model User {
   Consumer    Consumer?
   accounts    Account[]
   sessions    Session[]
-  memberNotes MemberNote[]
+  // memberNotes MemberNote[]  // Temporarily commented out to debug auth issue
 
   @@map("users")
 }
@@ -261,7 +261,7 @@ model MemberNote {
   updatedAt   DateTime @updatedAt
 
   consumer  Consumer @relation(fields: [consumerId], references: [id], onDelete: Cascade)
-  createdBy User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  // createdBy User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)  // Temporarily commented out
 
   @@index([consumerId])
   @@index([createdById])
