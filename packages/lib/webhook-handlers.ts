@@ -156,6 +156,35 @@ export async function createPlanSubscriptionFromSubscription(
   });
 
   console.log(`[Webhook] Created PlanSubscription for plan ${planId}, consumer ${consumer.email}`);
+
+  // Send confirmation email when subscription is active or trialing
+  if (subscription.status === 'active' || subscription.status === 'trialing') {
+    try {
+      const { sendEmail, subscriptionConfirmationEmail } = require('./email');
+      
+      const priceAmount = subscription.items.data[0]?.price?.unit_amount || plan.basePrice || 0;
+      const priceCurrency = subscription.items.data[0]?.price?.currency || plan.currency || 'usd';
+      const interval = subscription.items.data[0]?.price?.recurring?.interval || plan.interval || 'month';
+      
+      await sendEmail({
+        to: consumer.email,
+        subject: `Welcome to ${plan.business.name}!`,
+        html: subscriptionConfirmationEmail({
+          customerName: consumer.name || consumer.email.split('@')[0],
+          planName: plan.name,
+          amount: priceAmount,
+          currency: priceCurrency,
+          interval: interval,
+          businessName: plan.business.name,
+        }),
+      });
+      
+      console.log(`[Webhook] ✉️ Sent confirmation email to ${consumer.email}`);
+    } catch (emailError) {
+      console.error(`[Webhook] Failed to send confirmation email:`, emailError);
+      // Don't throw - email failure shouldn't fail the webhook
+    }
+  }
 }
 
 /**
