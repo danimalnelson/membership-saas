@@ -117,7 +117,21 @@ export async function POST(
       console.warn(`Setup fee of ${plan.setupFee} for plan ${plan.id} not yet implemented in checkout`);
     }
 
+    console.log("[Checkout] Creating session with params:", {
+      mode: sessionParams.mode,
+      priceId: sessionParams.line_items[0].price,
+      metadata: sessionParams.metadata,
+      subscription_metadata: sessionParams.subscription_data?.metadata,
+    });
+
     const session = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log("[Checkout] Session created:", {
+      id: session.id,
+      mode: session.mode,
+      subscription: session.subscription,
+      metadata: session.metadata,
+    });
 
     return NextResponse.json({
       sessionId: session.id,
