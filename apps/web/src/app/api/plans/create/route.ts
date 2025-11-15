@@ -14,16 +14,22 @@ const createPlanSchema = z.object({
   currency: z.string().default("usd"),
   interval: z.enum(["WEEK", "MONTH", "YEAR"]),
   intervalCount: z.number().int().positive().default(1),
-  quantityPerShipment: z.number().int().positive().optional().nullable(),
-  productType: z.string().max(100).optional().nullable(),
   setupFee: z.number().int().min(0).optional().nullable(),
-  shippingType: z.enum(["INCLUDED", "FLAT_RATE", "CALCULATED", "FREE_OVER_AMOUNT"]).default("INCLUDED"),
-  shippingCost: z.number().int().min(0).optional().nullable(),
-  trialPeriodDays: z.number().int().min(0).optional().nullable(),
-  minimumCommitmentMonths: z.number().int().min(0).optional().nullable(),
+  recurringFee: z.number().int().min(0).optional().nullable(),
+  recurringFeeName: z.string().max(100).optional().nullable(),
+  shippingFee: z.number().int().min(0).optional().nullable(),
   stockStatus: z.enum(["AVAILABLE", "SOLD_OUT", "COMING_SOON", "WAITLIST"]).default("AVAILABLE"),
   maxSubscribers: z.number().int().positive().optional().nullable(),
   status: z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]).default("DRAFT"),
+}).refine((data) => {
+  // If recurringFee is set, recurringFeeName must be provided
+  if (data.recurringFee && data.recurringFee > 0 && !data.recurringFeeName) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Recurring fee requires a fee name",
+  path: ["recurringFeeName"],
 });
 
 export async function POST(req: NextRequest) {
@@ -105,7 +111,6 @@ export async function POST(req: NextRequest) {
           interval: data.interval.toLowerCase() as "week" | "month" | "year",
           intervalCount: data.intervalCount,
           nickname: `${data.name} - ${data.intervalCount} ${data.interval.toLowerCase()}${data.intervalCount > 1 ? "s" : ""}`,
-          trialPeriodDays: data.trialPeriodDays || undefined,
           metadata: {
             planName: data.name,
             membershipId: membership.id,
@@ -127,13 +132,10 @@ export async function POST(req: NextRequest) {
         currency: data.currency,
         interval: data.interval,
         intervalCount: data.intervalCount,
-        quantityPerShipment: data.quantityPerShipment,
-        productType: data.productType,
         setupFee: data.setupFee,
-        shippingType: data.shippingType,
-        shippingCost: data.shippingCost,
-        trialPeriodDays: data.trialPeriodDays,
-        minimumCommitmentMonths: data.minimumCommitmentMonths,
+        recurringFee: data.recurringFee,
+        recurringFeeName: data.recurringFeeName,
+        shippingFee: data.shippingFee,
         stockStatus: data.stockStatus,
         maxSubscribers: data.maxSubscribers,
         status: data.status,

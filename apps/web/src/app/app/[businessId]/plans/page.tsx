@@ -188,18 +188,6 @@ export default async function PlansPage({
                               </span>
                             </div>
 
-                            {/* Quantity */}
-                            {plan.quantityPerShipment && (
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground">
-                                  Quantity:
-                                </span>
-                                <span className="font-medium">
-                                  {plan.quantityPerShipment} per shipment
-                                </span>
-                              </div>
-                            )}
-
                             {/* Subscriptions */}
                             <div className="pt-3 border-t flex items-center justify-between text-sm">
                               <span className="text-muted-foreground">
@@ -212,11 +200,6 @@ export default async function PlansPage({
 
                             {/* Features */}
                             <div className="flex flex-wrap gap-2 pt-2">
-                              {plan.trialPeriodDays && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                  {plan.trialPeriodDays}d trial
-                                </span>
-                              )}
                               {plan.setupFee && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                   Setup fee

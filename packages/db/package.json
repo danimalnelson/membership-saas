@@ -7,7 +7,7 @@
   "scripts": {
     "postinstall": "prisma generate",
     "generate": "prisma generate",
-    "push": "prisma db push",
+    "push": "prisma db push --accept-data-loss",
     "migrate": "prisma migrate dev",
     "studio": "prisma studio",
     "seed": "tsx seed.ts"

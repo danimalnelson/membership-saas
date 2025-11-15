@@ -100,11 +100,6 @@ export async function POST(
       },
     };
 
-    // Add trial period if configured
-    if (plan.trialPeriodDays && plan.trialPeriodDays > 0) {
-      sessionParams.subscription_data.trial_period_days = plan.trialPeriodDays;
-    }
-
     // Add setup fee if configured
     if (plan.setupFee && plan.setupFee > 0) {
       // For setup fees, we need to create a one-time payment item

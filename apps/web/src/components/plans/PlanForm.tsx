@@ -28,13 +28,10 @@ interface PlanFormData {
   currency: string;
   interval: "WEEK" | "MONTH" | "YEAR";
   intervalCount: number;
-  quantityPerShipment: string;
-  productType: string;
   setupFee: string;
-  shippingType: "INCLUDED" | "FLAT_RATE" | "CALCULATED" | "FREE_OVER_AMOUNT";
-  shippingCost: string;
-  trialPeriodDays: string;
-  minimumCommitmentMonths: string;
+  recurringFee: string;
+  recurringFeeName: string;
+  shippingFee: string;
   stockStatus: "AVAILABLE" | "SOLD_OUT" | "COMING_SOON" | "WAITLIST";
   maxSubscribers: string;
   status: "DRAFT" | "ACTIVE" | "ARCHIVED";
@@ -65,13 +62,10 @@ export function PlanForm({
     currency: initialData?.currency || "usd",
     interval: initialData?.interval || "MONTH",
     intervalCount: initialData?.intervalCount || 1,
-    quantityPerShipment: initialData?.quantityPerShipment || "",
-    productType: initialData?.productType || "",
     setupFee: initialData?.setupFee || "",
-    shippingType: initialData?.shippingType || "INCLUDED",
-    shippingCost: initialData?.shippingCost || "",
-    trialPeriodDays: initialData?.trialPeriodDays || "",
-    minimumCommitmentMonths: initialData?.minimumCommitmentMonths || "",
+    recurringFee: initialData?.recurringFee || "",
+    recurringFeeName: initialData?.recurringFeeName || "",
+    shippingFee: initialData?.shippingFee || "",
     stockStatus: initialData?.stockStatus || "AVAILABLE",
     maxSubscribers: initialData?.maxSubscribers || "",
     status: initialData?.status || "DRAFT",
@@ -83,6 +77,11 @@ export function PlanForm({
     setError(null);
 
     try {
+      // Validate recurring fee name if recurring fee is set
+      if (formData.recurringFee && parseFloat(formData.recurringFee) > 0 && !formData.recurringFeeName.trim()) {
+        throw new Error("Recurring fee requires a fee name");
+      }
+
       // Convert dollar amounts to cents
       const payload = {
         ...formData,
@@ -92,17 +91,12 @@ export function PlanForm({
         setupFee: formData.setupFee
           ? Math.round(parseFloat(formData.setupFee) * 100)
           : null,
-        shippingCost: formData.shippingCost
-          ? Math.round(parseFloat(formData.shippingCost) * 100)
+        recurringFee: formData.recurringFee
+          ? Math.round(parseFloat(formData.recurringFee) * 100)
           : null,
-        quantityPerShipment: formData.quantityPerShipment
-          ? parseInt(formData.quantityPerShipment)
-          : null,
-        trialPeriodDays: formData.trialPeriodDays
-          ? parseInt(formData.trialPeriodDays)
-          : null,
-        minimumCommitmentMonths: formData.minimumCommitmentMonths
-          ? parseInt(formData.minimumCommitmentMonths)
+        recurringFeeName: formData.recurringFeeName || null,
+        shippingFee: formData.shippingFee
+          ? Math.round(parseFloat(formData.shippingFee) * 100)
           : null,
         maxSubscribers: formData.maxSubscribers
           ? parseInt(formData.maxSubscribers)
@@ -312,9 +306,9 @@ export function PlanForm({
                 }
                 className="w-full px-3 py-2 border rounded-md"
               >
-              <option value="WEEK">Week</option>
-              <option value="MONTH">Month</option>
-              <option value="YEAR">Year</option>
+                <option value="WEEK">Week</option>
+                <option value="MONTH">Month</option>
+                <option value="YEAR">Year</option>
               </select>
             </div>
 
@@ -341,61 +335,6 @@ export function PlanForm({
               <p className="text-xs text-muted-foreground mt-1">
                 e.g., "2" for every 2 {formData.interval.toLowerCase()}s
               </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Product Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Product Details</CardTitle>
-          <CardDescription>
-            What customers receive with this plan
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="productType"
-                className="block text-sm font-medium mb-2"
-              >
-                Product Type
-              </label>
-              <input
-                type="text"
-                id="productType"
-                value={formData.productType}
-                onChange={(e) =>
-                  setFormData({ ...formData, productType: e.target.value })
-                }
-                placeholder="e.g., wine, beer, coffee"
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="quantityPerShipment"
-                className="block text-sm font-medium mb-2"
-              >
-                Quantity Per Shipment
-              </label>
-              <input
-                type="number"
-                id="quantityPerShipment"
-                value={formData.quantityPerShipment}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    quantityPerShipment: e.target.value,
-                  })
-                }
-                placeholder="6"
-                min="1"
-                className="w-full px-3 py-2 border rounded-md"
-              />
             </div>
           </div>
         </CardContent>
@@ -429,112 +368,92 @@ export function PlanForm({
               min="0"
               className="w-full px-3 py-2 border rounded-md"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Charged once at subscription start
+            </p>
           </div>
 
           <div>
             <label
-              htmlFor="shippingType"
+              htmlFor="recurringFee"
               className="block text-sm font-medium mb-2"
             >
-              Shipping
+              Recurring Fee (USD)
             </label>
-            <select
-              id="shippingType"
-              value={formData.shippingType}
+            <input
+              type="number"
+              id="recurringFee"
+              value={formData.recurringFee}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  shippingType: e.target.value as PlanFormData["shippingType"],
-                })
+                setFormData({ ...formData, recurringFee: e.target.value })
               }
+              placeholder="0.00"
+              step="0.01"
+              min="0"
               className="w-full px-3 py-2 border rounded-md"
-            >
-              <option value="INCLUDED">Included in price</option>
-              <option value="FLAT_RATE">Flat rate</option>
-              <option value="CALCULATED">Calculated at checkout</option>
-              <option value="FREE_OVER_AMOUNT">Free over amount</option>
-            </select>
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Added to each billing cycle (e.g., processing fee, service fee)
+            </p>
           </div>
 
-          {(formData.shippingType === "FLAT_RATE" || formData.shippingType === "FREE_OVER_AMOUNT") && (
+          {formData.recurringFee && parseFloat(formData.recurringFee) > 0 && (
             <div>
               <label
-                htmlFor="shippingCost"
+                htmlFor="recurringFeeName"
                 className="block text-sm font-medium mb-2"
               >
-                Shipping Cost (USD)
+                Recurring Fee Name *
               </label>
               <input
-                type="number"
-                id="shippingCost"
-                value={formData.shippingCost}
+                type="text"
+                id="recurringFeeName"
+                value={formData.recurringFeeName}
                 onChange={(e) =>
-                  setFormData({ ...formData, shippingCost: e.target.value })
+                  setFormData({ ...formData, recurringFeeName: e.target.value })
                 }
-                placeholder="10.00"
-                step="0.01"
-                min="0"
+                placeholder="e.g., Processing Fee, Service Fee"
                 className="w-full px-3 py-2 border rounded-md"
+                required
               />
             </div>
           )}
+
+          <div>
+            <label
+              htmlFor="shippingFee"
+              className="block text-sm font-medium mb-2"
+            >
+              Shipping Fee (USD) - Optional
+            </label>
+            <input
+              type="number"
+              id="shippingFee"
+              value={formData.shippingFee}
+              onChange={(e) =>
+                setFormData({ ...formData, shippingFee: e.target.value })
+              }
+              placeholder="0.00"
+              step="0.01"
+              min="0"
+              className="w-full px-3 py-2 border rounded-md"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Flat rate shipping fee (leave blank if no shipping or shipping included)
+            </p>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Trial & Inventory */}
+      {/* Inventory & Availability */}
       <Card>
         <CardHeader>
-          <CardTitle>Trial & Inventory</CardTitle>
+          <CardTitle>Inventory & Availability</CardTitle>
           <CardDescription>
-            Trial periods, commitment, and availability
+            Manage plan availability and subscriber limits
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="trialPeriodDays"
-                className="block text-sm font-medium mb-2"
-              >
-                Trial Period (Days)
-              </label>
-              <input
-                type="number"
-                id="trialPeriodDays"
-                value={formData.trialPeriodDays}
-                onChange={(e) =>
-                  setFormData({ ...formData, trialPeriodDays: e.target.value })
-                }
-                placeholder="0"
-                min="0"
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="minimumCommitmentMonths"
-                className="block text-sm font-medium mb-2"
-              >
-                Min. Commitment (Months)
-              </label>
-              <input
-                type="number"
-                id="minimumCommitmentMonths"
-                value={formData.minimumCommitmentMonths}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    minimumCommitmentMonths: e.target.value,
-                  })
-                }
-                placeholder="0"
-                min="0"
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
-          </div>
-
           <div>
             <label
               htmlFor="stockStatus"
@@ -565,7 +484,7 @@ export function PlanForm({
               htmlFor="maxSubscribers"
               className="block text-sm font-medium mb-2"
             >
-              Max Subscribers (Optional)
+              Max Active Subscribers (Optional)
             </label>
             <input
               type="number"
@@ -578,6 +497,9 @@ export function PlanForm({
               min="1"
               className="w-full px-3 py-2 border rounded-md"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Leave blank for unlimited. Counts only active subscriptions.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -599,4 +521,3 @@ export function PlanForm({
     </form>
   );
 }
-

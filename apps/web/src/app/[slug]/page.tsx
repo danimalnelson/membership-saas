@@ -150,28 +150,18 @@ export default async function BusinessLandingPage({
 
                           {/* Features */}
                           <div className="space-y-2">
-                            {plan.quantityPerShipment && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="text-primary">✓</span>
+                              <span>
+                                Billed every {plan.intervalCount > 1 && `${plan.intervalCount} `}
+                                {plan.interval.toLowerCase()}
+                                {plan.intervalCount > 1 && 's'}
+                              </span>
+                            </div>
+                            {plan.shippingFee && plan.shippingFee > 0 && (
                               <div className="flex items-center gap-2 text-sm">
                                 <span className="text-primary">✓</span>
-                                <span>{plan.quantityPerShipment} {plan.productType || 'items'} per shipment</span>
-                              </div>
-                            )}
-                            {plan.trialPeriodDays && plan.trialPeriodDays > 0 && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className="text-primary">✓</span>
-                                <span>{plan.trialPeriodDays}-day free trial</span>
-                              </div>
-                            )}
-                            {plan.shippingType === "INCLUDED" && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className="text-primary">✓</span>
-                                <span>Free shipping included</span>
-                              </div>
-                            )}
-                            {plan.minimumCommitmentMonths && plan.minimumCommitmentMonths > 0 && (
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <span>•</span>
-                                <span>{plan.minimumCommitmentMonths} month minimum</span>
+                                <span>+ {formatCurrency(plan.shippingFee, plan.currency)} shipping</span>
                               </div>
                             )}
                           </div>

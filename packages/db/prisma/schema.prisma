@@ -496,18 +496,11 @@ model Plan {
   interval            PriceInterval       // week, month, year
   intervalCount       Int                 @default(1)  // every 1, 2, 3, etc.
   
-  // Product Details
-  quantityPerShipment Int?
-  productType         String?             // "wine", "beer", etc.
-  
   // Fees & Shipping
-  setupFee            Int?                // In cents
-  shippingType        ShippingType        @default(INCLUDED)
-  shippingCost        Int?                // In cents
-  
-  // Trial & Commitment
-  trialPeriodDays     Int?
-  minimumCommitmentMonths Int?
+  setupFee            Int?                // One-time setup fee in cents
+  recurringFee        Int?                // Recurring custom fee in cents (added to each charge)
+  recurringFeeName    String?             // Name for recurring fee (e.g., "Processing Fee", "Service Fee")
+  shippingFee         Int?                // Optional flat rate shipping fee in cents
   
   // Inventory
   stockStatus         StockStatus         @default(AVAILABLE)
@@ -543,13 +536,6 @@ enum PriceInterval {
   WEEK
   MONTH
   YEAR
-}
-
-enum ShippingType {
-  INCLUDED
-  FLAT_RATE
-  CALCULATED
-  FREE_OVER_AMOUNT
 }
 
 enum StockStatus {

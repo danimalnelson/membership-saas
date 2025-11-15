@@ -122,55 +122,27 @@ export default async function PlanDetailsPage({
                 <CardTitle>What's Included</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {plan.quantityPerShipment && (
+                <div className="flex items-start gap-3">
+                  <span className="text-primary text-xl">✓</span>
+                  <div>
+                    <p className="font-medium">Recurring Subscription</p>
+                    <p className="text-sm text-muted-foreground">
+                      Billed every {plan.intervalCount > 1 && `${plan.intervalCount} `}
+                      {plan.interval.toLowerCase()}
+                      {plan.intervalCount > 1 && 's'}
+                    </p>
+                  </div>
+                </div>
+
+                {plan.shippingFee && plan.shippingFee > 0 && (
                   <div className="flex items-start gap-3">
                     <span className="text-primary text-xl">✓</span>
                     <div>
                       <p className="font-medium">
-                        {plan.quantityPerShipment} {plan.productType || 'items'} per shipment
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Delivered every {plan.intervalCount > 1 && `${plan.intervalCount} `}
-                        {plan.interval.toLowerCase()}
-                        {plan.intervalCount > 1 && 's'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {plan.shippingType === "INCLUDED" && (
-                  <div className="flex items-start gap-3">
-                    <span className="text-primary text-xl">✓</span>
-                    <div>
-                      <p className="font-medium">Free Shipping</p>
-                      <p className="text-sm text-muted-foreground">
-                        Shipping costs are included in your membership
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {plan.shippingType === "FLAT_RATE" && plan.shippingCost && (
-                  <div className="flex items-start gap-3">
-                    <span className="text-primary text-xl">✓</span>
-                    <div>
-                      <p className="font-medium">
-                        {formatCurrency(plan.shippingCost, plan.currency)} Flat Rate Shipping
+                        {formatCurrency(plan.shippingFee, plan.currency)} Flat Rate Shipping
                       </p>
                       <p className="text-sm text-muted-foreground">
                         Per shipment
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {plan.trialPeriodDays && plan.trialPeriodDays > 0 && (
-                  <div className="flex items-start gap-3">
-                    <span className="text-primary text-xl">✓</span>
-                    <div>
-                      <p className="font-medium">{plan.trialPeriodDays}-Day Free Trial</p>
-                      <p className="text-sm text-muted-foreground">
-                        Try before you commit - cancel anytime during your trial
                       </p>
                     </div>
                   </div>
@@ -259,12 +231,6 @@ export default async function PlanDetailsPage({
 
                 {/* Important Details */}
                 <div className="space-y-3 text-sm">
-                  {plan.minimumCommitmentMonths && plan.minimumCommitmentMonths > 0 && (
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-muted-foreground">Minimum Commitment</span>
-                      <span className="font-medium">{plan.minimumCommitmentMonths} months</span>
-                    </div>
-                  )}
                   <div className="flex justify-between py-2 border-b">
                     <span className="text-muted-foreground">Billing Frequency</span>
                     <span className="font-medium capitalize">
@@ -304,12 +270,6 @@ export default async function PlanDetailsPage({
                     </span>
                   )}
                 </Button>
-
-                {plan.trialPeriodDays && plan.trialPeriodDays > 0 && (
-                  <p className="text-center text-sm text-muted-foreground">
-                    Start your {plan.trialPeriodDays}-day free trial today. Cancel anytime.
-                  </p>
-                )}
               </CardContent>
             </Card>
           </div>

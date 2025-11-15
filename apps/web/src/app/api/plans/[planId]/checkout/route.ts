@@ -140,7 +140,6 @@ export const POST = withMiddleware(async (req: NextRequest, context): Promise<Ne
       cancelUrl: `${publicAppUrl}/${plan.business.slug}/plans/${plan.id}`,
       customerId,
       billingCycleAnchor,
-      trialPeriodDays: plan.trialPeriodDays ?? undefined,
       applicationFeeAmount: plan.basePrice ? Math.floor(plan.basePrice * 0.1) : undefined, // 10% platform fee
       automaticTax: true,
       metadata,
