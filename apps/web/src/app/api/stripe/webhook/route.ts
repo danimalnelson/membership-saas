@@ -308,6 +308,23 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription, accou
     return;
   }
 
+  // No PlanSubscription found - check if we should create one from metadata
+  const metadata = subscription.metadata || {};
+  const planId = metadata.planId;
+  
+  if (planId) {
+    // This is a NEW model subscription that doesn't exist yet - create it!
+    console.log(`[Webhook] No PlanSubscription found, creating from subscription metadata for plan ${planId}`);
+    try {
+      await syncPlanSubscription(prisma, subscription, accountId);
+      console.log(`[Webhook] ✅ Created PlanSubscription from subscription event`);
+    } catch (error) {
+      console.error(`[Webhook] ❌ Failed to create PlanSubscription:`, error);
+      throw error;
+    }
+    return;
+  }
+
   // OLD MODEL: Legacy handling
   const existingSub = await prisma.subscription.findUnique({
     where: { stripeSubscriptionId: subscription.id },
