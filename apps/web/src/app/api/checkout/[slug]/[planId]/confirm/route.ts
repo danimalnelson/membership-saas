@@ -93,7 +93,33 @@ export async function POST(
       );
     }
 
-    const customerId = setupIntent.customer as string;
+    // Get or create Stripe customer
+    let customerId = setupIntent.customer as string | null;
+    
+    // If SetupIntent doesn't have a customer (new user), create one now
+    if (!customerId) {
+      console.log("[Confirm] Creating new Stripe customer for:", consumerEmail);
+      
+      const customer = await stripe.customers.create({
+        email: consumerEmail,
+        name: consumerName || undefined,
+        payment_method: paymentMethodId,
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+        metadata: {
+          businessId: business.id,
+        },
+      });
+      
+      customerId = customer.id;
+      console.log("[Confirm] Created customer:", customerId);
+    } else {
+      // Existing customer - just attach the payment method
+      await stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customerId,
+      });
+    }
 
     // Create or update consumer record
     let consumer = await prisma.consumer.findUnique({

@@ -66,13 +66,17 @@ export async function POST(
     // Get Stripe client for connected account
     const stripe = getStripeClient(business.stripeAccountId);
 
-    // Find or create customer
-    let stripeCustomerId: string;
+    // Check if consumer already exists with a Stripe customer ID
+    // Only reuse customer if they have a previous successful subscription
+    let stripeCustomerId: string | undefined;
     
     const existingConsumer = await prisma.consumer.findUnique({
       where: { email: consumerEmail },
       include: {
         planSubscriptions: {
+          where: {
+            stripeCustomerId: { not: null },
+          },
           take: 1,
           select: { stripeCustomerId: true },
           orderBy: { createdAt: 'desc' },
@@ -80,24 +84,18 @@ export async function POST(
       },
     });
 
-    // Check if consumer already has a Stripe customer ID from a previous subscription
+    // Reuse existing customer ID only if they have a previous subscription
     if (existingConsumer?.planSubscriptions[0]?.stripeCustomerId) {
       stripeCustomerId = existingConsumer.planSubscriptions[0].stripeCustomerId;
+      console.log("[Setup Intent] Reusing existing customer:", stripeCustomerId);
     } else {
-      // Create new Stripe customer
-      const customer = await stripe.customers.create({
-        email: consumerEmail,
-        metadata: {
-          businessId: business.id,
-          businessSlug: slug,
-        },
-      });
-      stripeCustomerId = customer.id;
+      console.log("[Setup Intent] New customer - will create on successful payment");
     }
 
-    // Create SetupIntent for saving payment method
+    // Create SetupIntent WITHOUT customer for new users
+    // Customer will be created in /confirm endpoint after payment succeeds
     const setupIntent = await stripe.setupIntents.create({
-      customer: stripeCustomerId,
+      ...(stripeCustomerId ? { customer: stripeCustomerId } : {}),
       payment_method_types: ["card"],
       usage: "off_session",
       metadata: {
