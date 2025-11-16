@@ -188,7 +188,34 @@ export default function MemberPortalPage() {
                       )}
                     </div>
                   )}
-                  {/* Subscription management actions could go here */}
+                  <div className="flex gap-2 pt-4 border-t">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`/api/portal/${params.slug}/link`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ consumerEmail: memberData.email }),
+                          });
+
+                          if (!res.ok) {
+                            throw new Error("Failed to open portal");
+                          }
+
+                          const { url } = await res.json();
+                          if (url) {
+                            window.location.href = url;
+                          }
+                        } catch (err) {
+                          alert("Failed to open Stripe portal. Please try again.");
+                        }
+                      }}
+                    >
+                      Manage Subscription
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
