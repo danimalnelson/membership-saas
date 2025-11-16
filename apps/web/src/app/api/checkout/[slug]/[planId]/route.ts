@@ -89,7 +89,7 @@ export async function POST(
 
     const publicAppUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.PUBLIC_APP_URL || "http://localhost:3000";
     const successUrl = `${publicAppUrl}/${slug}/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${publicAppUrl}/${slug}/plans/${plan.id}`;
+    const cancelUrl = `${publicAppUrl}/${slug}`;
 
     const sessionParams: any = {
       mode: "subscription",
