@@ -41,11 +41,14 @@ This foundation defines:
 5. When all verification passes:
    - Commit with a precise summary.
    - Update the appropriate log (`/logs/build-progress.md`, `/logs/feature-progress.md`, etc.).
-6. **Verify Vercel deployment:**
+6. **Verify Vercel deployment (MANDATORY BEFORE MERGE):**
    - Push branch to GitHub
-   - Verify Vercel preview deployment succeeds (check Vercel dashboard or GitHub PR checks)
+   - **WAIT** for Vercel preview deployment to complete
+   - **REQUEST** user to confirm deployment status from Vercel dashboard
+   - Vercel deployment must show "Ready" status ✅
    - For feature branches, Vercel automatically creates preview deployments
-   - Fix any Vercel build failures before marking work complete
+   - Fix any Vercel build failures and repeat verification
+   - **DO NOT PROCEED** to merge without confirmed successful deployment
 7. **Manual testing when required:**
    - For Stripe integration changes, follow `/docs/payment-elements-implementation-checklist.md`
    - Test with Stripe test cards before marking feature complete
@@ -70,10 +73,14 @@ This foundation defines:
 4. **Use conventional commit format** (feat, fix, test, docs, etc.).
 5. **Log all progress** to appropriate files in `/logs/`.
 6. **Never hardcode secrets**; always use `process.env.*`.
-7. **Verify Vercel deployments** after pushing to GitHub:
-   - Check Vercel dashboard or GitHub PR checks for preview deployment status
+7. **Verify Vercel deployments (BLOCKING REQUIREMENT):**
+   - ⚠️ **CRITICAL:** Cannot merge to main without successful Vercel deployment
+   - Push feature branch to GitHub
+   - Wait for Vercel preview deployment to complete
+   - **ASK USER** to confirm Vercel deployment status before proceeding with merge
+   - User must verify: "Deployment shows Ready status" ✅
+   - If deployment fails: Fix issues, push, and restart verification
    - Feature branches get automatic preview deployments
-   - Fix build failures immediately (check Vercel logs)
    - Ensure environment variables are configured in Vercel project settings
 8. **Manual testing for Stripe features:**
    - Use `/docs/payment-elements-implementation-checklist.md` for Payment Elements testing
@@ -176,5 +183,53 @@ When modifying components:
 3. Create follow-up task to fix test
 4. Do not commit without some level of test verification
 
-## 9. Completion Signal
+## 9. Merge to Main Workflow (STRICT PROTOCOL)
+
+**⚠️ This workflow is MANDATORY and cannot be skipped.**
+
+### Pre-Merge Checklist (ALL must be ✅)
+1. [ ] All automated tests pass locally
+2. [ ] Feature branch pushed to GitHub
+3. [ ] Vercel preview deployment completed
+4. [ ] **USER CONFIRMS** Vercel deployment shows "Ready" status
+5. [ ] Relevant logs updated in `/logs/`
+6. [ ] No TypeScript or linter errors
+7. [ ] Manual testing completed (if applicable)
+
+### Merge Steps (Execute in Order)
+1. **STOP and Request Verification:**
+   ```
+   "Please confirm the Vercel deployment for branch [branch-name] shows 'Ready' status in your Vercel dashboard.
+   
+   I will wait for your confirmation before proceeding with the merge to main."
+   ```
+
+2. **WAIT for user confirmation.** Do NOT proceed without explicit approval.
+
+3. **After user confirms deployment is successful:**
+   ```bash
+   git checkout main
+   git pull origin main
+   git merge [feature-branch] --no-ff
+   git push origin main
+   ```
+
+4. **Monitor production deployment:**
+   - Vercel will auto-deploy main branch
+   - Request user to verify production deployment succeeds
+
+### If Deployment Fails
+1. **DO NOT MERGE** - Return to feature branch
+2. Fix the issues identified in Vercel logs
+3. Commit and push fixes
+4. Restart verification from step 1
+
+### Emergency Rollback Protocol
+If production deployment fails after merge:
+1. Immediately notify user
+2. Revert merge commit: `git revert -m 1 [merge-commit-hash]`
+3. Push revert: `git push origin main`
+4. Document incident in `/logs/build-progress.md`
+
+## 10. Completion Signal
 - When no missions remain or all exit criteria are met, summarize work, suggest the next highest-impact task, and wait for new instructions.
