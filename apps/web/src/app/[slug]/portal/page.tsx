@@ -39,7 +39,6 @@ export default function MemberPortalPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [memberData, setMemberData] = useState<any>(null);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [openingPortal, setOpeningPortal] = useState(false);
 
   useEffect(() => {
     // Check if consumer is authenticated and fetch subscriptions
@@ -64,30 +63,6 @@ export default function MemberPortalPage() {
         router.push(`/${params.slug}/auth/signin?returnUrl=${encodeURIComponent(`/${params.slug}/portal`)}`);
       });
   }, [params.slug, router]);
-
-  const handleOpenStripePortal = async () => {
-    setOpeningPortal(true);
-    try {
-      const res = await fetch(`/api/portal/${params.slug}/link`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ consumerEmail: memberData.email }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to open portal");
-      }
-
-      const { url } = await res.json();
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (err) {
-      alert("Failed to open Stripe portal. Please try again.");
-    } finally {
-      setOpeningPortal(false);
-    }
-  };
 
   const handleSignOut = () => {
     document.cookie = "consumer_session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
@@ -213,16 +188,7 @@ export default function MemberPortalPage() {
                       )}
                     </div>
                   )}
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={handleOpenStripePortal}
-                      disabled={openingPortal}
-                    >
-                      {openingPortal ? "Loading..." : "Manage Subscription"}
-                    </Button>
-                  </div>
+                  {/* Subscription management actions could go here */}
                 </CardContent>
               </Card>
             ))}
@@ -242,24 +208,6 @@ export default function MemberPortalPage() {
             </CardContent>
           </Card>
         )}
-
-        {/* Stripe Portal Access */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer Portal</CardTitle>
-            <CardDescription>
-              Manage payment methods, view invoices, and update billing information
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={handleOpenStripePortal} disabled={openingPortal} variant="outline" className="w-full">
-              {openingPortal ? "Opening..." : "Open Stripe Customer Portal"}
-            </Button>
-            <p className="text-xs text-muted-foreground mt-4">
-              You'll be redirected to a secure Stripe portal
-            </p>
-          </CardContent>
-        </Card>
 
         {/* Account Information */}
         <Card>
