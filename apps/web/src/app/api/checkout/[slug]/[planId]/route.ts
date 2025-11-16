@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@wine-club/db";
-import { getStripeClient } from "@wine-club/lib";
+import { getStripeClient, ensureCustomerOnConnectedAccount } from "@wine-club/lib";
 
 export async function POST(
   req: NextRequest,
@@ -9,10 +9,8 @@ export async function POST(
   try {
     const { slug, planId } = await context.params;
     
-    // Email is optional now - Stripe Checkout will collect it
-    // This eliminates the redundant email collection step
     const body = await req.json();
-    const { email } = body;
+    const { consumerEmail } = body;
 
     // Find plan and verify it's active
     const plan = await prisma.plan.findFirst({
@@ -66,6 +64,26 @@ export async function POST(
       );
     }
 
+    // Find or create consumer and get Stripe customer ID
+    let stripeCustomerId: string | undefined;
+    if (consumerEmail) {
+      let consumer = await prisma.consumer.findUnique({
+        where: { email: consumerEmail },
+      });
+
+      if (!consumer) {
+        consumer = await prisma.consumer.create({
+          data: { email: consumerEmail },
+        });
+      }
+
+      // Get or create customer on connected account
+      stripeCustomerId = await ensureCustomerOnConnectedAccount(
+        consumer,
+        business.stripeAccountId
+      );
+    }
+
     // Create Stripe Checkout Session
     const stripe = getStripeClient(business.stripeAccountId);
 
@@ -74,8 +92,8 @@ export async function POST(
 
     const sessionParams: any = {
       mode: "subscription",
-      // Only pre-fill email if provided (optional now - Stripe will collect it)
-      ...(email && { customer_email: email }),
+      // Use existing customer if found, otherwise Stripe will create one
+      ...(stripeCustomerId && { customer: stripeCustomerId }),
       line_items: [
         {
           price: plan.stripePriceId,
