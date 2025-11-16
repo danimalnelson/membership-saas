@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   PaymentElement,
-  AddressElement,
   ExpressCheckoutElement,
   useStripe,
   useElements,
@@ -52,6 +51,8 @@ function CheckoutForm({
   const router = useRouter();
   
   const [name, setName] = useState("");
+  const [country, setCountry] = useState("US");
+  const [postalCode, setPostalCode] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -304,12 +305,20 @@ function CheckoutForm({
               billingDetails: {
                 email: email,
                 name: name || undefined,
+                address: {
+                  country: country,
+                  postal_code: postalCode || undefined,
+                },
               },
             },
             fields: {
               billingDetails: {
                 email: "never", // Hide email field, we already have it
                 name: "never", // Hide name field, we already have it
+                address: {
+                  country: "never", // We collect this separately
+                  postalCode: "never", // We collect this separately
+                },
               },
             },
           }}
@@ -319,26 +328,60 @@ function CheckoutForm({
       {/* Billing Location (Country + Zip for tax/verification) */}
       <div>
         <h3 className="text-lg font-semibold mb-3">Billing Location</h3>
-        <AddressElement 
-          key={`address-${name}`} // Force re-render when name changes
-          options={{ 
-            mode: "billing",
-            defaultValues: {
-              name: name || "",
-            },
-            fields: {
-              name: "never", // Already collected at top
-              address: {
-                line1: "never",
-                line2: "never",
-                city: "never",
-                state: "never",
-                postalCode: "auto",
-                country: "auto",
-              },
-            },
-          }} 
-        />
+        <div className="grid grid-cols-2 gap-4">
+          {/* Country */}
+          <div>
+            <label htmlFor="country" className="block text-sm font-medium mb-2">
+              Country <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="country"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
+              required
+              disabled={isProcessing}
+            >
+              <option value="US">United States</option>
+              <option value="CA">Canada</option>
+              <option value="GB">United Kingdom</option>
+              <option value="AU">Australia</option>
+              <option value="DE">Germany</option>
+              <option value="FR">France</option>
+              <option value="IT">Italy</option>
+              <option value="ES">Spain</option>
+              <option value="NL">Netherlands</option>
+              <option value="SE">Sweden</option>
+              <option value="NO">Norway</option>
+              <option value="DK">Denmark</option>
+              <option value="FI">Finland</option>
+              <option value="JP">Japan</option>
+              <option value="KR">South Korea</option>
+              <option value="SG">Singapore</option>
+              <option value="NZ">New Zealand</option>
+              <option value="MX">Mexico</option>
+              <option value="BR">Brazil</option>
+              <option value="AR">Argentina</option>
+            </select>
+          </div>
+          
+          {/* Postal Code */}
+          <div>
+            <label htmlFor="postalCode" className="block text-sm font-medium mb-2">
+              Postal Code <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="postalCode"
+              value={postalCode}
+              onChange={(e) => setPostalCode(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="12345"
+              required
+              disabled={isProcessing}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Terms & Conditions */}
