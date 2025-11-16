@@ -317,6 +317,12 @@ export function MembershipListing({
               setStripePromise(null);
               setClientSecret("");
             }}
+            onEditEmail={() => {
+              // Reset to email step
+              setConfirmedEmail("");
+              setStripePromise(null);
+              setClientSecret("");
+            }}
           />
         </Elements>
       )}

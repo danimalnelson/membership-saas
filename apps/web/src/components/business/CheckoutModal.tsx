@@ -280,6 +280,7 @@ interface CheckoutModalProps {
   initialEmail?: string;
   onEmailConfirm?: (email: string) => Promise<void>;
   skipEmailStep?: boolean; // If true, go directly to payment (Elements already initialized)
+  onEditEmail?: () => void; // Callback to reset and go back to email step
 }
 
 export function CheckoutModal({
@@ -292,6 +293,7 @@ export function CheckoutModal({
   initialEmail = "",
   onEmailConfirm,
   skipEmailStep = false,
+  onEditEmail,
 }: CheckoutModalProps) {
   const [email, setEmail] = useState(initialEmail);
   const [emailConfirmed, setEmailConfirmed] = useState(skipEmailStep);
@@ -513,10 +515,29 @@ export function CheckoutModal({
               ) : (
                 /* Payment Step */
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Complete Your Purchase</h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Enter your payment information to subscribe
-                  </p>
+                  <div className="flex items-start justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-semibold mb-2">Complete Your Purchase</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Subscribing as: <span className="font-medium text-foreground">{email}</span>
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (skipEmailStep && onEditEmail) {
+                          // If we're in the second modal with Elements, need to reset parent state
+                          onEditEmail();
+                        } else {
+                          // If we're in the first modal, just go back
+                          setEmailConfirmed(false);
+                          setEmailError(null);
+                        }
+                      }}
+                      className="text-sm text-primary hover:underline shrink-0 ml-4"
+                    >
+                      Edit email
+                    </button>
+                  </div>
 
                   <CheckoutForm
                     plan={plan}
