@@ -168,7 +168,6 @@ export const MembershipForm = React.memo(
         slug,
         billingInterval,
         billingAnchor,
-        cohortBillingDay,
         chargeImmediately,
         allowMultiplePlans,
         maxMembers,
