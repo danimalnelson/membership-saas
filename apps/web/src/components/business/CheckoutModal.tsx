@@ -248,7 +248,7 @@ function CheckoutForm({
               name: name || "",
             },
             fields: {
-              name: name ? "never" : "auto", // Only hide after name is provided
+              name: "never", // Always hide - we collect name at top of form
             },
           }} 
         />
