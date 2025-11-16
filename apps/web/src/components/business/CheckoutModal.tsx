@@ -224,11 +224,13 @@ function CheckoutForm({
             defaultValues: {
               billingDetails: {
                 email: email,
+                name: name || undefined,
               },
             },
             fields: {
               billingDetails: {
                 email: "never", // Hide email field, we already have it
+                name: "never", // Hide name field, we already have it
               },
             },
           }}
@@ -241,6 +243,9 @@ function CheckoutForm({
         <AddressElement 
           options={{ 
             mode: "billing",
+            defaultValues: {
+              name: name || undefined,
+            },
             fields: {
               name: "never", // Don't collect name, we already have it
             },
