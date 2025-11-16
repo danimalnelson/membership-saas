@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@wine-club/db";
+import { getStripeClient } from "@wine-club/lib";
 import { Card, CardContent, formatCurrency, formatDate } from "@wine-club/ui";
 
 export default async function TransactionsPage({
@@ -32,23 +33,68 @@ export default async function TransactionsPage({
     notFound();
   }
 
-  const transactions = await prisma.transaction.findMany({
+  if (!business.stripeAccountId) {
+    return (
+      <div className="min-h-screen bg-background p-8">
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">Stripe account not connected</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Fetch invoices from Stripe
+  const stripe = getStripeClient(business.stripeAccountId);
+  const stripeInvoices = await stripe.invoices.list({
+    limit: 100,
+  });
+
+  // Combine with subscription activity from database
+  const planSubscriptions = await prisma.planSubscription.findMany({
     where: {
-      businessId: business.id,
+      plan: {
+        businessId: business.id,
+      },
     },
     include: {
       consumer: true,
-      subscription: {
-        include: {
-          membershipPlan: true,
-        },
-      },
+      plan: true,
     },
     orderBy: {
       createdAt: "desc",
     },
     take: 100,
   });
+
+  // Create combined transaction list
+  const transactions = [
+    // Invoice payments
+    ...stripeInvoices.data.map((invoice) => ({
+      id: invoice.id,
+      date: new Date(invoice.created * 1000),
+      type: invoice.status === "paid" ? "PAYMENT" : invoice.status === "void" ? "VOIDED" : "PENDING",
+      amount: invoice.amount_paid,
+      currency: invoice.currency,
+      customerEmail: invoice.customer_email || "Unknown",
+      customerName: invoice.customer_name || null,
+      description: `Invoice ${invoice.number || invoice.id}`,
+      stripeId: invoice.id,
+    })),
+    // Subscription events
+    ...planSubscriptions.map((sub) => ({
+      id: `sub-${sub.id}`,
+      date: sub.createdAt,
+      type: "SUBSCRIPTION_CREATED",
+      amount: 0,
+      currency: "usd",
+      customerEmail: sub.consumer.email,
+      customerName: sub.consumer.name,
+      description: `Subscribed to ${sub.plan.name}`,
+      stripeId: sub.stripeSubscriptionId,
+    })),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,7 +115,7 @@ export default async function TransactionsPage({
         <div className="mb-8">
           <h2 className="text-3xl font-bold mb-2">Transactions</h2>
           <p className="text-muted-foreground">
-            View all charges, refunds, and fees
+            View all payments, invoices, and subscription activity
           </p>
         </div>
 
@@ -99,34 +145,39 @@ export default async function TransactionsPage({
                     {transactions.map((transaction: any) => (
                       <tr key={transaction.id} className="hover:bg-muted/50">
                         <td className="p-4 text-sm">
-                          {formatDate(transaction.createdAt)}
+                          {formatDate(transaction.date)}
                         </td>
                         <td className="p-4">
                           <div className="text-sm font-medium">
-                            {transaction.consumer.name || "No name"}
+                            {transaction.customerName || transaction.customerEmail.split('@')[0]}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {transaction.consumer.email}
+                            {transaction.customerEmail}
                           </div>
                         </td>
                         <td className="p-4 text-sm">
-                          {transaction.subscription?.membershipPlan.name || "—"}
+                          {transaction.description}
                         </td>
                         <td className="p-4">
                           <span
                             className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                              transaction.type === "CHARGE"
-                                ? "bg-green-100 text-green-700"
-                                : transaction.type === "REFUND"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-gray-100 text-gray-700"
+                              transaction.type === "PAYMENT"
+                                ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+                                : transaction.type === "SUBSCRIPTION_CREATED"
+                                ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                                : transaction.type === "VOIDED"
+                                ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
+                                : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
                             }`}
                           >
-                            {transaction.type}
+                            {transaction.type.replace(/_/g, ' ')}
                           </span>
                         </td>
                         <td className="p-4 text-sm text-right font-medium">
-                          {formatCurrency(transaction.amount, transaction.currency)}
+                          {transaction.amount > 0 
+                            ? formatCurrency(transaction.amount, transaction.currency)
+                            : "—"
+                          }
                         </td>
                       </tr>
                     ))}
