@@ -19,8 +19,10 @@ interface Plan {
   currency: string;
   interval: string;
   intervalCount: number;
+  pricingType: string;
   setupFee: number | null;
   shippingFee: number | null;
+  stockStatus: string;
 }
 
 interface Membership {
