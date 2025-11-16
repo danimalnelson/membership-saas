@@ -46,6 +46,7 @@ export function MembershipListing({
     membership: Membership;
   } | null>(null);
   
+  const [confirmedEmail, setConfirmedEmail] = useState<string>("");
   const [stripePromise, setStripePromise] = useState<any>(null);
   const [clientSecret, setClientSecret] = useState<string>("");
   const [isInitializingCheckout, setIsInitializingCheckout] = useState(false);
@@ -240,15 +241,20 @@ export function MembershipListing({
           isOpen={true}
           onClose={() => {
             setSelectedPlan(null);
+            setConfirmedEmail("");
             setStripePromise(null);
             setClientSecret("");
           }}
           onSuccess={() => {
             setSelectedPlan(null);
+            setConfirmedEmail("");
             setStripePromise(null);
             setClientSecret("");
           }}
           onEmailConfirm={async (email) => {
+            // Store confirmed email
+            setConfirmedEmail(email);
+            
             // Initialize SetupIntent with email to ensure customer consolidation
             const [configRes, setupRes] = await Promise.all([
               fetch(`/api/portal/${businessSlug}/stripe-config`),
@@ -297,13 +303,17 @@ export function MembershipListing({
             membership={selectedPlan.membership}
             businessSlug={businessSlug}
             isOpen={true}
+            skipEmailStep={true}
+            initialEmail={confirmedEmail}
             onClose={() => {
               setSelectedPlan(null);
+              setConfirmedEmail("");
               setStripePromise(null);
               setClientSecret("");
             }}
             onSuccess={() => {
               setSelectedPlan(null);
+              setConfirmedEmail("");
               setStripePromise(null);
               setClientSecret("");
             }}

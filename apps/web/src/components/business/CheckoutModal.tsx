@@ -279,6 +279,7 @@ interface CheckoutModalProps {
   onSuccess: () => void;
   initialEmail?: string;
   onEmailConfirm?: (email: string) => Promise<void>;
+  skipEmailStep?: boolean; // If true, go directly to payment (Elements already initialized)
 }
 
 export function CheckoutModal({
@@ -290,9 +291,10 @@ export function CheckoutModal({
   onSuccess,
   initialEmail = "",
   onEmailConfirm,
+  skipEmailStep = false,
 }: CheckoutModalProps) {
   const [email, setEmail] = useState(initialEmail);
-  const [emailConfirmed, setEmailConfirmed] = useState(false);
+  const [emailConfirmed, setEmailConfirmed] = useState(skipEmailStep);
   const [isConfirmingEmail, setIsConfirmingEmail] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
 
