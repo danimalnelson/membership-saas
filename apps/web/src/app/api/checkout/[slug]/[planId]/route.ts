@@ -87,8 +87,9 @@ export async function POST(
     // Create Stripe Checkout Session
     const stripe = getStripeClient(business.stripeAccountId);
 
-    const successUrl = `${process.env.PUBLIC_APP_URL}/${slug}/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${process.env.PUBLIC_APP_URL}/${slug}/plans/${plan.id}`;
+    const publicAppUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.PUBLIC_APP_URL || "http://localhost:3000";
+    const successUrl = `${publicAppUrl}/${slug}/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${publicAppUrl}/${slug}/plans/${plan.id}`;
 
     const sessionParams: any = {
       mode: "subscription",
