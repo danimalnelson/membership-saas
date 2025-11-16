@@ -80,7 +80,15 @@ export default async function BusinessDashboardPage({
       },
     },
     include: {
-      plan: true,
+      plan: {
+        include: {
+          membership: {
+            select: {
+              billingInterval: true,
+            },
+          },
+        },
+      },
       consumer: true,
     },
   });
