@@ -82,6 +82,18 @@ export async function GET(
             { expand: ["default_payment_method", "latest_invoice"] }
           );
 
+          // Get payment method details
+          let paymentMethod = null;
+          if (typeof stripeSubscription.default_payment_method === "object" && stripeSubscription.default_payment_method) {
+            const pm = stripeSubscription.default_payment_method;
+            if ('card' in pm) {
+              paymentMethod = {
+                brand: pm.card?.brand,
+                last4: pm.card?.last4,
+              };
+            }
+          }
+
           return {
             ...planSub,
             stripeDetails: {
@@ -95,6 +107,7 @@ export async function GET(
               trialEnd: stripeSubscription.trial_end
                 ? new Date(stripeSubscription.trial_end * 1000)
                 : null,
+              paymentMethod,
             },
           };
         } catch (error) {

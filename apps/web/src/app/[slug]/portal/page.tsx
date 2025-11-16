@@ -4,7 +4,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, formatCurrency } from "@wine-club/ui";
 import Link from "next/link";
-import { Pause, Play, X as XIcon } from "lucide-react";
+import { Pause, Play, X as XIcon, Plus, CreditCard } from "lucide-react";
+import { loadStripe, Stripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import { PaymentMethodForm } from "@/components/portal/PaymentMethodForm";
+import { PaymentMethodList } from "@/components/portal/PaymentMethodList";
 
 interface StripeDetails {
   status: string;
@@ -13,6 +17,10 @@ interface StripeDetails {
   cancelAtPeriodEnd: boolean;
   cancelAt: string | null;
   trialEnd: string | null;
+  paymentMethod?: {
+    brand?: string;
+    last4?: string;
+  } | null;
 }
 
 interface Subscription {
@@ -42,6 +50,19 @@ export default function MemberPortalPage() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState<string | null>(null);
+  const [defaultPaymentMethod, setDefaultPaymentMethod] = useState<{ brand?: string; last4?: string } | null>(null);
+  const [showAddPaymentMethod, setShowAddPaymentMethod] = useState(false);
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [clientSecret, setClientSecret] = useState<string>("");
+  const [paymentMethods, setPaymentMethods] = useState<Array<{
+    id: string;
+    brand?: string;
+    last4?: string;
+    expMonth?: number;
+    expYear?: number;
+    isDefault?: boolean;
+  }>>([]);
+  const [defaultPaymentMethodId, setDefaultPaymentMethodId] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if consumer is authenticated and fetch subscriptions
@@ -59,6 +80,15 @@ export default function MemberPortalPage() {
         setAuthenticated(true);
         setMemberData(sessionData);
         setSubscriptions(subsData.subscriptions || []);
+        
+        // Extract default payment method from the first subscription
+        const firstSubWithPayment = (subsData.subscriptions || []).find(
+          (sub: Subscription) => sub.stripeDetails?.paymentMethod
+        );
+        if (firstSubWithPayment?.stripeDetails?.paymentMethod) {
+          setDefaultPaymentMethod(firstSubWithPayment.stripeDetails.paymentMethod);
+        }
+        
         setLoading(false);
       })
       .catch(() => {
@@ -66,6 +96,145 @@ export default function MemberPortalPage() {
         router.push(`/${params.slug}/auth/signin?returnUrl=${encodeURIComponent(`/${params.slug}/portal`)}`);
       });
   }, [params.slug, router]);
+
+  // Load Stripe configuration
+  useEffect(() => {
+    if (!params.slug) return;
+
+    fetch(`/api/portal/${params.slug}/stripe-config`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.publishableKey) {
+          setStripePromise(loadStripe(data.publishableKey, {
+            stripeAccount: data.stripeAccount,
+          }));
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load Stripe config:", err);
+      });
+  }, [params.slug]);
+
+  // Fetch payment methods when authenticated
+  useEffect(() => {
+    if (!memberData?.email || !params.slug) return;
+
+    fetchPaymentMethods();
+  }, [memberData?.email, params.slug]);
+
+  const fetchPaymentMethods = async () => {
+    if (!memberData?.email) return;
+
+    try {
+      const res = await fetch(
+        `/api/portal/${params.slug}/payment-methods?email=${encodeURIComponent(memberData.email)}`
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setPaymentMethods(data.paymentMethods);
+        setDefaultPaymentMethodId(data.defaultPaymentMethodId);
+      }
+    } catch (err) {
+      console.error("Failed to fetch payment methods:", err);
+    }
+  };
+
+  const fetchSetupIntent = async () => {
+    if (!memberData?.email) return;
+
+    try {
+      const res = await fetch(`/api/portal/${params.slug}/payment-methods/setup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: memberData.email }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setClientSecret(data.clientSecret);
+      }
+    } catch (err) {
+      console.error("Failed to fetch setup intent:", err);
+    }
+  };
+
+  const handleSetDefault = async (paymentMethodId: string) => {
+    try {
+      const res = await fetch(`/api/portal/${params.slug}/payment-methods/set-default`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: memberData?.email, paymentMethodId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to set default");
+      }
+
+      // Refresh payment methods and subscriptions
+      await fetchPaymentMethods();
+      
+      // Refresh subscriptions to get updated payment method
+      const subsRes = await fetch(`/api/portal/${params.slug}/subscriptions`);
+      const subsData = await subsRes.json();
+      setSubscriptions(subsData.subscriptions || []);
+      
+      const firstSubWithPayment = (subsData.subscriptions || []).find(
+        (sub: Subscription) => sub.stripeDetails?.paymentMethod
+      );
+      if (firstSubWithPayment?.stripeDetails?.paymentMethod) {
+        setDefaultPaymentMethod(firstSubWithPayment.stripeDetails.paymentMethod);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to set default payment method");
+    }
+  };
+
+  const handleRemove = async (paymentMethodId: string) => {
+    if (!confirm("Are you sure you want to remove this payment method?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `/api/portal/${params.slug}/payment-methods/${paymentMethodId}?email=${encodeURIComponent(memberData?.email || '')}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to remove");
+      }
+
+      await fetchPaymentMethods();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to remove payment method");
+    }
+  };
+
+  const handlePaymentMethodAdded = async () => {
+    await fetchSetupIntent();
+    await fetchPaymentMethods();
+    setShowAddPaymentMethod(false);
+    
+    // Refresh subscriptions to get updated payment method
+    const subsRes = await fetch(`/api/portal/${params.slug}/subscriptions`);
+    const subsData = await subsRes.json();
+    setSubscriptions(subsData.subscriptions || []);
+    
+    const firstSubWithPayment = (subsData.subscriptions || []).find(
+      (sub: Subscription) => sub.stripeDetails?.paymentMethod
+    );
+    if (firstSubWithPayment?.stripeDetails?.paymentMethod) {
+      setDefaultPaymentMethod(firstSubWithPayment.stripeDetails.paymentMethod);
+    }
+  };
+
+  const handleShowAddPaymentMethod = () => {
+    setShowAddPaymentMethod(true);
+    fetchSetupIntent();
+  };
 
   const handleSignOut = () => {
     document.cookie = "consumer_session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
@@ -313,34 +482,6 @@ export default function MemberPortalPage() {
                         Cancel
                       </Button>
                     )}
-
-                    {/* Manage Payment Methods */}
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          const res = await fetch(`/api/portal/${params.slug}/link`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ consumerEmail: memberData.email }),
-                          });
-
-                          if (!res.ok) {
-                            throw new Error("Failed to open portal");
-                          }
-
-                          const { url } = await res.json();
-                          if (url) {
-                            window.location.href = url;
-                          }
-                        } catch (err) {
-                          alert("Failed to open Stripe portal. Please try again.");
-                        }
-                      }}
-                    >
-                      Update Payment
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -367,15 +508,105 @@ export default function MemberPortalPage() {
           <CardHeader>
             <CardTitle>Account Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <span className="text-sm text-muted-foreground">Email:</span>
-              <p className="font-medium">{memberData?.email}</p>
-            </div>
-            {memberData?.name && (
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
               <div>
-                <span className="text-sm text-muted-foreground">Name:</span>
-                <p className="font-medium">{memberData.name}</p>
+                <span className="text-sm text-muted-foreground">Email:</span>
+                <p className="font-medium">{memberData?.email}</p>
+              </div>
+              {memberData?.name && (
+                <div>
+                  <span className="text-sm text-muted-foreground">Name:</span>
+                  <p className="font-medium">{memberData.name}</p>
+                </div>
+              )}
+              {defaultPaymentMethod && (
+                <div>
+                  <span className="text-sm text-muted-foreground">Payment Method:</span>
+                  <p className="font-medium capitalize">
+                    {defaultPaymentMethod.brand} ••••{defaultPaymentMethod.last4}
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Payment Methods Management */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                <CardTitle>Payment Methods</CardTitle>
+              </div>
+              {!showAddPaymentMethod && paymentMethods.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleShowAddPaymentMethod}
+                  className="gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add New
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {paymentMethods.length > 0 ? (
+              <PaymentMethodList
+                paymentMethods={paymentMethods}
+                defaultPaymentMethodId={defaultPaymentMethodId}
+                onSetDefault={handleSetDefault}
+                onRemove={handleRemove}
+              />
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-muted-foreground mb-4">No payment methods saved yet</p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleShowAddPaymentMethod}
+                  className="gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Payment Method
+                </Button>
+              </div>
+            )}
+
+            {/* Add New Payment Method Form */}
+            {showAddPaymentMethod && clientSecret && stripePromise && (
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Add New Payment Method</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowAddPaymentMethod(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret,
+                    appearance: {
+                      theme: "stripe",
+                      variables: {
+                        colorPrimary: "#3b82f6",
+                      },
+                    },
+                  }}
+                >
+                  <PaymentMethodForm
+                    slug={params.slug as string}
+                    email={memberData?.email || ''}
+                    onSuccess={handlePaymentMethodAdded}
+                  />
+                </Elements>
               </div>
             )}
           </CardContent>

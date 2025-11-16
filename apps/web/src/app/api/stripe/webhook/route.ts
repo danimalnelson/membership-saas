@@ -162,6 +162,10 @@ async function handleWebhookEvent(event: Stripe.Event, accountId?: string) {
       await handleChargeRefunded(event.data.object as Stripe.Charge, accountId);
       break;
 
+    case "payment_method.attached":
+      await handlePaymentMethodAttached(event.data.object as Stripe.PaymentMethod, accountId);
+      break;
+
     default:
       console.log(`Unhandled event type: ${event.type}`);
   }
@@ -182,6 +186,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, account
     try {
       await createPlanSubscriptionFromCheckout(prisma, session, accountId);
       console.log(`[Webhook] ✅ Created PlanSubscription from checkout ${session.id}`);
+      
+      // ENFORCE ONE PAYMENT METHOD RULE:
+      // Update all other subscriptions to use the same payment method
+      await syncPaymentMethodAcrossSubscriptions(session, accountId);
     } catch (error) {
       console.error(`[Webhook] ❌ Failed to create PlanSubscription:`, error);
       throw error;
@@ -735,6 +743,142 @@ async function handleAccountUpdated(account: Stripe.Account, eventId?: string) {
     });
     
     console.log(`[Webhook] account.updated: ⚠️  Account restricted for business ${business.id}`);
+  }
+}
+
+/**
+ * Helper: Sync payment method across all subscriptions for a customer
+ * Enforces the "one payment method per customer" rule
+ */
+async function syncPaymentMethodAcrossSubscriptions(session: Stripe.Checkout.Session, accountId?: string) {
+  if (!session.customer || typeof session.customer !== 'string') {
+    console.log(`[Webhook] syncPaymentMethod: No customer in session, skipping`);
+    return;
+  }
+
+  if (!accountId) {
+    console.log(`[Webhook] syncPaymentMethod: No accountId, skipping`);
+    return;
+  }
+
+  try {
+    const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2023-10-16",
+      typescript: true,
+      stripeAccount: accountId,
+    });
+
+    // Get the subscription that was just created
+    const subscriptionId = typeof session.subscription === 'string' 
+      ? session.subscription 
+      : session.subscription?.id;
+
+    if (!subscriptionId) {
+      console.log(`[Webhook] syncPaymentMethod: No subscription ID, skipping`);
+      return;
+    }
+
+    // Retrieve the subscription to get its payment method
+    const newSubscription = await stripeClient.subscriptions.retrieve(subscriptionId);
+    const paymentMethodId = newSubscription.default_payment_method;
+
+    if (!paymentMethodId || typeof paymentMethodId !== 'string') {
+      console.log(`[Webhook] syncPaymentMethod: No payment method on new subscription, skipping`);
+      return;
+    }
+
+    console.log(`[Webhook] syncPaymentMethod: Using payment method ${paymentMethodId} for customer ${session.customer}`);
+
+    // Get all OTHER active subscriptions for this customer
+    const allSubscriptions = await stripeClient.subscriptions.list({
+      customer: session.customer,
+      status: "active",
+    });
+
+    const otherSubscriptions = allSubscriptions.data.filter(sub => sub.id !== subscriptionId);
+    console.log(`[Webhook] syncPaymentMethod: Found ${otherSubscriptions.length} other active subscriptions to update`);
+
+    // Update each subscription to use the same payment method
+    for (const subscription of otherSubscriptions) {
+      try {
+        await stripeClient.subscriptions.update(subscription.id, {
+          default_payment_method: paymentMethodId,
+        });
+        console.log(`[Webhook] syncPaymentMethod: ✅ Updated subscription ${subscription.id}`);
+      } catch (error) {
+        console.error(`[Webhook] syncPaymentMethod: ❌ Failed to update subscription ${subscription.id}:`, error);
+      }
+    }
+
+    // Also set as customer's default
+    await stripeClient.customers.update(session.customer, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId,
+      },
+    });
+
+    console.log(`[Webhook] syncPaymentMethod: ✅ Updated ${otherSubscriptions.length} subscriptions and customer default`);
+  } catch (error) {
+    console.error(`[Webhook] syncPaymentMethod: ❌ Error:`, error);
+  }
+}
+
+/**
+ * Handle payment_method.attached event
+ * When a payment method is attached to a customer, update ALL active subscriptions
+ * to use this payment method (enforce one payment method per customer rule)
+ */
+async function handlePaymentMethodAttached(paymentMethod: Stripe.PaymentMethod, accountId?: string) {
+  console.log(`[Webhook] payment_method.attached: ${paymentMethod.id} for customer ${paymentMethod.customer}`);
+
+  if (!paymentMethod.customer || typeof paymentMethod.customer !== 'string') {
+    console.log(`[Webhook] payment_method.attached: No customer attached, skipping`);
+    return;
+  }
+
+  if (!accountId) {
+    console.log(`[Webhook] payment_method.attached: No accountId, skipping`);
+    return;
+  }
+
+  try {
+    // Get Stripe client for this connected account
+    const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2023-10-16",
+      typescript: true,
+      stripeAccount: accountId,
+    });
+
+    // Get all active subscriptions for this customer
+    const subscriptions = await stripeClient.subscriptions.list({
+      customer: paymentMethod.customer,
+      status: "active",
+    });
+
+    console.log(`[Webhook] payment_method.attached: Found ${subscriptions.data.length} active subscriptions`);
+
+    // Update each subscription to use the new payment method
+    for (const subscription of subscriptions.data) {
+      try {
+        await stripeClient.subscriptions.update(subscription.id, {
+          default_payment_method: paymentMethod.id,
+        });
+        console.log(`[Webhook] payment_method.attached: ✅ Updated subscription ${subscription.id}`);
+      } catch (error) {
+        console.error(`[Webhook] payment_method.attached: ❌ Failed to update subscription ${subscription.id}:`, error);
+      }
+    }
+
+    // Also set as customer's default
+    await stripeClient.customers.update(paymentMethod.customer, {
+      invoice_settings: {
+        default_payment_method: paymentMethod.id,
+      },
+    });
+
+    console.log(`[Webhook] payment_method.attached: ✅ Set as customer default`);
+  } catch (error) {
+    console.error(`[Webhook] payment_method.attached: ❌ Error:`, error);
   }
 }
 
