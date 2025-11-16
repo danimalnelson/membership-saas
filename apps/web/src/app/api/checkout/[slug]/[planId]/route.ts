@@ -103,8 +103,8 @@ export async function POST(
       ],
       success_url: successUrl,
       cancel_url: cancelUrl,
-      // Collect billing address (phone number is optional)
-      billing_address_collection: "required",
+      // Only collect ZIP code for billing
+      billing_address_collection: "auto",
       metadata: {
         planId: plan.id,
         planName: plan.name,
