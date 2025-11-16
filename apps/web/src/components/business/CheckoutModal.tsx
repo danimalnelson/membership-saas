@@ -236,13 +236,18 @@ function CheckoutForm({
                 return;
               }
 
+              // Extract email and name from the express checkout event
+              // This ensures we use the email from Link/Apple Pay, not the pre-filled one
+              const expressEmail = event.billingDetails?.email || email;
+              const expressName = event.billingDetails?.name || name || email.split("@")[0];
+
               // Confirm the payment with the express checkout payment method
               const result = await fetch(`/api/checkout/${businessSlug}/${plan.id}/confirm`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
-                  email,
-                  name: name || email.split("@")[0],
+                  email: expressEmail,
+                  name: expressName,
                 }),
               });
 
