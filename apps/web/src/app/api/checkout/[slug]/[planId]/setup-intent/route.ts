@@ -74,21 +74,20 @@ export async function POST(
       where: { email: consumerEmail },
       include: {
         planSubscriptions: {
-          where: {
-            NOT: {
-              stripeCustomerId: null,
-            },
-          },
-          take: 1,
+          take: 5, // Get a few recent subscriptions
           select: { stripeCustomerId: true },
           orderBy: { createdAt: 'desc' },
         },
       },
     });
 
-    // Reuse existing customer ID only if they have a previous subscription
-    if (existingConsumer?.planSubscriptions[0]?.stripeCustomerId) {
-      stripeCustomerId = existingConsumer.planSubscriptions[0].stripeCustomerId;
+    // Find first subscription with a valid Stripe customer ID
+    const subscriptionWithCustomer = existingConsumer?.planSubscriptions.find(
+      sub => sub.stripeCustomerId !== null && sub.stripeCustomerId !== undefined
+    );
+
+    if (subscriptionWithCustomer) {
+      stripeCustomerId = subscriptionWithCustomer.stripeCustomerId!;
       console.log("[Setup Intent] Reusing existing customer:", stripeCustomerId);
     } else {
       console.log("[Setup Intent] New customer - will create on successful payment");
