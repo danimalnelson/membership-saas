@@ -36,7 +36,8 @@ This foundation defines:
 2. Identify the responsible code path or service.
 3. Apply the linked mission loop until the exit criteria in that mission are satisfied.
 4. After every code or config change, run:
-   - `bash scripts/run-full-tests.sh`
+   - **TypeScript check:** `cd apps/web && pnpm next build` (catches type errors before Vercel)
+   - `bash scripts/run-full-tests.sh` (or skip if DATABASE_URL unavailable)
    - Additional targeted commands listed in the mission.
 5. When all verification passes:
    - Commit with a precise summary.
@@ -188,12 +189,12 @@ When modifying components:
 **⚠️ This workflow is MANDATORY and cannot be skipped.**
 
 ### Pre-Merge Checklist (ALL must be ✅)
-1. [ ] All automated tests pass locally
-2. [ ] Feature branch pushed to GitHub
-3. [ ] Vercel preview deployment completed
-4. [ ] **USER CONFIRMS** Vercel deployment shows "Ready" status
-5. [ ] Relevant logs updated in `/logs/`
-6. [ ] No TypeScript or linter errors
+1. [ ] All automated tests pass locally (`bash scripts/run-full-tests.sh` or skip if DATABASE_URL not available)
+2. [ ] **TypeScript check passes locally:** `cd apps/web && pnpm next build`
+3. [ ] Feature branch pushed to GitHub
+4. [ ] Vercel preview deployment completed
+5. [ ] **USER CONFIRMS** Vercel deployment shows "Ready" status
+6. [ ] Relevant logs updated in `/logs/`
 7. [ ] Manual testing completed (if applicable)
 
 ### Merge Steps (Execute in Order)
