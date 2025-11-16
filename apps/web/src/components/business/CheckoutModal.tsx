@@ -241,13 +241,14 @@ function CheckoutForm({
       <div>
         <h3 className="text-lg font-semibold mb-3">Billing Address</h3>
         <AddressElement 
+          key={`address-${name}`} // Force re-render when name changes
           options={{ 
             mode: "billing",
             defaultValues: {
-              name: name || undefined,
+              name: name || "",
             },
             fields: {
-              name: "never", // Don't collect name, we already have it
+              name: name ? "never" : "auto", // Only hide after name is provided
             },
           }} 
         />
