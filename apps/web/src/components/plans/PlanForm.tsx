@@ -77,11 +77,6 @@ export function PlanForm({
     setError(null);
 
     try {
-      // Validate recurring fee name if recurring fee is set
-      if (formData.recurringFee && parseFloat(formData.recurringFee) > 0 && !formData.recurringFeeName.trim()) {
-        throw new Error("Recurring fee requires a fee name");
-      }
-
       // Convert dollar amounts to cents
       const payload = {
         ...formData,
@@ -94,7 +89,9 @@ export function PlanForm({
         recurringFee: formData.recurringFee
           ? Math.round(parseFloat(formData.recurringFee) * 100)
           : null,
-        recurringFeeName: formData.recurringFeeName || null,
+        recurringFeeName: formData.recurringFee && parseFloat(formData.recurringFee) > 0 
+          ? "Processing Fee" 
+          : null,
         shippingFee: formData.shippingFee
           ? Math.round(parseFloat(formData.shippingFee) * 100)
           : null,
@@ -210,23 +207,43 @@ export function PlanForm({
 
           <div>
             <label htmlFor="status" className="block text-sm font-medium mb-2">
-              Status
+              Visibility
             </label>
-            <select
-              id="status"
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  status: e.target.value as PlanFormData["status"],
-                })
-              }
-              className="w-full px-3 py-2 border rounded-md"
-            >
-              <option value="DRAFT">Draft (not visible to customers)</option>
-              <option value="ACTIVE">Active (available for signup)</option>
-              <option value="ARCHIVED">Archived</option>
-            </select>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={formData.status === "ACTIVE"}
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    status: formData.status === "ACTIVE" ? "DRAFT" : "ACTIVE",
+                  })
+                }
+                className={`
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  ${formData.status === "ACTIVE" ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"}
+                `}
+              >
+                <span
+                  className={`
+                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                    ${formData.status === "ACTIVE" ? "translate-x-6" : "translate-x-1"}
+                  `}
+                />
+              </button>
+              <span className="text-sm">
+                {formData.status === "ACTIVE" ? (
+                  <span className="text-green-600 dark:text-green-400 font-medium">
+                    Visible to customers
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">
+                    Hidden from customers
+                  </span>
+                )}
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -269,56 +286,38 @@ export function PlanForm({
                 htmlFor="basePrice"
                 className="block text-sm font-medium mb-2"
               >
-                Price (USD) *
+                Price *
               </label>
-              <input
-                type="number"
-                id="basePrice"
-                value={formData.basePrice}
-                onChange={(e) =>
-                  setFormData({ ...formData, basePrice: e.target.value })
-                }
-                placeholder="50.00"
-                step="0.01"
-                min="0"
-                className="w-full px-3 py-2 border rounded-md"
-                required
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  $
+                </span>
+                <input
+                  type="number"
+                  id="basePrice"
+                  value={formData.basePrice}
+                  onChange={(e) =>
+                    setFormData({ ...formData, basePrice: e.target.value })
+                  }
+                  placeholder="50.00"
+                  step="0.01"
+                  min="0"
+                  className="w-full pl-7 pr-3 py-2 border rounded-md"
+                  required
+                />
+              </div>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="interval"
-                className="block text-sm font-medium mb-2"
-              >
-                Billing Interval
-              </label>
-              <select
-                id="interval"
-                value={formData.interval}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    interval: e.target.value as PlanFormData["interval"],
-                  })
-                }
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="WEEK">Week</option>
-                <option value="MONTH">Month</option>
-                <option value="YEAR">Year</option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="intervalCount"
-                className="block text-sm font-medium mb-2"
-              >
-                Every X Intervals
-              </label>
+          <div>
+            <label
+              htmlFor="intervalCount"
+              className="block text-sm font-medium mb-2"
+            >
+              Billing Frequency
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Every</span>
               <input
                 type="number"
                 id="intervalCount"
@@ -326,26 +325,30 @@ export function PlanForm({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
+                    interval: "MONTH",
                     intervalCount: parseInt(e.target.value) || 1,
                   })
                 }
                 min="1"
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-20 px-3 py-2 border rounded-md"
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                e.g., "2" for every 2 {formData.interval.toLowerCase()}s
-              </p>
+              <span className="text-sm">
+                {formData.intervalCount === 1 ? "month" : "months"}
+              </span>
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              e.g., "1" for monthly, "3" for quarterly
+            </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Fees & Shipping */}
+      {/* Additional Fees */}
       <Card>
         <CardHeader>
-          <CardTitle>Fees & Shipping</CardTitle>
+          <CardTitle>Additional Fees</CardTitle>
           <CardDescription>
-            Additional charges and shipping options
+            One-time and recurring charges
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -354,20 +357,25 @@ export function PlanForm({
               htmlFor="setupFee"
               className="block text-sm font-medium mb-2"
             >
-              One-Time Setup Fee (USD)
+              One-Time Setup Fee
             </label>
-            <input
-              type="number"
-              id="setupFee"
-              value={formData.setupFee}
-              onChange={(e) =>
-                setFormData({ ...formData, setupFee: e.target.value })
-              }
-              placeholder="0.00"
-              step="0.01"
-              min="0"
-              className="w-full px-3 py-2 border rounded-md"
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                $
+              </span>
+              <input
+                type="number"
+                id="setupFee"
+                value={formData.setupFee}
+                onChange={(e) =>
+                  setFormData({ ...formData, setupFee: e.target.value })
+                }
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                className="w-full pl-7 pr-3 py-2 border rounded-md"
+              />
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               Charged once at subscription start
             </p>
@@ -378,68 +386,31 @@ export function PlanForm({
               htmlFor="recurringFee"
               className="block text-sm font-medium mb-2"
             >
-              Recurring Fee (USD)
+              Processing Fee
             </label>
-            <input
-              type="number"
-              id="recurringFee"
-              value={formData.recurringFee}
-              onChange={(e) =>
-                setFormData({ ...formData, recurringFee: e.target.value })
-              }
-              placeholder="0.00"
-              step="0.01"
-              min="0"
-              className="w-full px-3 py-2 border rounded-md"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Added to each billing cycle (e.g., processing fee, service fee)
-            </p>
-          </div>
-
-          {formData.recurringFee && parseFloat(formData.recurringFee) > 0 && (
-            <div>
-              <label
-                htmlFor="recurringFeeName"
-                className="block text-sm font-medium mb-2"
-              >
-                Recurring Fee Name *
-              </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                $
+              </span>
               <input
-                type="text"
-                id="recurringFeeName"
-                value={formData.recurringFeeName}
+                type="number"
+                id="recurringFee"
+                value={formData.recurringFee}
                 onChange={(e) =>
-                  setFormData({ ...formData, recurringFeeName: e.target.value })
+                  setFormData({ 
+                    ...formData, 
+                    recurringFee: e.target.value,
+                    recurringFeeName: "Processing Fee"
+                  })
                 }
-                placeholder="e.g., Processing Fee, Service Fee"
-                className="w-full px-3 py-2 border rounded-md"
-                required
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                className="w-full pl-7 pr-3 py-2 border rounded-md"
               />
             </div>
-          )}
-
-          <div>
-            <label
-              htmlFor="shippingFee"
-              className="block text-sm font-medium mb-2"
-            >
-              Shipping Fee (USD) - Optional
-            </label>
-            <input
-              type="number"
-              id="shippingFee"
-              value={formData.shippingFee}
-              onChange={(e) =>
-                setFormData({ ...formData, shippingFee: e.target.value })
-              }
-              placeholder="0.00"
-              step="0.01"
-              min="0"
-              className="w-full px-3 py-2 border rounded-md"
-            />
             <p className="text-xs text-muted-foreground mt-1">
-              Flat rate shipping fee (leave blank if no shipping or shipping included)
+              Added to each billing cycle
             </p>
           </div>
         </CardContent>
