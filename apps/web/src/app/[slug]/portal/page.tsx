@@ -119,6 +119,7 @@ export default function MemberPortalPage() {
     if (!memberData?.email || !params.slug) return;
 
     fetchPaymentMethods();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberData?.email, params.slug]);
 
   const fetchPaymentMethods = async () => {

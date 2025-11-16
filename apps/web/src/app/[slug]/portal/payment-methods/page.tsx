@@ -64,6 +64,7 @@ export default function PaymentMethodsPage({
       fetchSetupIntent(),
       fetchPaymentMethods(),
     ]).finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email, slug, stripePromise]);
 
   const fetchSetupIntent = async () => {
