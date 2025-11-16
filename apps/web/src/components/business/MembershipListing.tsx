@@ -3,7 +3,10 @@
 import { Button, Card, formatCurrency } from "@wine-club/ui";
 import { Check } from "lucide-react";
 import { useState } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import { PlanModal } from "./PlanModal";
+import { CheckoutModal } from "./CheckoutModal";
 
 interface Plan {
   id: string;
@@ -43,6 +46,57 @@ export function MembershipListing({
     plan: Plan;
     membership: Membership;
   } | null>(null);
+  
+  const [checkoutData, setCheckoutData] = useState<{
+    plan: Plan;
+    membership: Membership;
+    email: string;
+  } | null>(null);
+
+  const [stripePromise, setStripePromise] = useState<any>(null);
+  const [clientSecret, setClientSecret] = useState<string>("");
+
+  const handleEmailSubmit = async (email: string) => {
+    if (!selectedPlan) return;
+
+    try {
+      // Fetch Stripe config and setup intent
+      const [configRes, setupRes] = await Promise.all([
+        fetch(`/api/portal/${businessSlug}/stripe-config`),
+        fetch(`/api/checkout/${businessSlug}/${selectedPlan.plan.id}/setup-intent`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ consumerEmail: email }),
+        }),
+      ]);
+
+      if (!configRes.ok || !setupRes.ok) {
+        throw new Error("Failed to initialize checkout");
+      }
+
+      const config = await configRes.json();
+      const setup = await setupRes.json();
+
+      // Initialize Stripe
+      const stripe = await loadStripe(config.publishableKey, {
+        stripeAccount: config.stripeAccount,
+      });
+
+      setStripePromise(Promise.resolve(stripe));
+      setClientSecret(setup.clientSecret);
+
+      // Close plan modal and open checkout modal
+      setCheckoutData({
+        plan: selectedPlan.plan,
+        membership: selectedPlan.membership,
+        email,
+      });
+      setSelectedPlan(null);
+    } catch (error) {
+      console.error("Checkout initialization error:", error);
+      alert("Failed to start checkout. Please try again.");
+    }
+  };
 
   if (memberships.length === 0) {
     return (
@@ -225,14 +279,48 @@ export function MembershipListing({
         </div>
       </div>
 
-      {/* Modal component */}
+      {/* Plan Modal */}
       <PlanModal
         plan={selectedPlan?.plan || null}
         membership={selectedPlan?.membership || null}
         businessSlug={businessSlug}
         isOpen={!!selectedPlan}
         onClose={() => setSelectedPlan(null)}
+        onEmailSubmit={handleEmailSubmit}
       />
+
+      {/* Checkout Modal */}
+      {checkoutData && stripePromise && clientSecret && (
+        <Elements
+          stripe={stripePromise}
+          options={{
+            clientSecret,
+            appearance: {
+              theme: "stripe",
+              variables: {
+                colorPrimary: "rgb(38 38 38)",
+                borderRadius: "0.75rem",
+              },
+            },
+          }}
+        >
+          <CheckoutModal
+            plan={checkoutData.plan}
+            membership={checkoutData.membership}
+            email={checkoutData.email}
+            businessSlug={businessSlug}
+            isOpen={true}
+            onClose={() => {
+              setCheckoutData(null);
+              setClientSecret("");
+            }}
+            onSuccess={() => {
+              setCheckoutData(null);
+              setClientSecret("");
+            }}
+          />
+        </Elements>
+      )}
     </>
   );
 }
