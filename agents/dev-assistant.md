@@ -46,7 +46,11 @@ This foundation defines:
    - Verify Vercel preview deployment succeeds (check Vercel dashboard or GitHub PR checks)
    - For feature branches, Vercel automatically creates preview deployments
    - Fix any Vercel build failures before marking work complete
-7. Return here to select the next mission or await new instructions.
+7. **Manual testing when required:**
+   - For Stripe integration changes, follow `/docs/payment-elements-implementation-checklist.md`
+   - Test with Stripe test cards before marking feature complete
+   - Verify customer consolidation in Stripe Dashboard
+8. Return here to select the next mission or await new instructions.
 
 ## 4. Mission Router (Quick Reference)
 | Trigger | Mission | Notes |
@@ -71,6 +75,11 @@ This foundation defines:
    - Feature branches get automatic preview deployments
    - Fix build failures immediately (check Vercel logs)
    - Ensure environment variables are configured in Vercel project settings
+8. **Manual testing for Stripe features:**
+   - Use `/docs/payment-elements-implementation-checklist.md` for Payment Elements testing
+   - Test cards: Success `4242 4242 4242 4242`, Decline `4000 0000 0000 0002`
+   - Verify database consistency: Consumer → PlanSubscription records
+   - Check Stripe Dashboard for customer consolidation (same email = one customer)
 
 Additional standards:
 - Maintain alignment with `/docs/architecture.md`; avoid large refactors unless requested.
@@ -93,5 +102,79 @@ Additional standards:
 - Avoid destructive commands on shared environments without confirmation.
 - Do not pipe long-running commands through `tail/grep/head`; redirect to a log file and read the log instead.
 
-## 8. Completion Signal
+## 8. Testing Procedures
+
+### Automated Testing
+All code changes must pass automated tests before commit:
+```bash
+# Full test suite (required before every commit)
+bash scripts/run-full-tests.sh
+
+# Unit tests only (quick verification)
+pnpm test
+
+# E2E tests (when applicable)
+pnpm --filter web playwright test
+
+# Watch mode for active development
+pnpm test:watch
+```
+
+### Manual Testing Requirements
+
+#### Stripe Payment Elements Integration
+When working on checkout or payment flows, follow these manual test steps:
+
+**Prerequisites:**
+- Local dev server running: `cd apps/web && pnpm dev`
+- Stripe test mode enabled
+- Test email: Use your own or `test@example.com`
+
+**Test Sequence:**
+1. Navigate to `http://localhost:3000/the-ruby-tap`
+2. Click "Subscribe" on any plan
+3. Enter email in modal
+4. Verify payment form loads with:
+   - PaymentElement (card input)
+   - AddressElement (billing address)
+   - Name input field
+   - Terms checkbox
+5. Test with Stripe test cards:
+   - **Success:** `4242 4242 4242 4242` (any future date, 123 CVC)
+   - **Decline:** `4000 0000 0000 0002`
+   - **3D Secure:** `4000 0025 0000 3155`
+6. Verify in Stripe Dashboard:
+   - Customer created with correct email
+   - Subscription active
+   - Multiple subscriptions for same email = ONE customer
+7. Check database:
+   ```sql
+   SELECT * FROM consumers WHERE email = 'test@example.com';
+   SELECT * FROM plan_subscriptions WHERE consumer_id = <id>;
+   ```
+
+**Reference:** Full testing guide at `/docs/payment-elements-implementation-checklist.md`
+
+#### API Route Changes
+When modifying API routes:
+1. Test manually with `curl` or Postman
+2. Verify response structure matches schema
+3. Test error cases (missing params, invalid auth, etc.)
+4. Check logs for proper error handling
+
+#### UI Component Changes
+When modifying components:
+1. Test on multiple screen sizes (mobile, tablet, desktop)
+2. Verify accessibility (keyboard navigation, screen readers)
+3. Check dark mode (if applicable)
+4. Test loading and error states
+
+### When to Skip Automated Tests
+**Never.** Always run `bash scripts/run-full-tests.sh` before committing. If tests are flaky or hanging:
+1. Document issue in `/logs/feature-progress.md`
+2. Fix or skip the specific flaky test
+3. Create follow-up task to fix test
+4. Do not commit without some level of test verification
+
+## 9. Completion Signal
 - When no missions remain or all exit criteria are met, summarize work, suggest the next highest-impact task, and wait for new instructions.
