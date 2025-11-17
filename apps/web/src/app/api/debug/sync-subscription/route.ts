@@ -32,6 +32,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!planSub.plan.business.stripeAccountId) {
+      return NextResponse.json(
+        { error: "Business does not have a Stripe account" },
+        { status: 400 }
+      );
+    }
+
     // Get Stripe subscription
     const stripe = getStripeClient(planSub.plan.business.stripeAccountId);
     const stripeSub = await stripe.subscriptions.retrieve(planSub.stripeSubscriptionId);
