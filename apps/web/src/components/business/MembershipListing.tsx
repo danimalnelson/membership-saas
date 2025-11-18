@@ -74,7 +74,7 @@ export function MembershipListing({
       </div>
 
       {/* Memberships section - full width gray background */}
-      <div className="bg-[#F5F5F5] py-12 md:py-16">
+      <div className="bg-[#F5F5F5] py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           <div className="space-y-10 md:space-y-12">
           {memberships.map((membership) => (
