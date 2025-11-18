@@ -63,10 +63,7 @@ export function MembershipListing({
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
         {businessDescription && (
           <div className="pb-8 md:pb-10">
-            <h2 className="text-xl md:text-2xl font-semibold mb-3 md:mb-4 text-balance">
-              About {businessName}
-            </h2>
-            <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-3xl text-pretty">
+            <p className="text-sm md:text-base text-muted-foreground font-medium leading-relaxed max-w-3xl text-pretty">
               {businessDescription}
             </p>
           </div>
@@ -74,7 +71,7 @@ export function MembershipListing({
       </div>
 
       {/* Memberships section - full width gray background */}
-      <div className="bg-gray-50 py-12 md:py-16">
+      <div className="bg-[#F5F5F5] py-12 md:py-16">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           <div className="space-y-10 md:space-y-12">
           {memberships.map((membership) => (
@@ -83,11 +80,11 @@ export function MembershipListing({
               className="pb-10 md:pb-12 last:pb-0"
             >
               <div className="mb-6 md:mb-8">
-                <h3 className="text-lg md:text-xl font-semibold mb-2 text-balance">
+                <h3 className="text-xl md:text-2xl font-semibold mb-2 text-balance">
                   {membership.name}
                 </h3>
                 {membership.description && (
-                  <p className="text-sm text-muted-foreground text-pretty">
+                  <p className="text-base text-muted-foreground font-medium text-pretty">
                     {membership.description}
                   </p>
                 )}
@@ -99,29 +96,20 @@ export function MembershipListing({
                 No plans available in this membership.
               </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                 {membership.plans.map((plan) => (
                   <Card
                     key={plan.id}
-                    className="relative bg-white border-0 shadow-none rounded-2xl p-5 md:p-6 pb-20 hover:scale-[1.01] transition-transform duration-300 ease-out"
+                    className="relative bg-white border-0 shadow-none rounded-2xl p-5 md:p-6 pb-20 min-h-[320px] hover:scale-[1.01] transition-transform duration-300 ease-out cursor-pointer"
+                    onClick={() => {
+                      if (plan.stockStatus !== "SOLD_OUT" && plan.stockStatus !== "COMING_SOON") {
+                        setSelectedPlan({ plan, membership });
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold mb-1 truncate">{plan.name}</h4>
-                        {plan.pricingType === "FIXED" && plan.basePrice ? (
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-semibold tracking-tight">
-                              {formatCurrency(plan.basePrice, plan.currency)}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              /{membership.billingInterval.toLowerCase()}
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="text-lg font-semibold text-muted-foreground">
-                            Dynamic Pricing
-                          </div>
-                        )}
+                        <h4 className="text-2xl font-semibold tracking-tight truncate">{plan.name}</h4>
                       </div>
                       
                       {/* Stock Status Badge */}
@@ -147,19 +135,13 @@ export function MembershipListing({
                     </div>
 
                     {plan.description && (
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                      <p className="text-base text-muted-foreground font-medium mb-4">
                         {plan.description}
                       </p>
                     )}
 
                     {/* Plan features/details */}
                     <ul className="space-y-3 mb-6">
-                      <li className="flex gap-3 text-sm">
-                        <Check className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span className="leading-relaxed">
-                          Billed {membership.billingInterval.toLowerCase()}ly
-                        </span>
-                      </li>
                       {plan.shippingFee && plan.shippingFee > 0 && (
                         <li className="flex gap-3 text-sm">
                           <Check className="w-4 h-4 shrink-0 mt-0.5" />
@@ -178,22 +160,48 @@ export function MembershipListing({
                       )}
                     </ul>
 
-                    <Button
-                      className="absolute bottom-5 right-5 rounded-full h-10 px-6"
-                      onClick={() => setSelectedPlan({ plan, membership })}
-                      disabled={
-                        plan.stockStatus === "SOLD_OUT" ||
-                        plan.stockStatus === "COMING_SOON"
-                      }
-                    >
-                      {plan.stockStatus === "SOLD_OUT"
-                        ? "Sold Out"
-                        : plan.stockStatus === "COMING_SOON"
-                        ? "Coming Soon"
-                        : plan.stockStatus === "WAITLIST"
-                        ? "Join Waitlist"
-                        : "Subscribe"}
-                    </Button>
+                    <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between">
+                      {/* Price on the left */}
+                      {plan.pricingType === "FIXED" && plan.basePrice ? (
+                        <div className="flex items-baseline gap-1">
+                          <span className="font-semibold">
+                            {formatCurrency(plan.basePrice, plan.currency)}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            /{membership.billingInterval.toLowerCase()}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="font-semibold text-muted-foreground">
+                          Dynamic Pricing
+                        </div>
+                      )}
+                      
+                      {/* Button on the right */}
+                      <Button
+                        className={
+                          plan.stockStatus === "AVAILABLE"
+                            ? "rounded-full w-[36px] h-[36px] p-0 text-[1.5rem] leading-none"
+                            : "rounded-full h-10 px-6"
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPlan({ plan, membership });
+                        }}
+                        disabled={
+                          plan.stockStatus === "SOLD_OUT" ||
+                          plan.stockStatus === "COMING_SOON"
+                        }
+                      >
+                        {plan.stockStatus === "SOLD_OUT"
+                          ? "Sold Out"
+                          : plan.stockStatus === "COMING_SOON"
+                          ? "Coming Soon"
+                          : plan.stockStatus === "WAITLIST"
+                          ? "Join Waitlist"
+                          : "+"}
+                      </Button>
+                    </div>
                   </Card>
                 ))}
               </div>

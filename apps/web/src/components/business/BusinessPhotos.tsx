@@ -13,7 +13,7 @@ export function BusinessPhotos({
   const displayPhotos = photos.length > 0 ? photos : [
     "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80", // Wine bar
     "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&q=80", // Wine glasses
-    "https://images.unsplash.com/photo-1566995541631-c859a802d5a1?w=800&q=80", // Wine bottles
+    "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&q=80", // Wine bottles on shelf
   ];
 
   if (displayPhotos.length === 0) return null;
