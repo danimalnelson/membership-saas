@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@wine-club/db";
 import { getStripeClient } from "@wine-club/lib";
 import { decodeConsumerSession } from "@/lib/consumer-auth";
+import { sendEmail, subscriptionResumedEmail } from "@wine-club/emails";
 
 export async function POST(
   req: NextRequest,
@@ -40,6 +41,10 @@ export async function POST(
           businessId: business.id,
         },
       },
+      include: {
+        consumer: true,
+        plan: true,
+      },
     });
 
     if (!planSubscription) {
@@ -48,17 +53,41 @@ export async function POST(
 
     // Resume in Stripe
     const stripe = getStripeClient(business.stripeAccountId);
-    await stripe.subscriptions.update(planSubscription.stripeSubscriptionId, {
-      pause_collection: null as any,
-    });
+    const stripeSubscription = await stripe.subscriptions.update(
+      planSubscription.stripeSubscriptionId,
+      {
+        pause_collection: null as any,
+      }
+    );
 
     // Update local status
     await prisma.planSubscription.update({
       where: { id: subscriptionId },
       data: {
         status: "active",
+        pausedAt: null,
         lastSyncedAt: new Date(),
+        currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
       },
+    });
+
+    // Send resume confirmation email
+    const publicAppUrl = process.env.PUBLIC_APP_URL || "http://localhost:3000";
+    const nextBillingDate = new Date(stripeSubscription.current_period_end * 1000);
+    const amount = stripeSubscription.items.data[0]?.price?.unit_amount || planSubscription.plan.basePrice || 0;
+    const currency = stripeSubscription.items.data[0]?.price?.currency || planSubscription.plan.currency || "usd";
+
+    await sendEmail({
+      to: planSubscription.consumer.email,
+      subject: `Subscription Resumed - ${business.name}`,
+      html: subscriptionResumedEmail({
+        customerName: planSubscription.consumer.name || "Valued Member",
+        planName: planSubscription.plan.name,
+        nextBillingDate: nextBillingDate.toLocaleDateString(),
+        amount,
+        currency,
+        businessName: business.name,
+      }),
     });
 
     return NextResponse.json({ success: true });
@@ -70,4 +99,3 @@ export async function POST(
     );
   }
 }
-

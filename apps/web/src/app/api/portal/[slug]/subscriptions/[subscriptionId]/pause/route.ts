@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@wine-club/db";
 import { getStripeClient } from "@wine-club/lib";
 import { decodeConsumerSession } from "@/lib/consumer-auth";
+import { sendEmail, subscriptionPausedEmail } from "@wine-club/emails";
 
 export async function POST(
   req: NextRequest,
@@ -40,6 +41,10 @@ export async function POST(
           businessId: business.id,
         },
       },
+      include: {
+        consumer: true,
+        plan: true,
+      },
     });
 
     if (!planSubscription) {
@@ -59,8 +64,22 @@ export async function POST(
       where: { id: subscriptionId },
       data: {
         status: "paused",
+        pausedAt: new Date(),
         lastSyncedAt: new Date(),
       },
+    });
+
+    // Send pause confirmation email
+    const publicAppUrl = process.env.PUBLIC_APP_URL || "http://localhost:3000";
+    await sendEmail({
+      to: planSubscription.consumer.email,
+      subject: `Subscription Paused - ${business.name}`,
+      html: subscriptionPausedEmail({
+        customerName: planSubscription.consumer.name || "Valued Member",
+        planName: planSubscription.plan.name,
+        businessName: business.name,
+        portalUrl: `${publicAppUrl}/${slug}/portal`,
+      }),
     });
 
     return NextResponse.json({ success: true });
@@ -72,4 +91,3 @@ export async function POST(
     );
   }
 }
-

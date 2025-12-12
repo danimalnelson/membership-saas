@@ -90,6 +90,19 @@ openssl rand -base64 32
 NEXTAUTH_SECRET="..."
 ```
 
+#### Cron Secret
+- [ ] **Step 2.14**: Generate cron secret (same command, different value)
+
+**Command**:
+```bash
+openssl rand -base64 32
+```
+
+**Cron Secret**:
+```
+CRON_SECRET="..."
+```
+
 ---
 
 ### Phase 3: GitHub Repository
@@ -147,6 +160,9 @@ Add these variables (use values from Phase 1 & 2):
 
 #### Resend
 - [ ] `RESEND_API_KEY` = `re_...`
+
+#### Cron Jobs
+- [ ] `CRON_SECRET` = `...` (generate with `openssl rand -base64 32`)
 
 #### Public URLs
 - [ ] `PUBLIC_APP_URL` = `https://YOUR_PROJECT.vercel.app` (temporary)
@@ -285,18 +301,25 @@ After Vercel deployment, run migrations:
 
 ---
 
-### Phase 10: Monitoring Setup
+### Phase 10: Cron Jobs & Monitoring Setup
 
-- [ ] **Step 10.1**: Enable Vercel Analytics (automatic)
-- [ ] **Step 10.2**: Set up Stripe email alerts
+#### Cron Jobs (Automatic Emails)
+- [ ] **Step 10.1**: Verify cron jobs in Vercel Dashboard → Settings → Cron Jobs
+  - `/api/cron/renewal-reminders` - Daily at 9am UTC (7-day renewal reminders)
+  - `/api/cron/monthly-summaries` - 1st of month at 10am UTC (business owner reports)
+- [ ] **Step 10.2**: Ensure `CRON_SECRET` is set in environment variables
+
+#### Monitoring
+- [ ] **Step 10.3**: Enable Vercel Analytics (automatic)
+- [ ] **Step 10.4**: Set up Stripe email alerts
   - Go to Stripe → Settings → Notifications
   - Enable "Failed payments"
   - Enable "Webhook delivery failures"
-- [ ] **Step 10.3**: Set up Neon database alerts
+- [ ] **Step 10.5**: Set up Neon database alerts
   - Go to Neon Dashboard → Settings
   - Enable storage alerts
   - Enable connection alerts
-- [ ] **Step 10.4**: Bookmark monitoring dashboards:
+- [ ] **Step 10.6**: Bookmark monitoring dashboards:
   - Vercel: `https://vercel.com/dashboard`
   - Stripe: `https://dashboard.stripe.com`
   - Neon: `https://console.neon.tech`

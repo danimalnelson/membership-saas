@@ -5,11 +5,17 @@ import { prisma } from "@wine-club/db";
 import { verifyWebhookSignature } from "@wine-club/lib";
 import {
   sendEmail,
+  sendBusinessEmail,
+  // Member emails
   subscriptionConfirmationEmail,
   paymentFailedEmail,
   refundProcessedEmail,
   subscriptionCancelledEmail,
-} from "@wine-club/lib/email";
+  // Business owner emails
+  newMemberEmail,
+  memberChurnedEmail,
+  paymentAlertEmail,
+} from "@wine-club/emails";
 import {
   createPlanSubscriptionFromCheckout,
   syncPlanSubscription,
@@ -196,6 +202,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, account
       // ENFORCE ONE PAYMENT METHOD RULE:
       // Update all other subscriptions to use the same payment method
       await syncPaymentMethodAcrossSubscriptions(session, accountId);
+
+      // Send business owner notification for new member
+      await notifyBusinessOwnerNewMember(session, planId);
     } catch (error) {
       console.error(`[Webhook] ❌ Failed to create PlanSubscription:`, error);
       throw error;
@@ -396,7 +405,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription, acco
       await handlePlanSubscriptionDeleted(prisma, subscription);
       console.log(`[Webhook] ✅ Deleted PlanSubscription ${planSubscription.id}`);
 
-      // Send cancellation email
+      // Send cancellation email to member
       if (planSubscription.consumer.email) {
         const cancellationDate = new Date(subscription.current_period_end * 1000);
         await sendEmail({
@@ -410,6 +419,9 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription, acco
           }),
         });
       }
+
+      // Notify business owner of churned member
+      await notifyBusinessOwnerMemberChurned(planSubscription, subscription);
     } catch (error) {
       console.error(`[Webhook] ❌ Failed to delete PlanSubscription:`, error);
       throw error;
@@ -740,6 +752,8 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, accountId?: s
 
   if (business && subscription.member.consumer.email) {
     const publicAppUrl = process.env.PUBLIC_APP_URL || "http://localhost:3000";
+    
+    // Send payment failed email to member
     await sendEmail({
       to: subscription.member.consumer.email,
       subject: `Payment Update Required - ${business.name}`,
@@ -752,6 +766,23 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, accountId?: s
         portalUrl: `${publicAppUrl}/${business.slug}/portal`,
       }),
     });
+
+    // Notify business owner of payment failure
+    if (business.contactEmail) {
+      await sendBusinessEmail(
+        business.contactEmail,
+        `Payment Failed Alert - ${subscription.member.consumer.name || subscription.member.consumer.email}`,
+        paymentAlertEmail({
+          businessName: business.name,
+          memberName: subscription.member.consumer.name || "Member",
+          memberEmail: subscription.member.consumer.email,
+          planName: subscription.membershipPlan.name,
+          amount: invoice.amount_due,
+          currency: invoice.currency,
+          dashboardUrl: `${publicAppUrl}/dashboard/${business.slug}/members`,
+        })
+      );
+    }
   }
 }
 
@@ -1069,6 +1100,98 @@ function mapSubscriptionStatusToMemberStatus(status: string): "ACTIVE" | "PAST_D
       return "CANCELED";
     default:
       return "ACTIVE";
+  }
+}
+
+/**
+ * Notify business owner of new member signup
+ */
+async function notifyBusinessOwnerNewMember(
+  session: Stripe.Checkout.Session,
+  planId: string
+) {
+  try {
+    const plan = await prisma.plan.findUnique({
+      where: { id: planId },
+      include: { business: true },
+    });
+
+    if (!plan || !plan.business.contactEmail) {
+      console.log(`[Webhook] No business contact email for new member notification`);
+      return;
+    }
+
+    const customerName = session.customer_details?.name || "New Member";
+    const customerEmail = session.customer_email || session.customer_details?.email || "Unknown";
+    const amount = session.amount_total || 0;
+    const currency = session.currency || "usd";
+    const publicAppUrl = process.env.PUBLIC_APP_URL || "http://localhost:3000";
+
+    await sendBusinessEmail(
+      plan.business.contactEmail,
+      `New Member Signup - ${customerName}`,
+      newMemberEmail({
+        businessName: plan.business.name,
+        memberName: customerName,
+        memberEmail: customerEmail,
+        planName: plan.name,
+        amount,
+        currency,
+        dashboardUrl: `${publicAppUrl}/dashboard/${plan.business.slug}/members`,
+      })
+    );
+
+    console.log(`[Webhook] ✉️ Sent new member notification to ${plan.business.contactEmail}`);
+  } catch (error) {
+    console.error(`[Webhook] Failed to send new member notification:`, error);
+    // Don't throw - notification failure shouldn't fail the webhook
+  }
+}
+
+/**
+ * Notify business owner of member churn (cancellation)
+ */
+async function notifyBusinessOwnerMemberChurned(
+  planSubscription: {
+    consumer: { name: string | null; email: string };
+    plan: {
+      name: string;
+      business: { name: string; slug: string | null; contactEmail: string | null };
+    };
+    createdAt: Date;
+  },
+  subscription: Stripe.Subscription
+) {
+  try {
+    if (!planSubscription.plan.business.contactEmail) {
+      console.log(`[Webhook] No business contact email for churn notification`);
+      return;
+    }
+
+    const publicAppUrl = process.env.PUBLIC_APP_URL || "http://localhost:3000";
+    
+    // Calculate total spent (simplified - ideally would sum transactions)
+    const totalSpent = 0; // TODO: Could query transactions for actual total
+
+    await sendBusinessEmail(
+      planSubscription.plan.business.contactEmail,
+      `Member Cancelled - ${planSubscription.consumer.name || planSubscription.consumer.email}`,
+      memberChurnedEmail({
+        businessName: planSubscription.plan.business.name,
+        memberName: planSubscription.consumer.name || "Member",
+        memberEmail: planSubscription.consumer.email,
+        planName: planSubscription.plan.name,
+        memberSince: planSubscription.createdAt.toLocaleDateString(),
+        totalSpent,
+        currency: "usd",
+        dashboardUrl: `${publicAppUrl}/dashboard/${planSubscription.plan.business.slug}/members`,
+      })
+    );
+
+    console.log(`[Webhook] ✉️ Sent churn notification to ${planSubscription.plan.business.contactEmail}`);
+  } catch (error) {
+    console.error(`[Webhook] Failed to send churn notification:`, error);
+    // Don't throw - notification failure shouldn't fail the webhook
   }
 }
 
