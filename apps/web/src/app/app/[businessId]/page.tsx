@@ -12,6 +12,7 @@ import { ActionItems } from "@/components/dashboard/ActionItems";
 import { GettingStarted } from "@/components/dashboard/GettingStarted";
 import { AlertBanner } from "@/components/dashboard/AlertBanner";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
+import { getStripeClient } from "@wine-club/lib";
 import { Users, DollarSign, TrendingDown, CreditCard } from "lucide-react";
 
 export default async function BusinessDashboardPage({
@@ -173,25 +174,54 @@ export default async function BusinessDashboardPage({
     },
   });
 
-  // Get this month's revenue
-  const thisMonthRevenueResult = await prisma.transaction.aggregate({
-    where: {
-      OR: [
-        { businessId: business.id },
-        {
-          subscription: {
-            member: {
-              businessId: business.id,
-            },
-          },
-        },
-      ],
-      createdAt: { gte: thisMonthStart },
-      NOT: { type: "REFUND" },
-    },
-    _sum: { amount: true },
-  });
-  const thisMonthRevenue = thisMonthRevenueResult._sum.amount || 0;
+  // Get revenue from Stripe invoices (source of truth)
+  let thisMonthRevenue = 0;
+  let monthlyRevenue: Array<{ month: string; revenue: number }> = [];
+  let mrrHistory: Array<{ month: string; mrr: number }> = [];
+
+  if (business.stripeAccountId) {
+    try {
+      const stripe = getStripeClient(business.stripeAccountId);
+      const invoices = await stripe.invoices.list({
+        limit: 100,
+        status: "paid",
+        created: { gte: Math.floor(twelveMonthsAgo.getTime() / 1000) },
+      });
+
+      // Group invoices by month
+      const monthlyRevenueMap = new Map<string, number>();
+      
+      for (const invoice of invoices.data) {
+        const date = new Date(invoice.created * 1000);
+        const monthKey = date.toISOString().slice(0, 7); // YYYY-MM
+        monthlyRevenueMap.set(
+          monthKey,
+          (monthlyRevenueMap.get(monthKey) || 0) + invoice.amount_paid
+        );
+
+        // Calculate this month's revenue
+        if (date >= thisMonthStart) {
+          thisMonthRevenue += invoice.amount_paid;
+        }
+      }
+
+      // Convert to sorted array
+      monthlyRevenue = Array.from(monthlyRevenueMap.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, revenue]) => ({ month, revenue }));
+
+      // Generate MRR history from revenue
+      const lastMonthRevenueValue = monthlyRevenue[monthlyRevenue.length - 1]?.revenue || 0;
+      mrrHistory = monthlyRevenue.map(({ month, revenue }) => ({
+        month,
+        mrr: lastMonthRevenueValue > 0 
+          ? Math.round((revenue / lastMonthRevenueValue) * currentMrr)
+          : currentMrr,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch Stripe invoices for charts:", error);
+    }
+  }
 
   // Get total members (all time)
   const allSubscriptions = await prisma.planSubscription.findMany({
@@ -263,48 +293,8 @@ export default async function BusinessDashboardPage({
     take: 5,
   });
 
-  // Get monthly revenue for charts (last 12 months)
-  // Query transactions linked through subscriptions (handles legacy data without businessId)
+  // Date for Stripe query
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 12, 1);
-  const monthlyTransactions = await prisma.transaction.findMany({
-    where: {
-      OR: [
-        { businessId: business.id },
-        {
-          subscription: {
-            member: {
-              businessId: business.id,
-            },
-          },
-        },
-      ],
-      createdAt: { gte: twelveMonthsAgo },
-      // Exclude refunds from revenue
-      NOT: { type: "REFUND" },
-    },
-    select: { amount: true, createdAt: true },
-    orderBy: { createdAt: "asc" },
-  });
-
-  // Group transactions by month
-  const monthlyRevenueMap = new Map<string, number>();
-  monthlyTransactions.forEach(tx => {
-    const monthKey = tx.createdAt.toISOString().slice(0, 7);
-    monthlyRevenueMap.set(monthKey, (monthlyRevenueMap.get(monthKey) || 0) + tx.amount);
-  });
-
-  const monthlyRevenue = Array.from(monthlyRevenueMap.entries())
-    .map(([month, revenue]) => ({ month, revenue }))
-    .slice(-12);
-
-  // Generate MRR history from monthly revenue
-  const lastMonthRevenueValue = monthlyRevenue[monthlyRevenue.length - 1]?.revenue || 0;
-  const mrrHistory = monthlyRevenue.map(({ month, revenue }) => ({
-    month,
-    mrr: lastMonthRevenueValue > 0 
-      ? Math.round((revenue / lastMonthRevenueValue) * currentMrr)
-      : currentMrr,
-  }));
 
   // Build activity feed
   const activities: ActivityItem[] = [
