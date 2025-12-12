@@ -76,12 +76,24 @@ export const GET = withMiddleware(async (req: NextRequest) => {
   });
   const filename = `${slugify(business?.name || "members")}-members-${new Date().toISOString().split("T")[0]}.csv`;
 
-  return new Response(csvContent, {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/7ebd8bc0-6508-4d0d-819b-62165c5218ee',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'export/route.ts:beforeResponse',message:'CSV content and headers',data:{csvContentLength:csvContent.length,csvPreview:csvContent.slice(0,200),filename},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2-H3'})}).catch(()=>{});
+  // #endregion
+
+  // Create response with CSV headers
+  const response = new NextResponse(csvContent, {
+    status: 200,
     headers: {
-      "Content-Type": "text/csv",
+      "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
+
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/7ebd8bc0-6508-4d0d-819b-62165c5218ee',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'export/route.ts:afterResponse',message:'Response created',data:{contentType:response.headers.get('Content-Type'),contentDisposition:response.headers.get('Content-Disposition')},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H2'})}).catch(()=>{});
+  // #endregion
+
+  return response;
 });
 
 /**
