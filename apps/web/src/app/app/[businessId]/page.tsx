@@ -186,8 +186,8 @@ export default async function BusinessDashboardPage({
           },
         },
       ],
-      type: { in: ["CHARGE", "Payment"] as any },
       createdAt: { gte: thisMonthStart },
+      NOT: { type: "REFUND" },
     },
     _sum: { amount: true },
   });
@@ -264,14 +264,12 @@ export default async function BusinessDashboardPage({
   });
 
   // Get monthly revenue for charts (last 12 months)
-  // Query transactions that either have businessId directly OR are linked through subscriptions
+  // Query transactions linked through subscriptions (handles legacy data without businessId)
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 12, 1);
   const monthlyTransactions = await prisma.transaction.findMany({
     where: {
       OR: [
-        // Direct businessId match
         { businessId: business.id },
-        // Or through subscription -> member -> business chain
         {
           subscription: {
             member: {
@@ -280,9 +278,9 @@ export default async function BusinessDashboardPage({
           },
         },
       ],
-      // Accept multiple transaction types (CHARGE or legacy "Payment")
-      type: { in: ["CHARGE", "Payment"] as any },
       createdAt: { gte: twelveMonthsAgo },
+      // Exclude refunds from revenue
+      NOT: { type: "REFUND" },
     },
     select: { amount: true, createdAt: true },
     orderBy: { createdAt: "asc" },
