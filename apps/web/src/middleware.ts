@@ -5,9 +5,12 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
+  const hostname = getHostname(request);
+  const isDashboardHost = isDashboardHostname(hostname);
+  const effectivePathname = getDashboardPathname(pathname, isDashboardHost);
 
   // Block debug/admin/test routes in production (unless explicitly enabled)
-  if (isDebugRoute(pathname) && !isAdminAccessAllowed()) {
+  if (isDebugRoute(effectivePathname) && !isAdminAccessAllowed()) {
     return NextResponse.json(
       { error: "Not available" },
       { status: 404 }
@@ -15,21 +18,27 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protect /app routes (B2B dashboard)
-  if (pathname.startsWith("/app")) {
+  if (effectivePathname.startsWith("/app")) {
     if (!token) {
       const signInUrl = new URL("/auth/signin", request.url);
-      signInUrl.searchParams.set("callbackUrl", pathname);
+      signInUrl.searchParams.set("callbackUrl", effectivePathname);
       return NextResponse.redirect(signInUrl);
     }
 
     // Check business access for /app/:businessId/* routes
-    const businessIdMatch = pathname.match(/^\/app\/([^\/]+)/);
+    const businessIdMatch = effectivePathname.match(/^\/app\/([^\/]+)/);
     if (businessIdMatch && businessIdMatch[1] !== "switch") {
       const requestedBusinessId = businessIdMatch[1];
       
       // TODO: Verify user has access to this business
       // For now, we allow if user is authenticated
     }
+  }
+
+  if (isDashboardHost && effectivePathname !== pathname) {
+    const url = request.nextUrl.clone();
+    url.pathname = effectivePathname;
+    return NextResponse.rewrite(url);
   }
 
   return NextResponse.next();
@@ -57,13 +66,43 @@ function isDebugRoute(pathname: string): boolean {
   );
 }
 
+function getHostname(request: NextRequest): string {
+  const host = request.headers.get("host") || "";
+  return host.split(":")[0].toLowerCase();
+}
+
+function isDashboardHostname(hostname: string): boolean {
+  return hostname === "dashboard.localhost" || hostname.startsWith("dashboard.");
+}
+
+function getDashboardPathname(pathname: string, isDashboardHost: boolean): string {
+  if (!isDashboardHost || isDashboardPath(pathname)) {
+    return pathname;
+  }
+
+  if (pathname === "/") {
+    return "/app";
+  }
+
+  return `/app${pathname}`;
+}
+
+function isDashboardPath(pathname: string): boolean {
+  return (
+    pathname.startsWith("/app") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/_next") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml"
+  );
+}
+
 export const config = {
   matcher: [
-    "/app/:path*",
-    "/admin/:path*",
-    "/api/debug/:path*",
-    "/api/admin/:path*",
-    "/api/test/:path*",
+    "/((?!_next/|favicon.ico|robots.txt|sitemap.xml).*)",
   ],
 };
 

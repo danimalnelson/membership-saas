@@ -4,50 +4,50 @@
 
 @layer base {
   :root {
-    /* Simpler color palette - more utilitarian and product-focused */
-    --background: 0 0% 100%; /* Pure white background */
-    --foreground: 0 0% 9%; /* #181818 base text */
+    /* Light mode - kept for reference but app will use dark */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
-    --primary: 0 0% 9%; /* #181818 primary */
+    --primary: 0 0% 9%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 96%; /* Light grey */
+    --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 38%; /* #606060 muted text */
+    --muted-foreground: 0 0% 38%;
     --accent: 0 0% 96%;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 88%; /* Subtle border */
+    --border: 0 0% 88%;
     --input: 0 0% 88%;
     --ring: 0 0% 9%;
-    --radius: 0.75rem; /* Slightly larger border radius for modern feel */
+    --radius: 0.5rem;
   }
 
   .dark {
-    /* Dark mode theme with deep blacks and subtle contrast */
-    --background: 0 0% 12%; /* Deep charcoal background */
-    --foreground: 0 0% 95%; /* Soft white */
-    --card: 0 0% 16%; /* Elevated card surface */
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 16%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 0 0% 95%; /* Light primary for dark mode */
-    --primary-foreground: 0 0% 12%;
-    --secondary: 0 0% 20%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 0 0% 28%; /* Subtle warm accent */
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 95%;
-    --border: 0 0% 24%; /* Subtle borders */
-    --input: 0 0% 24%;
-    --ring: 0 0% 50%;
+    /* Linear-inspired dark theme */
+    --background: 220 13% 5%; /* #0e0f11 - Linear's background */
+    --foreground: 220 10% 90%; /* #e2e4e9 - Light text */
+    --card: 220 10% 8%; /* Slightly elevated surface */
+    --card-foreground: 220 10% 90%;
+    --popover: 220 10% 10%;
+    --popover-foreground: 220 10% 90%;
+    --primary: 217 91% 60%; /* Blue accent */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 10% 14%;
+    --secondary-foreground: 220 10% 90%;
+    --muted: 220 10% 14%;
+    --muted-foreground: 220 10% 50%; /* #6b6f76 - Muted text */
+    --accent: 220 10% 14%;
+    --accent-foreground: 220 10% 90%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 10% 16%; /* Subtle borders */
+    --input: 220 10% 16%;
+    --ring: 217 91% 60%;
   }
 }
 
@@ -59,13 +59,11 @@
     @apply bg-background text-foreground;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-feature-settings: 'rlig' 1, 'calt' 1;
-    font-weight: 400; /* Default font weight */
+    font-weight: 400;
   }
   
-  /* Refined typography with tighter letter spacing for titles */
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight;
     font-weight: 500;
   }
 }
-
