@@ -7,7 +7,7 @@ import { LinearMobileSidebar } from "./linear-mobile-sidebar";
 interface Business {
   id: string;
   name: string;
-  slug: string | null;
+  slug: string;
   logoUrl?: string | null;
 }
 

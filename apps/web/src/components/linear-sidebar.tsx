@@ -28,7 +28,7 @@ import {
 interface Business {
   id: string;
   name: string;
-  slug: string | null;
+  slug: string;
   logoUrl?: string | null;
 }
 
@@ -54,7 +54,7 @@ export const LinearSidebar = memo(function LinearSidebar({
   userEmail 
 }: LinearSidebarProps) {
   const pathname = usePathname();
-  const basePath = `/app/${businessId}`;
+  const basePath = `/app/${business.slug}`;
   const [isBusinessDropdownOpen, setIsBusinessDropdownOpen] = useState(false);
   const [isTeamExpanded, setIsTeamExpanded] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -147,7 +147,7 @@ export const LinearSidebar = memo(function LinearSidebar({
                 {otherBusinesses.map((b) => (
                   <Link
                     key={b.id}
-                    href={`/app/${b.id}`}
+                    href={`/app/${b.slug}`}
                     onClick={() => setIsBusinessDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.04] transition-colors"
                   >

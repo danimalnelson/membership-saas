@@ -44,7 +44,7 @@ export default function OnboardingReturnPage() {
       // If onboarding complete, redirect to dashboard
       if (data.status === "ONBOARDING_COMPLETE" && data.canAccessDashboard) {
         setTimeout(() => {
-          router.push(`/app/${data.businessId}`);
+          router.push(`/app/${data.slug || data.businessId}`);
         }, 2000);
       }
     } catch (err: any) {

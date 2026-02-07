@@ -24,7 +24,7 @@ import {
 interface Business {
   id: string;
   name: string;
-  slug: string | null;
+  slug: string;
   logoUrl?: string | null;
 }
 
@@ -54,7 +54,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
   userEmail 
 }: LinearMobileSidebarProps) {
   const pathname = usePathname();
-  const basePath = `/app/${businessId}`;
+  const basePath = `/app/${business.slug}`;
   const [isOpen, setIsOpen] = useState(false);
 
   const isActive = (href: string) => {
@@ -256,7 +256,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
                 {otherBusinesses.map((b) => (
                   <Link
                     key={b.id}
-                    href={`/app/${b.id}`}
+                    href={`/app/${b.slug}`}
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-white/[0.04] transition-colors"
                   >

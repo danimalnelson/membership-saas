@@ -21,6 +21,7 @@ export interface ActivityItem {
 interface ActivityFeedProps {
   activities: ActivityItem[];
   businessId: string;
+  businessSlug?: string;
   maxItems?: number;
   showViewAll?: boolean;
 }
@@ -42,9 +43,11 @@ const ACTIVITY_COLORS: Record<ActivityType, string> = {
 export function ActivityFeed({
   activities,
   businessId,
+  businessSlug,
   maxItems = 8,
   showViewAll = true,
 }: ActivityFeedProps) {
+  const slugOrId = businessSlug || businessId;
   const displayActivities = activities.slice(0, maxItems);
 
   return (
@@ -54,7 +57,7 @@ export function ActivityFeed({
           <CardTitle className="text-lg">Recent Activity</CardTitle>
           {showViewAll && activities.length > 0 && (
             <Link
-              href={`/app/${businessId}/members`}
+              href={`/app/${slugOrId}/members`}
               className="text-sm text-primary hover:underline"
             >
               View all
@@ -76,7 +79,7 @@ export function ActivityFeed({
               <ActivityRow
                 key={activity.id}
                 activity={activity}
-                businessId={businessId}
+                businessSlug={slugOrId}
               />
             ))}
           </div>
@@ -88,10 +91,10 @@ export function ActivityFeed({
 
 function ActivityRow({
   activity,
-  businessId,
+  businessSlug,
 }: {
   activity: ActivityItem;
-  businessId: string;
+  businessSlug: string;
 }) {
   const timeAgo = getRelativeTime(activity.timestamp);
 
@@ -115,7 +118,7 @@ function ActivityRow({
   if (activity.metadata?.consumerId) {
     return (
       <Link
-        href={`/app/${businessId}/members/${activity.metadata.consumerId}`}
+        href={`/app/${businessSlug}/members/${activity.metadata.consumerId}`}
         className="block hover:opacity-80 transition-opacity"
       >
         {content}

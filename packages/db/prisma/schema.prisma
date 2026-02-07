@@ -72,7 +72,7 @@ model VerificationToken {
 model Business {
   id                      String   @id @default(cuid())
   name                    String
-  slug                    String?  @unique // Nullable until onboarding complete
+  slug                    String   @unique
   status                  BusinessStatus @default(CREATED)
   logoUrl                 String?
   description             String?

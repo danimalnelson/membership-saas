@@ -3,13 +3,14 @@ import { redirect, notFound } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@wine-club/db";
 import { LinearLayout } from "@/components/linear-layout";
+import { BusinessProvider } from "@/contexts/business-context";
 
 export default async function BusinessLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ businessId: string }>;
+  params: Promise<{ businessSlug: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -17,12 +18,12 @@ export default async function BusinessLayout({
     redirect("/auth/signin");
   }
 
-  const { businessId } = await params;
+  const { businessSlug } = await params;
   
-  // Fetch current business
+  // Fetch current business by slug
   const business = await prisma.business.findFirst({
     where: {
-      id: businessId,
+      slug: businessSlug,
       users: {
         some: {
           userId: session.user.id,
@@ -53,14 +54,15 @@ export default async function BusinessLayout({
   });
 
   return (
-    <LinearLayout
-      businessId={businessId}
-      business={business}
-      allBusinesses={allBusinesses}
-      userEmail={session.user.email || undefined}
-    >
-      {children}
-    </LinearLayout>
+    <BusinessProvider businessId={business.id} businessSlug={business.slug}>
+      <LinearLayout
+        businessId={business.id}
+        business={business}
+        allBusinesses={allBusinesses}
+        userEmail={session.user.email || undefined}
+      >
+        {children}
+      </LinearLayout>
+    </BusinessProvider>
   );
 }
-

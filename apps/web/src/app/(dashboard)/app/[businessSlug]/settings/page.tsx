@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Button,
@@ -10,14 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@wine-club/ui";
+import { useBusinessContext } from "@/contexts/business-context";
 
-export default function SettingsPage({
-  params,
-}: {
-  params: Promise<{ businessId: string }>;
-}) {
-  const unwrappedParams = use(params);
-  const businessId = unwrappedParams.businessId;
+export default function SettingsPage() {
+  const { businessId } = useBusinessContext();
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);

@@ -7,29 +7,25 @@ import { MembershipForm } from "@/components/memberships/MembershipForm";
 export default async function CreateMembershipPage({
   params,
 }: {
-  params: Promise<{ businessId: string }>;
+  params: Promise<{ businessSlug: string }>;
 }) {
-  const { businessId } = await params;
+  const { businessSlug } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
     redirect("/auth/signin");
   }
 
-  // Verify business access
-  const businessAccess = await prisma.businessUser.findFirst({
+  // Fetch business by slug and verify access
+  const business = await prisma.business.findFirst({
     where: {
-      businessId,
-      userId: session.user.id,
+      slug: businessSlug,
+      users: {
+        some: {
+          userId: session.user.id,
+        },
+      },
     },
-  });
-
-  if (!businessAccess) {
-    return notFound();
-  }
-
-  const business = await prisma.business.findUnique({
-    where: { id: businessId },
   });
 
   if (!business) {
@@ -38,7 +34,7 @@ export default async function CreateMembershipPage({
 
   return (
     <div className="max-w-4xl mx-auto">
-      <MembershipForm businessId={businessId} />
+      <MembershipForm businessId={business.id} />
     </div>
   );
 }

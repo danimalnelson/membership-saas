@@ -8,7 +8,7 @@ import { PlanForm } from "@/components/plans/PlanForm";
 export default async function EditPlanPage({
   params,
 }: {
-  params: Promise<{ businessId: string; planId: string }>;
+  params: Promise<{ businessSlug: string; planId: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -16,12 +16,12 @@ export default async function EditPlanPage({
     redirect("/auth/signin");
   }
 
-  const { businessId, planId } = await params;
+  const { businessSlug, planId } = await params;
 
   // Get business and verify access
   const business = await prisma.business.findFirst({
     where: {
-      id: businessId,
+      slug: businessSlug,
       users: {
         some: {
           userId: session.user.id,
@@ -84,7 +84,7 @@ export default async function EditPlanPage({
             <h1 className="text-2xl font-semibold text-foreground mb-1">Edit Plan</h1>
             <p className="text-sm text-muted-foreground">{plan.name}</p>
           </div>
-          <Link href={`/app/${business.id}/plans`}>
+          <Link href={`/app/${business.slug}/plans`}>
             <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               ← Back to Plans
             </button>

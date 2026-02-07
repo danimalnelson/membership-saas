@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@wine-club/ui";
+import { useBusinessContext } from "@/contexts/business-context";
 
 interface Membership {
   id: string;
@@ -83,6 +84,7 @@ export function PlanForm({
   planId,
 }: PlanFormProps) {
   const router = useRouter();
+  const { businessSlug } = useBusinessContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<PlanFormData>({
@@ -186,7 +188,7 @@ export function PlanForm({
       const data = await response.json();
 
       // Redirect to plans list
-      router.push(`/app/${businessId}/plans`);
+      router.push(`/app/${businessSlug}/plans`);
       router.refresh();
     } catch (err: any) {
       setError(err.message);

@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Button,
@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@wine-club/ui";
+import { useBusinessContext } from "@/contexts/business-context";
 
 interface Alert {
   id: string;
@@ -51,12 +52,8 @@ const SEVERITY_TEXT_COLORS = {
   CRITICAL: "text-red-800 dark:text-red-200",
 };
 
-export default function AlertsPage({
-  params,
-}: {
-  params: Promise<{ businessId: string }>;
-}) {
-  const { businessId } = use(params);
+export default function AlertsPage() {
+  const { businessId, businessSlug } = useBusinessContext();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AlertsResponse | null>(null);
@@ -111,7 +108,7 @@ export default function AlertsPage({
 
   const handleNavigate = (alert: Alert) => {
     if (alert.type === "MISSING_DYNAMIC_PRICE" && alert.metadata?.planId) {
-      router.push(`/app/${businessId}/plans/${alert.metadata.planId}/edit`);
+      router.push(`/app/${businessSlug}/plans/${alert.metadata.planId}/edit`);
     }
   };
 

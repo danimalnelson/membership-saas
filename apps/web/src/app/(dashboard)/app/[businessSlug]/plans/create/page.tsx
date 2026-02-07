@@ -9,7 +9,7 @@ export default async function CreatePlanPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ businessId: string }>;
+  params: Promise<{ businessSlug: string }>;
   searchParams: Promise<{ membershipId?: string }>;
 }) {
   const session = await getServerSession(authOptions);
@@ -18,12 +18,12 @@ export default async function CreatePlanPage({
     redirect("/auth/signin");
   }
 
-  const { businessId } = await params;
+  const { businessSlug } = await params;
   const { membershipId } = await searchParams;
 
   const business = await prisma.business.findFirst({
     where: {
-      id: businessId,
+      slug: businessSlug,
       users: {
         some: {
           userId: session.user.id,
@@ -59,7 +59,7 @@ export default async function CreatePlanPage({
             You need to connect your Stripe account before creating plans.
             Plans create products and prices in your Stripe account.
           </p>
-          <Link href={`/app/${business.id}/settings`}>
+          <Link href={`/app/${business.slug}/settings`}>
             <button className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
               Go to Settings
             </button>
@@ -81,7 +81,7 @@ export default async function CreatePlanPage({
             Plans are organized within memberships. Create at least one
             membership before adding plans.
           </p>
-          <Link href={`/app/${business.id}/memberships/create`}>
+          <Link href={`/app/${business.slug}/memberships/create`}>
             <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
               Create Membership
             </button>

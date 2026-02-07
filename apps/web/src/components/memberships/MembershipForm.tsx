@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@wine-club/ui";
 import useSWR from "swr";
+import { useBusinessContext } from "@/contexts/business-context";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -34,6 +35,7 @@ interface MembershipFormProps {
 export const MembershipForm = React.memo(
   ({ businessId, membership }: MembershipFormProps) => {
     const router = useRouter();
+    const { businessSlug } = useBusinessContext();
     const isEdit = !!membership;
 
     // Form state
@@ -188,7 +190,7 @@ export const MembershipForm = React.memo(
           }
 
           // Success - redirect to memberships list
-          router.push(`/app/${businessId}/memberships`);
+          router.push(`/app/${businessSlug}/memberships`);
           router.refresh();
         } catch (err) {
           setError(err instanceof Error ? err.message : "An error occurred");
@@ -698,7 +700,7 @@ export const MembershipForm = React.memo(
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push(`/app/${businessId}/memberships`)}
+              onClick={() => router.push(`/app/${businessSlug}/memberships`)}
               disabled={isSubmitting}
             >
               Cancel

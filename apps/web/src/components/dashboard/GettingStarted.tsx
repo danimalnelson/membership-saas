@@ -4,7 +4,7 @@ import { Check, Circle, ArrowRight } from "lucide-react";
 
 interface GettingStartedProps {
   businessId: string;
-  businessSlug: string | null;
+  businessSlug: string;
   stripeConnected: boolean;
   hasPlans: boolean;
   hasMembers: boolean;
@@ -37,14 +37,14 @@ export function GettingStarted({
       title: "Connect Stripe",
       description: "Enable payment processing",
       completed: stripeConnected,
-      href: !stripeConnected ? `/app/${businessId}/settings` : undefined,
+      href: !stripeConnected ? `/app/${businessSlug}/settings` : undefined,
     },
     {
       id: "create-plan",
       title: "Create a membership plan",
       description: "Set up your first membership tier",
       completed: hasPlans,
-      href: !hasPlans ? `/app/${businessId}/memberships/create` : undefined,
+      href: !hasPlans ? `/app/${businessSlug}/memberships/create` : undefined,
     },
     {
       id: "first-member",

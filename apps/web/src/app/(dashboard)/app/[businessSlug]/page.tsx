@@ -17,7 +17,7 @@ import { Users, DollarSign, TrendingDown, CreditCard } from "lucide-react";
 export default async function BusinessDashboardPage({
   params,
 }: {
-  params: Promise<{ businessId: string }>;
+  params: Promise<{ businessSlug: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -25,10 +25,10 @@ export default async function BusinessDashboardPage({
     redirect("/auth/signin");
   }
 
-  const { businessId } = await params;
+  const { businessSlug } = await params;
   const business = await prisma.business.findFirst({
     where: {
-      id: businessId,
+      slug: businessSlug,
       users: {
         some: {
           userId: session.user.id,
@@ -380,7 +380,7 @@ export default async function BusinessDashboardPage({
         )}
 
         {/* Alert Banner for unresolved alerts */}
-        <AlertBanner alerts={unresolvedAlerts} businessId={business.id} />
+        <AlertBanner alerts={unresolvedAlerts} businessId={business.id} businessSlug={business.slug} />
 
         {/* Getting Started (only shows if not complete) */}
         <div className="mb-6">
@@ -413,21 +413,21 @@ export default async function BusinessDashboardPage({
               label: "vs last week",
             }}
             icon={<Users className="h-4 w-4" />}
-            href={`/app/${business.id}/members`}
+            href={`/app/${business.slug}/members`}
           />
           <MetricCard
             title="Failed Payments"
             value={pastDueCount}
             description={pastDueCount > 0 ? "Needs attention" : "All good"}
             icon={<CreditCard className="h-4 w-4" />}
-            href={pastDueCount > 0 ? `/app/${business.id}/members?status=past_due` : undefined}
+            href={pastDueCount > 0 ? `/app/${business.slug}/members?status=past_due` : undefined}
           />
           <MetricCard
             title="Revenue This Month"
             value={formatCurrency(thisMonthRevenue, business.currency)}
             description={new Date().toLocaleDateString("en-US", { month: "long" })}
             icon={<TrendingDown className="h-4 w-4" />}
-            href={`/app/${business.id}/transactions`}
+            href={`/app/${business.slug}/transactions`}
           />
         </div>
 
@@ -437,6 +437,7 @@ export default async function BusinessDashboardPage({
           <ActivityFeed
             activities={activities}
             businessId={business.id}
+            businessSlug={business.slug}
             maxItems={6}
           />
 
@@ -493,7 +494,7 @@ export default async function BusinessDashboardPage({
                 Preview page →
               </a>
               <Link
-                href={`/app/${business.id}/settings`}
+                href={`/app/${business.slug}/settings`}
                 className="text-sm text-muted-foreground hover:underline"
               >
                 Customize

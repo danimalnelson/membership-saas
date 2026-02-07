@@ -12,7 +12,7 @@ import { MemberNotes } from "@/components/members/MemberNotes";
 export default async function MemberDetailPage({
   params,
 }: {
-  params: Promise<{ businessId: string; consumerId: string }>;
+  params: Promise<{ businessSlug: string; consumerId: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -20,12 +20,12 @@ export default async function MemberDetailPage({
     redirect("/auth/signin");
   }
 
-  const { businessId, consumerId } = await params;
+  const { businessSlug, consumerId } = await params;
 
   // Verify business access
   const business = await prisma.business.findFirst({
     where: {
-      id: businessId,
+      slug: businessSlug,
       users: {
         some: {
           userId: session.user.id,
@@ -95,7 +95,7 @@ export default async function MemberDetailPage({
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-6 flex items-center gap-4">
-        <Link href={`/app/${business.id}/members`}>
+        <Link href={`/app/${business.slug}/members`}>
           <button className="text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -113,7 +113,7 @@ export default async function MemberDetailPage({
             <div className="flex items-center justify-between">
               <CardTitle>Member Information</CardTitle>
               <EditMemberInfoDialog
-                businessId={businessId}
+                businessId={business.id}
                 consumerId={consumer.id}
                 initialName={consumer.name}
                 initialPhone={consumer.phone}

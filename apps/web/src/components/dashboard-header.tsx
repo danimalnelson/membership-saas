@@ -9,7 +9,7 @@ interface DashboardHeaderProps {
   business: {
     id: string;
     name: string;
-    slug: string | null;
+    slug: string;
     logoUrl?: string | null;
   };
   userEmail?: string;
@@ -53,19 +53,19 @@ export const DashboardHeader = memo(function DashboardHeader({ business, userEma
         </div>
         
         <nav className="flex gap-6">
-          <Link href={`/app/${business.id}`} className="text-sm font-medium border-b-2 border-primary pb-2">
+          <Link href={`/app/${business.slug}`} className="text-sm font-medium border-b-2 border-primary pb-2">
             Overview
           </Link>
-          <Link href={`/app/${business.id}/plans`} className="text-sm text-muted-foreground hover:text-foreground pb-2">
+          <Link href={`/app/${business.slug}/plans`} className="text-sm text-muted-foreground hover:text-foreground pb-2">
             Plans
           </Link>
-          <Link href={`/app/${business.id}/members`} className="text-sm text-muted-foreground hover:text-foreground pb-2">
+          <Link href={`/app/${business.slug}/members`} className="text-sm text-muted-foreground hover:text-foreground pb-2">
             Members
           </Link>
-          <Link href={`/app/${business.id}/transactions`} className="text-sm text-muted-foreground hover:text-foreground pb-2">
+          <Link href={`/app/${business.slug}/transactions`} className="text-sm text-muted-foreground hover:text-foreground pb-2">
             Transactions
           </Link>
-          <Link href={`/app/${business.id}/settings`} className="text-sm text-muted-foreground hover:text-foreground pb-2">
+          <Link href={`/app/${business.slug}/settings`} className="text-sm text-muted-foreground hover:text-foreground pb-2">
             Settings
           </Link>
         </nav>

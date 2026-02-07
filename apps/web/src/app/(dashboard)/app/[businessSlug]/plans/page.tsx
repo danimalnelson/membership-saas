@@ -9,7 +9,7 @@ import { PlanStatusBadge } from "@/components/plans/PlanStatusBadge";
 export default async function PlansPage({
   params,
 }: {
-  params: Promise<{ businessId: string }>;
+  params: Promise<{ businessSlug: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -17,10 +17,10 @@ export default async function PlansPage({
     redirect("/auth/signin");
   }
 
-  const { businessId } = await params;
+  const { businessSlug } = await params;
   const business = await prisma.business.findFirst({
     where: {
-      id: businessId,
+      slug: businessSlug,
       users: {
         some: {
           userId: session.user.id,
@@ -67,7 +67,7 @@ export default async function PlansPage({
             Manage your membership plans and pricing
           </p>
         </div>
-        <Link href={`/app/${businessId}/memberships`}>
+        <Link href={`/app/${business.slug}/memberships`}>
           <Button variant="outline" size="sm">Manage Memberships</Button>
         </Link>
       </div>
@@ -82,7 +82,7 @@ export default async function PlansPage({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href={`/app/${businessId}/settings`}>
+              <Link href={`/app/${business.slug}/settings`}>
                 <Button>Go to Settings</Button>
               </Link>
             </CardContent>
@@ -99,7 +99,7 @@ export default async function PlansPage({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href={`/app/${businessId}/memberships/create`}>
+              <Link href={`/app/${business.slug}/memberships/create`}>
                 <Button>Create Your First Membership</Button>
               </Link>
             </CardContent>
@@ -121,7 +121,7 @@ export default async function PlansPage({
                       </p>
                     )}
                   </div>
-                  <Link href={`/app/${businessId}/plans/create?membershipId=${membership.id}`}>
+                  <Link href={`/app/${business.slug}/plans/create?membershipId=${membership.id}`}>
                     <Button size="sm">+ Add Plan</Button>
                   </Link>
                 </div>
@@ -133,7 +133,7 @@ export default async function PlansPage({
                       <p className="text-muted-foreground mb-4">
                         No plans in this membership yet
                       </p>
-                      <Link href={`/app/${businessId}/plans/create?membershipId=${membership.id}`}>
+                      <Link href={`/app/${business.slug}/plans/create?membershipId=${membership.id}`}>
                         <Button size="sm">Create First Plan</Button>
                       </Link>
                     </CardContent>
@@ -143,7 +143,7 @@ export default async function PlansPage({
                     {membership.plans.map((plan) => (
                       <Link
                         key={plan.id}
-                        href={`/app/${businessId}/plans/${plan.id}/edit`}
+                        href={`/app/${business.slug}/plans/${plan.id}/edit`}
                       >
                         <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                           <CardHeader>

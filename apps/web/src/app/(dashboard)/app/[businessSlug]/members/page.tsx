@@ -9,7 +9,7 @@ import { Download } from "lucide-react";
 export default async function MembersPage({
   params,
 }: {
-  params: Promise<{ businessId: string }>;
+  params: Promise<{ businessSlug: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -17,10 +17,10 @@ export default async function MembersPage({
     redirect("/auth/signin");
   }
 
-  const { businessId } = await params;
+  const { businessSlug } = await params;
   const business = await prisma.business.findFirst({
     where: {
-      id: businessId,
+      slug: businessSlug,
       users: {
         some: {
           userId: session.user.id,
@@ -214,7 +214,7 @@ export default async function MembersPage({
                       </div>
 
                       <div>
-                        <Link href={`/app/${business.id}/members/${member.consumer.id}`}>
+                        <Link href={`/app/${business.slug}/members/${member.consumer.id}`}>
                           <button className="px-4 py-2 text-sm border rounded-md hover:bg-accent">
                             View Details
                           </button>

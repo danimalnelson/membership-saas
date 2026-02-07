@@ -12,6 +12,7 @@ interface Alert {
 interface AlertBannerProps {
   alerts: Alert[];
   businessId: string;
+  businessSlug?: string;
 }
 
 const SEVERITY_STYLES: Record<string, { bg: string; border: string; text: string }> = {
@@ -37,7 +38,9 @@ const SEVERITY_STYLES: Record<string, { bg: string; border: string; text: string
   },
 };
 
-export function AlertBanner({ alerts, businessId }: AlertBannerProps) {
+export function AlertBanner({ alerts, businessId, businessSlug }: AlertBannerProps) {
+  const slugOrId = businessSlug || businessId;
+
   if (alerts.length === 0) {
     return null;
   }
@@ -66,7 +69,7 @@ export function AlertBanner({ alerts, businessId }: AlertBannerProps) {
                 : `${alerts.length} items need your attention`}
             </h3>
             <Link
-              href={`/app/${businessId}/alerts`}
+              href={`/app/${slugOrId}/alerts`}
               className={`text-sm font-medium ${styles.text} hover:underline whitespace-nowrap`}
             >
               View all

@@ -173,7 +173,7 @@ function SuccessContent() {
 
             <div className="flex justify-center pt-4">
               <Button 
-                onClick={() => router.push(`/app/${businessId}`)}
+                onClick={() => router.push(`/app/${businessSlug || businessId}`)}
                 size="lg"
                 className="min-w-64"
                 disabled={status !== "ONBOARDING_COMPLETE"}

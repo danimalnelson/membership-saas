@@ -9,7 +9,7 @@ import { Card, CardContent, formatCurrency, formatDate } from "@wine-club/ui";
 export default async function TransactionsPage({
   params,
 }: {
-  params: Promise<{ businessId: string }>;
+  params: Promise<{ businessSlug: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -17,10 +17,10 @@ export default async function TransactionsPage({
     redirect("/auth/signin");
   }
 
-  const { businessId } = await params;
+  const { businessSlug } = await params;
   const business = await prisma.business.findFirst({
     where: {
-      id: businessId,
+      slug: businessSlug,
       users: {
         some: {
           userId: session.user.id,

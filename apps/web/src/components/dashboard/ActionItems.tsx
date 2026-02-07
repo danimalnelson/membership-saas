@@ -21,7 +21,7 @@ export interface ActionItem {
 
 interface ActionItemsProps {
   businessId: string;
-  businessSlug: string | null;
+  businessSlug: string;
   totalPlans: number;
   totalMembers: number;
   failedPayments: number;
@@ -106,7 +106,7 @@ function ActionItemRow({ action }: { action: ActionItem }) {
 
 function getContextualActions(params: {
   businessId: string;
-  businessSlug: string | null;
+  businessSlug: string;
   totalPlans: number;
   totalMembers: number;
   failedPayments: number;
@@ -122,7 +122,7 @@ function getContextualActions(params: {
       id: "failed-payments",
       title: `${params.failedPayments} failed payment${params.failedPayments > 1 ? "s" : ""}`,
       description: "Members need to update their payment method",
-      href: `/app/${params.businessId}/members?status=past_due`,
+      href: `/app/${params.businessSlug}/members?status=past_due`,
       priority: "high",
       icon: <CreditCard className="h-4 w-4" />,
     });
@@ -134,7 +134,7 @@ function getContextualActions(params: {
       id: "missing-prices",
       title: `Set ${params.missingPriceCount} upcoming price${params.missingPriceCount > 1 ? "s" : ""}`,
       description: "Dynamic pricing plans need next month's price",
-      href: `/app/${params.businessId}/alerts`,
+      href: `/app/${params.businessSlug}/alerts`,
       priority: "high",
       icon: <DollarSign className="h-4 w-4" />,
     });
@@ -147,7 +147,7 @@ function getContextualActions(params: {
       id: "unresolved-alerts",
       title: `${otherAlerts} alert${otherAlerts > 1 ? "s" : ""} need attention`,
       description: "Review and resolve pending alerts",
-      href: `/app/${params.businessId}/alerts`,
+      href: `/app/${params.businessSlug}/alerts`,
       priority: "high",
       icon: <AlertCircle className="h-4 w-4" />,
     });
@@ -159,7 +159,7 @@ function getContextualActions(params: {
       id: "create-plan",
       title: "Create your first plan",
       description: "Set up a membership plan to start accepting members",
-      href: `/app/${params.businessId}/memberships/create`,
+      href: `/app/${params.businessSlug}/memberships/create`,
       priority: "medium",
       icon: <Plus className="h-4 w-4" />,
     });
@@ -171,7 +171,7 @@ function getContextualActions(params: {
       id: "share-page",
       title: "Share your public page",
       description: "Invite your first members to join",
-      href: `/app/${params.businessId}/settings`,
+      href: `/app/${params.businessSlug}/settings`,
       priority: "medium",
       icon: <Share2 className="h-4 w-4" />,
     });

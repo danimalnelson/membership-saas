@@ -9,29 +9,25 @@ import { MembershipStatusBadge } from "@/components/memberships/MembershipStatus
 export default async function MembershipsPage({
   params,
 }: {
-  params: Promise<{ businessId: string }>;
+  params: Promise<{ businessSlug: string }>;
 }) {
-  const { businessId } = await params;
+  const { businessSlug } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
     redirect("/auth/signin");
   }
 
-  // Verify business access
-  const businessAccess = await prisma.businessUser.findFirst({
+  // Fetch business by slug and verify access
+  const business = await prisma.business.findFirst({
     where: {
-      businessId,
-      userId: session.user.id,
+      slug: businessSlug,
+      users: {
+        some: {
+          userId: session.user.id,
+        },
+      },
     },
-  });
-
-  if (!businessAccess) {
-    return notFound();
-  }
-
-  const business = await prisma.business.findUnique({
-    where: { id: businessId },
   });
 
   if (!business) {
@@ -40,7 +36,7 @@ export default async function MembershipsPage({
 
   // Fetch memberships with plan counts
   const memberships = await prisma.membership.findMany({
-    where: { businessId },
+    where: { businessId: business.id },
     include: {
       plans: {
         select: {
@@ -67,7 +63,7 @@ export default async function MembershipsPage({
             Manage your subscription memberships and plans
           </p>
         </div>
-        <Link href={`/app/${businessId}/memberships/create`}>
+        <Link href={`/app/${business.slug}/memberships/create`}>
           <Button size="sm">+ Create Membership</Button>
         </Link>
       </div>
@@ -80,7 +76,7 @@ export default async function MembershipsPage({
               <p className="text-muted-foreground mb-6">
                 Create your first membership to start offering subscription plans.
               </p>
-              <Link href={`/app/${businessId}/memberships/create`}>
+              <Link href={`/app/${business.slug}/memberships/create`}>
                 <Button>+ Create Your First Membership</Button>
               </Link>
             </CardContent>
@@ -95,7 +91,7 @@ export default async function MembershipsPage({
               return (
                 <Link
                   key={membership.id}
-                  href={`/app/${businessId}/memberships/${membership.id}/edit`}
+                  href={`/app/${business.slug}/memberships/${membership.id}/edit`}
                 >
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                     <CardHeader>
