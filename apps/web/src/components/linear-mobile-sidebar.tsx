@@ -45,8 +45,9 @@ const navItems = [
   { href: "/reports", label: "Reports", icon: PieChart },
 ];
 
-const bottomNavItems = [
-  { href: "/settings", label: "Settings", icon: Settings },
+const settingsNavItems = [
+  { href: "/settings", label: "General" },
+  { href: "/settings/branding", label: "Branding" },
 ];
 
 export const LinearMobileSidebar = memo(function LinearMobileSidebar({ 
@@ -184,22 +185,28 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
           {/* Bottom Section */}
           <div className="px-2 pb-4 border-t border-[#eaeaea]">
             <div className="space-y-0.5 py-2">
-              {bottomNavItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
+              {/* Settings sub-nav */}
+              <p className="px-3 py-1.5 text-[11px] text-[#999] uppercase tracking-wide flex items-center gap-1.5">
+                <Settings className="h-3.5 w-3.5" />
+                Settings
+              </p>
+              {settingsNavItems.map((item) => {
+                const fullPath = `${basePath}${item.href}`;
+                const active = item.href === "/settings"
+                  ? pathname === fullPath
+                  : pathname === fullPath || pathname.startsWith(`${fullPath}/`);
                 return (
                   <Link
                     key={item.href}
-                    href={`${basePath}${item.href}`}
+                    href={fullPath}
                     onClick={() => setIsOpen(false)}
                     className={cn(
-                      "flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium transition-colors",
+                      "flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium transition-colors ml-2",
                       active
                         ? "bg-[#f0f0f0] text-[#171717]"
                         : "text-[#666] hover:text-[#171717] hover:bg-[#f5f5f5]"
                     )}
                   >
-                    <Icon className="h-[18px] w-[18px]" />
                     {item.label}
                   </Link>
                 );

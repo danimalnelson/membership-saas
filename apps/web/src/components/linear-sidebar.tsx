@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@wine-club/ui";
 import {
-  LayoutDashboard,
   Users,
   ArrowLeftRight,
   Layers,
@@ -14,14 +13,12 @@ import {
   PieChart,
   Settings,
   HelpCircle,
-  Building2,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   LogOut,
   Check,
-  Plus,
   Inbox,
-  Compass,
 } from "lucide-react";
 
 interface Business {
@@ -47,6 +44,11 @@ const mainNavItems = [
   { href: "/reports", label: "Reports", icon: PieChart },
 ];
 
+const settingsNavItems = [
+  { href: "/settings", label: "General" },
+  { href: "/settings/branding", label: "Branding" },
+];
+
 export const LinearSidebar = memo(function LinearSidebar({ 
   businessId, 
   business, 
@@ -56,15 +58,31 @@ export const LinearSidebar = memo(function LinearSidebar({
   const pathname = usePathname();
   const basePath = `/app/${business.slug}`;
   const [isBusinessDropdownOpen, setIsBusinessDropdownOpen] = useState(false);
-  const [isTeamExpanded, setIsTeamExpanded] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Determine if we're on a settings page
+  const isOnSettingsPage = pathname.startsWith(`${basePath}/settings`);
+  const [showSettingsNav, setShowSettingsNav] = useState(isOnSettingsPage);
+
+  // Sync with route changes
+  useEffect(() => {
+    setShowSettingsNav(isOnSettingsPage);
+  }, [isOnSettingsPage]);
 
   const isActive = (href: string) => {
     if (href === "") {
       return pathname === basePath;
     }
     const fullPath = `${basePath}${href}`;
-    // Exact match or match followed by a slash (to prevent /members matching /memberships)
+    return pathname === fullPath || pathname.startsWith(`${fullPath}/`);
+  };
+
+  const isSettingsActive = (href: string) => {
+    const fullPath = `${basePath}${href}`;
+    // Exact match for /settings (General), startsWith for sub-pages
+    if (href === "/settings") {
+      return pathname === fullPath;
+    }
     return pathname === fullPath || pathname.startsWith(`${fullPath}/`);
   };
 
@@ -87,9 +105,9 @@ export const LinearSidebar = memo(function LinearSidebar({
   const otherBusinesses = allBusinesses.filter(b => b.id !== businessId);
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 z-40 w-[241px] flex flex-col bg-[#fafafa] border-r border-[#eaeaea]">
-      {/* Workspace Header */}
-      <div className="px-3 pt-3 pb-2" ref={dropdownRef}>
+    <aside className="fixed left-0 top-0 bottom-0 z-40 w-[241px] flex flex-col bg-[#fafafa] border-r border-[#eaeaea] overflow-hidden">
+      {/* Workspace Header — stays fixed at top */}
+      <div className="px-3 pt-3 pb-2 shrink-0" ref={dropdownRef}>
         <button
           onClick={() => setIsBusinessDropdownOpen(!isBusinessDropdownOpen)}
           className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#f5f5f5] transition-colors"
@@ -180,53 +198,99 @@ export const LinearSidebar = memo(function LinearSidebar({
         )}
       </div>
 
-      {/* Nav Items */}
-      <nav className="px-2 py-1 flex flex-col gap-0.5">
-        {mainNavItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={`${basePath}${item.href}`}
+      {/* Sliding container for main nav and settings nav */}
+      <div
+        className="flex w-[482px] flex-1 transition-transform duration-200 ease-in-out"
+        style={{ transform: showSettingsNav ? "translateX(-241px)" : "translateX(0)" }}
+      >
+        {/* ============ Panel 1: Main Nav ============ */}
+        <div className="w-[241px] h-full flex flex-col shrink-0">
+          {/* Main Nav Items */}
+          <nav className="px-2 py-1 flex flex-col gap-0.5">
+            {mainNavItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={`${basePath}${item.href}`}
+                  className={cn(
+                    "flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium transition-colors",
+                    active
+                      ? "bg-[#f0f0f0] text-[#171717]"
+                      : "text-[#666] hover:text-black hover:bg-[#f5f5f5]"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+
+            <div className="border-t border-[#eaeaea] mt-[4px] mb-[4px]" />
+
+            <button
+              onClick={() => setShowSettingsNav(true)}
               className={cn(
-                "flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium transition-colors",
-                active
+                "flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium transition-colors w-full",
+                isOnSettingsPage
                   ? "bg-[#f0f0f0] text-[#171717]"
                   : "text-[#666] hover:text-black hover:bg-[#f5f5f5]"
               )}
             >
-              <Icon className="h-4 w-4" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+              <Settings className="h-4 w-4" />
+              <span className="flex-1 text-left">Settings</span>
+              <ChevronRight className="h-3.5 w-3.5 text-[#999]" />
+            </button>
+            <a
+              href="mailto:support@example.com"
+              className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-[#666] hover:text-black hover:bg-[#f5f5f5] transition-colors"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span>Help & Support</span>
+            </a>
+          </nav>
 
-        <div className="border-t border-[#eaeaea] mt-[4px] mb-[4px]" />
+          <div className="flex-1" />
+        </div>
 
-        <Link
-          href={`${basePath}/settings`}
-          className={cn(
-            "flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium transition-colors",
-            isActive("/settings")
-              ? "bg-[#f0f0f0] text-[#171717]"
-              : "text-[#666] hover:text-black hover:bg-[#f5f5f5]"
-          )}
-        >
-          <Settings className="h-4 w-4" />
-          <span>Settings</span>
-        </Link>
-        <a
-          href="mailto:support@example.com"
-          className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-[#666] hover:text-black hover:bg-[#f5f5f5] transition-colors"
-        >
-          <HelpCircle className="h-4 w-4" />
-          <span>Help & Support</span>
-        </a>
-      </nav>
+        {/* ============ Panel 2: Settings Nav ============ */}
+        <div className="w-[241px] h-full flex flex-col shrink-0">
+          {/* Settings Header — full-width back button */}
+          <div className="px-2 pt-1 pb-1">
+            <button
+              onClick={() => setShowSettingsNav(false)}
+              className="w-full flex items-center px-2 h-9 rounded-md hover:bg-[#f5f5f5] transition-colors text-sm font-medium text-[#171717] relative"
+            >
+              <ChevronLeft className="h-4 w-4 text-[#999] absolute left-2" />
+              <span className="flex-1 text-center">Settings</span>
+            </button>
+          </div>
 
-      {/* Spacer */}
-      <div className="flex-1" />
+          {/* Settings Nav Items */}
+          <nav className="px-2 py-1 flex flex-col gap-0.5">
+            {settingsNavItems.map((item) => {
+              const active = isSettingsActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={`${basePath}${item.href}`}
+                  className={cn(
+                    "flex items-center px-2 h-9 rounded-md text-sm font-medium transition-colors",
+                    active
+                      ? "bg-[#f0f0f0] text-[#171717]"
+                      : "text-[#666] hover:text-black hover:bg-[#f5f5f5]"
+                  )}
+                >
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="flex-1" />
+        </div>
+      </div>
     </aside>
   );
 });

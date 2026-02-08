@@ -39,8 +39,6 @@ export default function SettingsPage() {
     website: "",
     contactEmail: "",
     contactPhone: "",
-    brandColorPrimary: "#6366f1",
-    brandColorSecondary: "",
     timeZone: "America/New_York",
   });
 
@@ -136,8 +134,6 @@ export default function SettingsPage() {
           website: data.website || "",
           contactEmail: data.contactEmail || "",
           contactPhone: data.contactPhone || "",
-          brandColorPrimary: data.brandColorPrimary || "#6366f1",
-          brandColorSecondary: data.brandColorSecondary || "",
           timeZone: data.timeZone || "America/New_York",
         });
       } catch (err: any) {
@@ -449,77 +445,6 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            {/* Brand Colors */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="brandColorPrimary"
-                  className="block text-sm font-medium mb-2"
-                >
-                  Primary Brand Color
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    id="brandColorPrimary"
-                    type="color"
-                    className="h-10 w-20"
-                    value={formData.brandColorPrimary}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        brandColorPrimary: e.target.value,
-                      })
-                    }
-                  />
-                  <input
-                    type="text"
-                    className="flex-1 px-3 py-2 border rounded-md font-mono text-sm"
-                    value={formData.brandColorPrimary}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        brandColorPrimary: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="brandColorSecondary"
-                  className="block text-sm font-medium mb-2"
-                >
-                  Secondary Brand Color
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    id="brandColorSecondary"
-                    type="color"
-                    className="h-10 w-20"
-                    value={formData.brandColorSecondary || "#000000"}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        brandColorSecondary: e.target.value,
-                      })
-                    }
-                  />
-                  <input
-                    type="text"
-                    className="flex-1 px-3 py-2 border rounded-md font-mono text-sm"
-                    placeholder="#000000"
-                    value={formData.brandColorSecondary}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        brandColorSecondary: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
