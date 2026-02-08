@@ -49,8 +49,15 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setUploadError("Please select an image file");
+    const ALLOWED_TYPES = [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/webp",
+      "image/gif",
+    ];
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setUploadError("Accepted formats: PNG, JPEG, WebP, GIF");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -85,7 +92,7 @@ export default function SettingsPage() {
     try {
       const body = new FormData();
       body.append("file", blob, "logo.png");
-      body.append("prefix", `logos/${businessId}`);
+      body.append("businessId", businessId);
       if (formData.logoUrl) {
         body.append("oldUrl", formData.logoUrl);
       }
@@ -216,7 +223,7 @@ export default function SettingsPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp,image/gif"
                 className="hidden"
                 onChange={handleFileSelect}
               />

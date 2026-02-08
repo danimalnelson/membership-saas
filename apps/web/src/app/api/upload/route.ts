@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@wine-club/db";
 import { put, del } from "@vercel/blob";
 import sharp from "sharp";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const MAX_SVG_SIZE = 200 * 1024; // 200KB
 const MAX_DIMENSION = 512;
 const WEBP_QUALITY = 80;
 
+// Only raster formats — SVGs are excluded due to XSS risk
 const ALLOWED_TYPES = new Set([
   "image/png",
   "image/jpeg",
   "image/jpg",
   "image/webp",
   "image/gif",
-  "image/svg+xml",
 ]);
 
 export async function POST(req: NextRequest) {
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    const prefix = (formData.get("prefix") as string) || "uploads";
+    const businessId = formData.get("businessId") as string | null;
     const oldUrl = formData.get("oldUrl") as string | null;
 
     // Validate file exists
@@ -36,10 +36,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate MIME type
+    // Require businessId
+    if (!businessId) {
+      return NextResponse.json({ error: "Business ID required" }, { status: 400 });
+    }
+
+    // Verify the user has OWNER or ADMIN access to this business
+    const membership = await prisma.businessUser.findFirst({
+      where: {
+        businessId,
+        userId: session.user.id,
+        role: { in: ["OWNER", "ADMIN"] },
+      },
+    });
+
+    if (!membership) {
+      return NextResponse.json(
+        { error: "Not authorized to upload for this business" },
+        { status: 403 }
+      );
+    }
+
+    // Validate MIME type (client-reported — sharp validates actual content below)
     if (!ALLOWED_TYPES.has(file.type)) {
       return NextResponse.json(
-        { error: "Invalid file type. Accepted: PNG, JPEG, WebP, GIF, SVG" },
+        { error: "Invalid file type. Accepted: PNG, JPEG, WebP, GIF" },
         { status: 400 }
       );
     }
@@ -53,46 +74,33 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    let outputBuffer: Buffer;
-    let filename: string;
-    let contentType: string;
 
-    if (file.type === "image/svg+xml") {
-      // SVGs: pass through with stricter size limit (no sharp processing)
-      if (file.size > MAX_SVG_SIZE) {
-        return NextResponse.json(
-          { error: "SVG files must be under 200KB" },
-          { status: 400 }
-        );
-      }
-      outputBuffer = buffer;
-      filename = `${prefix}/${Date.now()}.svg`;
-      contentType = "image/svg+xml";
-    } else {
-      // Raster images: resize + convert to WebP
-      outputBuffer = await sharp(buffer)
-        .rotate() // Auto-rotate based on EXIF orientation, then strip metadata
-        .resize({
-          width: MAX_DIMENSION,
-          height: MAX_DIMENSION,
-          fit: "inside",
-          withoutEnlargement: true,
-        })
-        .webp({ quality: WEBP_QUALITY })
-        .toBuffer();
+    // sharp validates magic bytes — rejects non-image files even if MIME was spoofed
+    const outputBuffer = await sharp(buffer)
+      .rotate() // Auto-rotate based on EXIF orientation, then strip metadata
+      .resize({
+        width: MAX_DIMENSION,
+        height: MAX_DIMENSION,
+        fit: "cover",
+      })
+      .webp({ quality: WEBP_QUALITY })
+      .toBuffer();
 
-      filename = `${prefix}/${Date.now()}.webp`;
-      contentType = "image/webp";
-    }
+    // Namespace by businessId to prevent cross-business collisions
+    const filename = `logos/${businessId}/${Date.now()}.webp`;
 
     // Upload to Vercel Blob
     const blob = await put(filename, outputBuffer, {
       access: "public",
-      contentType,
+      contentType: "image/webp",
     });
 
-    // Delete old blob if replacing (only if it's a Vercel Blob URL)
-    if (oldUrl && oldUrl.includes(".vercel-storage.com")) {
+    // Delete old blob if replacing (only our own Vercel Blob URLs scoped to this business)
+    if (
+      oldUrl &&
+      oldUrl.includes(".vercel-storage.com") &&
+      oldUrl.includes(`logos/${businessId}/`)
+    ) {
       try {
         await del(oldUrl);
       } catch {
@@ -103,8 +111,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: blob.url });
   } catch (error: any) {
     console.error("Upload error:", error);
+
+    // sharp throws on corrupt/non-image files — return a friendly message
+    if (error?.message?.includes("Input buffer contains unsupported image format")) {
+      return NextResponse.json(
+        { error: "File does not appear to be a valid image" },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: error?.message || "Upload failed" },
+      { error: "Upload failed" },
       { status: 500 }
     );
   }
