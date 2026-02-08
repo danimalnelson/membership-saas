@@ -15,9 +15,7 @@
  * - Billing in July uses July price (not June fallback)
  */
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@wine-club/db";
 
 export async function getCurrentPriceForDate(
   planId: string,

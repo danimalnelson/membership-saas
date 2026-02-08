@@ -8,10 +8,8 @@
  * Called from: Plan edit API route when dynamic price is updated
  */
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@wine-club/db";
 import { getStripeClient } from "./stripe";
-
-const prisma = new PrismaClient();
 
 interface ResumeResult {
   resumed: number;
