@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import AvatarEditor from "react-avatar-editor";
 import {
   Button,
   Card,
@@ -10,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@wine-club/ui";
+import { Upload, X, ZoomIn, ZoomOut } from "lucide-react";
 import { useBusinessContext } from "@/contexts/business-context";
 
 export default function SettingsPage() {
@@ -20,6 +22,15 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Crop modal state
+  const editorRef = useRef<AvatarEditor | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [zoom, setZoom] = useState(1);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -32,6 +43,76 @@ export default function SettingsPage() {
     brandColorSecondary: "",
     timeZone: "America/New_York",
   });
+
+  // Step 1: File selected -> open crop modal
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("File must be under 5MB");
+      return;
+    }
+
+    setUploadError("");
+    setCropFile(file);
+    setZoom(1);
+
+    // Reset so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // Step 2: Crop confirmed -> export from editor canvas -> upload
+  const handleCropConfirm = async () => {
+    if (!editorRef.current) return;
+
+    // Get the cropped square canvas directly from the editor
+    const canvas = editorRef.current.getImageScaledToCanvas();
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error("Canvas export failed"))),
+        "image/png"
+      );
+    });
+
+    setUploading(true);
+    setCropFile(null);
+
+    try {
+      const body = new FormData();
+      body.append("file", blob, "logo.png");
+      body.append("prefix", `logos/${businessId}`);
+      if (formData.logoUrl) {
+        body.append("oldUrl", formData.logoUrl);
+      }
+
+      const res = await fetch("/api/upload", { method: "POST", body });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Upload failed");
+      }
+
+      const { url } = await res.json();
+      setFormData((prev) => ({ ...prev, logoUrl: url }));
+    } catch (err: any) {
+      setUploadError(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const cancelCrop = () => {
+    setCropFile(null);
+  };
+
+  const removeLogo = () => {
+    setFormData((prev) => ({ ...prev, logoUrl: "" }));
+    setUploadError("");
+  };
 
   useEffect(() => {
     const fetchBusiness = async () => {
@@ -81,6 +162,7 @@ export default function SettingsPage() {
       }
 
       setSuccess(true);
+      router.refresh(); // Re-fetch server data so sidebar logo updates
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       setError(err.message);
@@ -128,34 +210,117 @@ export default function SettingsPage() {
               />
             </div>
 
-            {/* Logo URL */}
+            {/* Logo Upload */}
             <div>
-              <label
-                htmlFor="logoUrl"
-                className="block text-sm font-medium mb-2"
-              >
-                Logo URL
-              </label>
+              <label className="block text-sm font-medium mb-2">Logo</label>
               <input
-                id="logoUrl"
-                type="url"
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder="https://example.com/logo.png"
-                value={formData.logoUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, logoUrl: e.target.value })
-                }
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
               />
-              {formData.logoUrl && (
-                <div className="mt-2">
-                  <img
-                    src={formData.logoUrl}
-                    alt="Logo preview"
-                    className="h-16 object-contain"
-                  />
+
+              {formData.logoUrl ? (
+                <div className="flex items-center gap-4">
+                  <div className="relative group">
+                    <img
+                      src={formData.logoUrl}
+                      alt="Logo preview"
+                      className="h-20 w-20 rounded-lg object-cover border border-[#eaeaea]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/0 group-hover:bg-black/40 transition-colors cursor-pointer"
+                    >
+                      <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                        Change
+                      </span>
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeLogo}
+                    className="inline-flex items-center gap-1 text-xs text-[#999] hover:text-[#171717] transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                    Remove
+                  </button>
                 </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex items-center justify-center gap-2 w-20 h-20 rounded-lg border border-dashed border-[#ccc] hover:border-[#999] bg-[#fafafa] hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+                >
+                  {uploading ? (
+                    <div className="h-5 w-5 border-2 border-[#ccc] border-t-[#171717] rounded-full animate-spin" />
+                  ) : (
+                    <Upload className="h-5 w-5 text-[#999]" />
+                  )}
+                </button>
+              )}
+
+              {uploading && (
+                <p className="mt-2 text-xs text-muted-foreground">Uploading...</p>
+              )}
+              {uploadError && (
+                <p className="mt-2 text-xs text-red-600">{uploadError}</p>
               )}
             </div>
+
+            {/* Crop Modal */}
+            {cropFile && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="bg-white rounded-xl shadow-xl w-[420px] overflow-hidden">
+                  <div className="flex items-center justify-center bg-[#f5f5f5] p-4">
+                    <AvatarEditor
+                      ref={editorRef}
+                      image={cropFile}
+                      width={340}
+                      height={340}
+                      border={0}
+                      borderRadius={0}
+                      scale={zoom}
+                      rotate={0}
+                      backgroundColor="#f5f5f5"
+                    />
+                  </div>
+                  <div className="px-4 py-3 flex items-center gap-3">
+                    <ZoomOut className="h-3.5 w-3.5 text-[#999] shrink-0" />
+                    <input
+                      type="range"
+                      min={1}
+                      max={3}
+                      step={0.05}
+                      value={zoom}
+                      onChange={(e) => setZoom(Number(e.target.value))}
+                      className="flex-1 accent-[#171717]"
+                    />
+                    <ZoomIn className="h-3.5 w-3.5 text-[#999] shrink-0" />
+                  </div>
+                  <div className="px-4 py-3 border-t border-[#eaeaea] flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={cancelCrop}
+                      className="text-sm font-medium text-[#666] hover:text-[#171717] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCropConfirm}
+                      className="px-4 h-9 rounded-lg bg-[#171717] text-white text-sm font-medium hover:bg-[#333] transition-colors"
+                    >
+                      Set Logo
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Description */}
             <div>
