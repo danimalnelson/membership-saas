@@ -52,6 +52,7 @@ interface PlanFormProps {
   initialData?: Partial<PlanFormData>;
   planId?: string; // If editing
   onSuccess?: () => void; // If provided, called instead of router.push on save
+  onCancel?: () => void; // If provided, called instead of router.back on cancel
 }
 
 // Generate next N months starting from current month
@@ -84,6 +85,7 @@ export function PlanForm({
   initialData,
   planId,
   onSuccess,
+  onCancel,
 }: PlanFormProps) {
   const router = useRouter();
   const { businessSlug } = useBusinessContext();
@@ -614,7 +616,7 @@ export function PlanForm({
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.back()}
+          onClick={() => onCancel ? onCancel() : router.back()}
           disabled={loading}
         >
           Cancel

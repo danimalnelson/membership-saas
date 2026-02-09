@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@wine-club/db";
 import { getBusinessBySlug } from "@/lib/data/business";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@wine-club/ui";
-import { PlansTable } from "@/components/plans/PlansTable";
+import { PlansAndMembershipsTable } from "@/components/plans/PlansAndMembershipsTable";
 
 export default async function PlansPage({
   params,
@@ -64,58 +64,51 @@ export default async function PlansPage({
     orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
   });
 
-  // No memberships yet
-  if (memberships.length === 0) {
-    return (
-      <div className="max-w-7xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>Create a Membership First</CardTitle>
-            <CardDescription>
-              Plans are organized within memberships. Create a membership before adding plans.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href={`/app/${business.slug}/memberships/create`}>
-              <Button>Create Your First Membership</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Flatten plans with membership context
-  const plans = memberships.flatMap((membership) =>
-    membership.plans.map((plan) => ({
+  // Shape into MembershipGroup[] with nested plans (includes all fields for edit forms)
+  const groups = memberships.map((m) => ({
+    id: m.id,
+    name: m.name,
+    description: m.description,
+    slug: m.slug,
+    status: m.status,
+    billingInterval: m.billingInterval,
+    billingAnchor: m.billingAnchor,
+    cohortBillingDay: m.cohortBillingDay,
+    chargeImmediately: m.chargeImmediately,
+    allowMultiplePlans: m.allowMultiplePlans,
+    maxMembers: m.maxMembers,
+    giftEnabled: m.giftEnabled,
+    waitlistEnabled: m.waitlistEnabled,
+    membersOnlyAccess: m.membersOnlyAccess,
+    pauseEnabled: m.pauseEnabled,
+    skipEnabled: m.skipEnabled,
+    benefits: m.benefits,
+    displayOrder: m.displayOrder,
+    plans: m.plans.map((plan) => ({
       id: plan.id,
+      membershipId: m.id,
       name: plan.name,
+      description: plan.description || "",
       status: plan.status,
-      membershipName: membership.name,
       price: plan.basePrice,
       currency: plan.currency,
       pricingType: plan.pricingType,
-      frequency: membership.billingInterval,
+      setupFee: plan.setupFee,
+      recurringFee: plan.recurringFee,
+      recurringFeeName: plan.recurringFeeName,
+      shippingFee: plan.shippingFee,
+      stockStatus: plan.stockStatus,
+      maxSubscribers: plan.maxSubscribers,
       subscriptionCount: plan._count.planSubscriptions,
-    }))
-  );
-
-  const allMembershipNames = [...new Set(memberships.map((m) => m.name))].sort();
+    })),
+  }));
 
   return (
     <div className="max-w-7xl mx-auto">
-      <PlansTable
-        plans={plans}
-        allMembershipNames={allMembershipNames}
+      <PlansAndMembershipsTable
+        groups={groups}
         businessId={business.id}
         businessSlug={business.slug}
-        memberships={memberships.map((m) => ({
-          id: m.id,
-          name: m.name,
-          billingAnchor: m.billingAnchor,
-          cohortBillingDay: m.cohortBillingDay,
-          status: m.status,
-        }))}
       />
     </div>
   );

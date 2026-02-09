@@ -9,7 +9,7 @@ import {
   LayoutDashboard,
   Users,
   ArrowLeftRight,
-  Layers,
+
   BarChart3,
   PieChart,
   Settings,
@@ -40,7 +40,6 @@ const navItems = [
   { href: "", label: "Dashboard", icon: Inbox },
   { href: "/members", label: "Members", icon: Users },
   { href: "/transactions", label: "Activity", icon: ArrowLeftRight },
-  { href: "/memberships", label: "Memberships", icon: Layers },
   { href: "/plans", label: "Plans", icon: BarChart3 },
   { href: "/reports", label: "Reports", icon: PieChart },
 ];

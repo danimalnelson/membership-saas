@@ -189,16 +189,16 @@ export function DataTable<T>({
           </CardContent>
         </Card>
       ) : (
-        <Card className="shadow-none">
+        <Card className="shadow-none overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="border-b">
+                <thead className="border-b bg-[#fafafa]">
                   <tr className="text-left">
                     {columns.map((col) => (
                       <th
                         key={col.key}
-                        className={`px-3 h-[42px] font-medium text-xs text-[#171717] ${
+                        className={`px-3 h-[42px] font-medium text-sm text-muted-foreground ${
                           col.align === "right" ? "text-right" : ""
                         } ${col.headerClassName || ""}`}
                       >

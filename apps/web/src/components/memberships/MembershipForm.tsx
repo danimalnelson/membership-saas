@@ -31,10 +31,11 @@ interface MembershipFormProps {
     displayOrder: number;
   };
   onSuccess?: () => void; // If provided, called instead of router.push on save
+  onCancel?: () => void; // If provided, called instead of router.push on cancel
 }
 
 export const MembershipForm = React.memo(
-  ({ businessId, membership, onSuccess }: MembershipFormProps) => {
+  ({ businessId, membership, onSuccess, onCancel }: MembershipFormProps) => {
     const router = useRouter();
     const { businessSlug } = useBusinessContext();
     const isEdit = !!membership;
@@ -706,7 +707,7 @@ export const MembershipForm = React.memo(
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push(`/app/${businessSlug}/memberships`)}
+              onClick={() => onCancel ? onCancel() : router.push(`/app/${businessSlug}/memberships`)}
               disabled={isSubmitting}
             >
               Cancel
