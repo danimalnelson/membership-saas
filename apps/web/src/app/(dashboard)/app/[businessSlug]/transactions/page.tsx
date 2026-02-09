@@ -93,7 +93,7 @@ export default async function TransactionsPage({
       currency: "usd",
       customerEmail: sub.consumer.email,
       customerName: sub.consumer.name,
-      description: `Subscribed to ${sub.plan.name}`,
+      description: sub.plan.name,
       stripeId: sub.stripeSubscriptionId,
       paymentMethodBrand: null,
       paymentMethodLast4: null,
