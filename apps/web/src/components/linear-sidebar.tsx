@@ -197,14 +197,17 @@ export const LinearSidebar = memo(function LinearSidebar({
         )}
       </div>
 
-      {/* Sliding container for main nav and settings nav */}
-      <div
-        className="flex w-[482px] flex-1 transition-transform duration-200 ease-in-out"
-        style={{ transform: showSettingsNav ? "translateX(-241px)" : "translateX(0)" }}
-      >
+      {/* Nav panels — crossfade with subtle 24px shift */}
+      <div className="relative flex-1 overflow-hidden">
         {/* ============ Panel 1: Main Nav ============ */}
-        <div className="w-[241px] h-full flex flex-col shrink-0">
-          {/* Main Nav Items */}
+        <div
+          className="absolute inset-0 flex flex-col transition-all duration-200 ease-in-out"
+          style={{
+            opacity: showSettingsNav ? 0 : 1,
+            transform: showSettingsNav ? "translateX(-24px)" : "translateX(0)",
+            pointerEvents: showSettingsNav ? "none" : "auto",
+          }}
+        >
           <nav className="px-2 py-1 flex flex-col gap-0.5">
             {mainNavItems.map((item) => {
               const Icon = item.icon;
@@ -254,7 +257,14 @@ export const LinearSidebar = memo(function LinearSidebar({
         </div>
 
         {/* ============ Panel 2: Settings Nav ============ */}
-        <div className="w-[241px] h-full flex flex-col shrink-0">
+        <div
+          className="absolute inset-0 flex flex-col transition-all duration-200 ease-in-out"
+          style={{
+            opacity: showSettingsNav ? 1 : 0,
+            transform: showSettingsNav ? "translateX(0)" : "translateX(24px)",
+            pointerEvents: showSettingsNav ? "auto" : "none",
+          }}
+        >
           {/* Settings Header — full-width back button */}
           <div className="px-2 pt-1 pb-1">
             <button
