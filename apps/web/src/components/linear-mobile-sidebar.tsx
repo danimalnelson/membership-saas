@@ -6,20 +6,18 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@wine-club/ui";
 import {
-  LayoutDashboard,
   Users,
   ArrowLeftRight,
-
-  BarChart3,
+  Layers,
   PieChart,
   Settings,
   HelpCircle,
-  Building2,
   LogOut,
   Check,
   Menu,
   X,
   Inbox,
+  Plus,
 } from "lucide-react";
 
 interface Business {
@@ -34,13 +32,14 @@ interface LinearMobileSidebarProps {
   business: Business;
   allBusinesses: Business[];
   userEmail?: string;
+  userName?: string;
 }
 
 const navItems = [
   { href: "", label: "Dashboard", icon: Inbox },
   { href: "/members", label: "Members", icon: Users },
   { href: "/transactions", label: "Activity", icon: ArrowLeftRight },
-  { href: "/plans", label: "Plans", icon: BarChart3 },
+  { href: "/plans", label: "Plans", icon: Layers },
   { href: "/reports", label: "Reports", icon: PieChart },
 ];
 
@@ -53,7 +52,8 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
   businessId, 
   business, 
   allBusinesses, 
-  userEmail 
+  userEmail,
+  userName,
 }: LinearMobileSidebarProps) {
   const pathname = usePathname();
   const basePath = `/app/${business.slug}`;
@@ -284,10 +284,36 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
               </div>
             )}
 
-            {/* User Email */}
-            {userEmail && (
-              <div className="px-3 pt-3 text-[11px] text-[#999]">
-                {userEmail}
+            {/* Add Business */}
+            <div className="pt-2 border-t border-[#eaeaea]">
+              <Link
+                href="/onboarding"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium text-[#666] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
+              >
+                <Plus className="h-[18px] w-[18px]" />
+                Add business
+              </Link>
+            </div>
+
+            {/* User Info */}
+            {(userName || userEmail) && (
+              <div className="pt-2 border-t border-[#eaeaea]">
+                <Link
+                  href={`${basePath}/account`}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-[#f5f5f5] transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    {userName && (
+                      <p className="text-[14px] font-medium text-[#171717] truncate">{userName}</p>
+                    )}
+                    {userEmail && (
+                      <p className="text-[14px] font-normal text-[#666] truncate">{userEmail}</p>
+                    )}
+                  </div>
+                  <Settings className="h-4 w-4 text-[#666] shrink-0" />
+                </Link>
               </div>
             )}
           </div>

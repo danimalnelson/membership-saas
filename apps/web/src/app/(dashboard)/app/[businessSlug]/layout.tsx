@@ -37,6 +37,7 @@ export default async function BusinessLayout({
         business={business}
         allBusinesses={allBusinesses}
         userEmail={session.user.email || undefined}
+        userName={session.user.name || undefined}
       >
         {children}
       </LinearLayout>

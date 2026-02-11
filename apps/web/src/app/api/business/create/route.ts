@@ -11,6 +11,7 @@ const createBusinessSchema = z.object({
   country: z.string().length(2).default("US"),
   currency: z.string().length(3).default("USD"),
   timeZone: z.string().default("America/New_York"),
+  userName: z.string().max(100).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -31,6 +32,14 @@ export async function POST(req: NextRequest) {
         { error: slugError, field: "slug" },
         { status: 400 }
       );
+    }
+
+    // Update user name if provided
+    if (data.userName) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { name: data.userName },
+      });
     }
 
     // Create business and link user as OWNER

@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@wine-club/ui";
 
 export default function OnboardingDetailsPage() {
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
   const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
     name: "",
     slug: "",
     country: "US",
@@ -24,16 +27,26 @@ export default function OnboardingDetailsPage() {
     setError("");
 
     try {
+      const { firstName, lastName, ...businessData } = formData;
       const res = await fetch("/api/business/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...businessData,
+          userName: `${firstName} ${lastName}`.trim(),
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(data.error || "Failed to create business");
+      }
+
+      // Update session with user name so it's immediately available
+      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+      if (fullName) {
+        await updateSession({ userName: fullName });
       }
 
       // Redirect to Stripe Connect step
@@ -96,6 +109,37 @@ export default function OnboardingDetailsPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="firstName" className="block text-sm font-medium mb-2">
+                    First Name *
+                  </label>
+                  <input
+                    id="firstName"
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                    required
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="Dan"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="lastName" className="block text-sm font-medium mb-2">
+                    Last Name *
+                  </label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                    required
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="Nelson"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label htmlFor="name" className="block text-sm font-medium mb-2">
                   Business Name *

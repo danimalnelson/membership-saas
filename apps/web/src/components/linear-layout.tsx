@@ -17,6 +17,7 @@ interface LinearLayoutProps {
   business: Business;
   allBusinesses: Business[];
   userEmail?: string;
+  userName?: string;
 }
 
 export function LinearLayout({
@@ -25,6 +26,7 @@ export function LinearLayout({
   business,
   allBusinesses,
   userEmail,
+  userName,
 }: LinearLayoutProps) {
   return (
     <div className="min-h-screen bg-[#fafafa]">
@@ -35,6 +37,7 @@ export function LinearLayout({
           business={business}
           allBusinesses={allBusinesses}
           userEmail={userEmail}
+          userName={userName}
         />
       </div>
 
@@ -45,6 +48,7 @@ export function LinearLayout({
           business={business}
           allBusinesses={allBusinesses}
           userEmail={userEmail}
+          userName={userName}
         />
       </div>
 

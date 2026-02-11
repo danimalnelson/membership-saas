@@ -1,0 +1,196 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Check } from "lucide-react";
+import { FilterPill } from "./filter-pill";
+import type { FilterConfig, TextFilterConfig, SelectFilterConfig } from "./use-data-table";
+
+// ---------------------------------------------------------------------------
+// Delayed-focus input — focuses after a brief delay so the ring animates in
+// ---------------------------------------------------------------------------
+
+function DelayedFocusInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      {...props}
+      className="w-full px-3 py-2 text-sm border rounded-md outline-none ring-0 ring-[#171717]/0 focus:ring-2 focus:ring-[#171717]/20 focus:border-[#999] transition-all duration-1000"
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shared filter popover components
+// ---------------------------------------------------------------------------
+
+export function FilterPillFromConfig({
+  config,
+  value,
+  inputValue,
+  isOpen,
+  onToggle,
+  onApplyText,
+  onApplySelect,
+  onSetInput,
+}: {
+  config: FilterConfig;
+  value: string;
+  inputValue: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  onApplyText: () => void;
+  onApplySelect: (value: string) => void;
+  onSetInput: (value: string) => void;
+}) {
+  const active = !!value;
+
+  if (config.type === "text") {
+    const textConfig = config as TextFilterConfig;
+    const displayValue = active
+      ? textConfig.formatActive
+        ? textConfig.formatActive(value)
+        : value
+      : undefined;
+
+    return (
+      <FilterPill label={config.label} activeValue={displayValue} active={active} onToggle={onToggle} isOpen={isOpen}>
+        <div className="w-64">
+          <div className="p-3">
+            <p className="text-sm font-medium text-[#171717] mb-2">Filter by: {config.label.toLowerCase()}</p>
+            <DelayedFocusInput
+              placeholder={textConfig.placeholder || "contains..."}
+              maxLength={textConfig.maxLength}
+              value={inputValue}
+              onChange={(e) => {
+                const v = textConfig.inputTransform ? textConfig.inputTransform(e.target.value) : e.target.value;
+                onSetInput(v);
+              }}
+              onKeyDown={(e) => e.key === "Enter" && onApplyText()}
+            />
+          </div>
+          <div className="p-3 border-t border-[#eaeaea]">
+            <button
+              onClick={onApplyText}
+              className="w-full px-3 h-9 text-sm font-medium text-white bg-[#171717] rounded-md hover:bg-black transition-colors"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      </FilterPill>
+    );
+  }
+
+  // Multi-select filter
+  return (
+    <MultiSelectFilterPill
+      config={config as SelectFilterConfig}
+      value={value}
+      active={active}
+      isOpen={isOpen}
+      onToggle={onToggle}
+      onApplySelect={onApplySelect}
+    />
+  );
+}
+
+function MultiSelectFilterPill({
+  config,
+  value,
+  active,
+  isOpen,
+  onToggle,
+  onApplySelect,
+}: {
+  config: SelectFilterConfig;
+  value: string;
+  active: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+  onApplySelect: (value: string) => void;
+}) {
+  const selectedValues = value ? value.split(",") : [];
+  const [pending, setPending] = useState<Set<string>>(new Set(selectedValues));
+
+  // Sync pending state whenever committed value changes (e.g. filter cleared)
+  // or when the dropdown opens (to reset uncommitted selections)
+  useEffect(() => {
+    setPending(new Set(value ? value.split(",") : []));
+  }, [isOpen, value]);
+
+  const toggleOption = (optValue: string) => {
+    setPending((prev) => {
+      const next = new Set(prev);
+      if (next.has(optValue)) {
+        next.delete(optValue);
+      } else {
+        next.add(optValue);
+      }
+      return next;
+    });
+  };
+
+  const applySelection = () => {
+    onApplySelect(Array.from(pending).join(","));
+  };
+
+  // Build display value for the pill
+  const displayValue = active
+    ? config.formatActive
+      ? config.formatActive(value)
+      : selectedValues
+          .map((v) => config.options.find((o) => o.value === v)?.label || v)
+          .join(", ")
+    : undefined;
+
+  return (
+    <FilterPill label={config.label} activeValue={displayValue} active={active} onToggle={onToggle} isOpen={isOpen}>
+      <div className="w-56">
+        <p className="px-3 pt-3 pb-2 text-sm font-medium text-[#171717]">Filter by: {config.label.toLowerCase()}</p>
+        <div className="max-h-64 overflow-y-auto px-2 pb-3">
+          <div className="flex flex-col gap-0.5">
+            {config.options.map((opt) => {
+              const checked = pending.has(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => toggleOption(opt.value)}
+                  className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-[#666] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
+                >
+                  <span
+                    className={`flex items-center justify-center h-4 w-4 rounded border transition-colors shrink-0 ${
+                      checked
+                        ? "bg-[#171717] border-[#171717]"
+                        : "border-[#d0d0d0] bg-white"
+                    }`}
+                  >
+                    {checked && <Check className="h-3 w-3 text-white" />}
+                  </span>
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="p-3 border-t border-[#eaeaea]">
+          <button
+            onClick={applySelection}
+            className="w-full px-3 h-9 text-sm font-medium text-white bg-[#171717] rounded-md hover:bg-black transition-colors"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </FilterPill>
+  );
+}

@@ -138,22 +138,39 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.sub = user.id;
+        token.name = user.name;
       }
 
-      // Allow updating businessId via update trigger
-      if (trigger === "update" && session?.businessId) {
-        token.businessId = session.businessId;
+      // Allow updating businessId and userName via update trigger
+      if (trigger === "update") {
+        if (session?.businessId) {
+          token.businessId = session.businessId;
+        }
+        if (session?.userName) {
+          token.name = session.userName;
+        }
       }
 
-      // Load default businessId if not set
-      if (!token.businessId && token.sub) {
-        const businessUser = await prisma.businessUser.findFirst({
-          where: { userId: token.sub },
-          include: { business: true },
-          orderBy: { createdAt: "asc" },
+      // Load user data from DB if missing
+      if (token.sub && (!token.businessId || !token.name)) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            name: true,
+            businesses: {
+              select: { businessId: true },
+              orderBy: { createdAt: "asc" },
+              take: 1,
+            },
+          },
         });
-        if (businessUser) {
-          token.businessId = businessUser.businessId;
+        if (dbUser) {
+          if (!token.name && dbUser.name) {
+            token.name = dbUser.name;
+          }
+          if (!token.businessId && dbUser.businesses[0]) {
+            token.businessId = dbUser.businesses[0].businessId;
+          }
         }
       }
 

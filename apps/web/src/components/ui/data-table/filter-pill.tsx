@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 interface FilterPillProps {
   /** The base label that always stays visible (e.g., "Name") */
@@ -31,6 +31,16 @@ function PlusIcon({ active, className }: { active?: boolean; className?: string 
 export function FilterPill({ label, activeValue, active, onToggle, children, isOpen }: FilterPillProps) {
   const ref = useRef<HTMLDivElement>(null);
 
+  // Defer active styling briefly on mount so the transition is visible
+  const [showActive, setShowActive] = useState(false);
+  useEffect(() => {
+    if (active) {
+      const t = requestAnimationFrame(() => setShowActive(true));
+      return () => cancelAnimationFrame(t);
+    }
+    setShowActive(false);
+  }, [active]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -46,7 +56,7 @@ export function FilterPill({ label, activeValue, active, onToggle, children, isO
       <button
         onClick={onToggle}
         className={`group inline-flex items-center gap-1.5 px-2 h-6 rounded-full text-xs font-medium border transition-all duration-300 ${
-          active
+          showActive
             ? "bg-[#171717] text-white border-[#171717]"
             : "bg-white text-[#666] border-[#e0e0e0] hover:border-[#ccc] hover:text-[#171717]"
         }`}
@@ -54,8 +64,8 @@ export function FilterPill({ label, activeValue, active, onToggle, children, isO
         {/* Fixed 12x12 icon container — rotate + to × when active */}
         <span className="flex items-center justify-center w-3 h-3 shrink-0">
           <PlusIcon
-            active={active}
-            className={active ? "" : "group-hover:text-[#171717]"}
+            active={showActive}
+            className={showActive ? "" : "group-hover:text-[#171717]"}
           />
         </span>
         <span>{label}</span>

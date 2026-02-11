@@ -9,7 +9,7 @@ import {
   Users,
   ArrowLeftRight,
 
-  BarChart3,
+
   PieChart,
   Settings,
   HelpCircle,
@@ -17,8 +17,10 @@ import {
   ChevronRight,
   ChevronLeft,
   LogOut,
-  Check,
+
   Inbox,
+  Plus,
+  Layers,
 } from "lucide-react";
 
 interface Business {
@@ -33,13 +35,14 @@ interface LinearSidebarProps {
   business: Business;
   allBusinesses: Business[];
   userEmail?: string;
+  userName?: string;
 }
 
 const mainNavItems = [
   { href: "", label: "Dashboard", icon: Inbox },
   { href: "/members", label: "Members", icon: Users },
   { href: "/transactions", label: "Activity", icon: ArrowLeftRight },
-  { href: "/plans", label: "Plans", icon: BarChart3 },
+  { href: "/plans", label: "Plans", icon: Layers },
   { href: "/reports", label: "Reports", icon: PieChart },
 ];
 
@@ -52,7 +55,8 @@ export const LinearSidebar = memo(function LinearSidebar({
   businessId, 
   business, 
   allBusinesses, 
-  userEmail 
+  userEmail,
+  userName,
 }: LinearSidebarProps) {
   const pathname = usePathname();
   const basePath = `/app/${business.slug}`;
@@ -106,10 +110,10 @@ export const LinearSidebar = memo(function LinearSidebar({
   return (
     <aside className="fixed left-0 top-0 bottom-0 z-40 w-[241px] flex flex-col bg-[#fafafa] border-r border-[#eaeaea] overflow-hidden">
       {/* Workspace Header — stays fixed at top */}
-      <div className="px-3 pt-3 pb-2 shrink-0" ref={dropdownRef}>
+      <div className="px-3 py-3 shrink-0" ref={dropdownRef}>
         <button
           onClick={() => setIsBusinessDropdownOpen(!isBusinessDropdownOpen)}
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#f5f5f5] transition-colors"
+          className="w-full flex items-center gap-1.5 px-2 h-9 rounded-md hover:bg-[#f5f5f5] transition-colors"
         >
           {business.logoUrl ? (
             <img
@@ -135,18 +139,32 @@ export const LinearSidebar = memo(function LinearSidebar({
 
         {/* Workspace Dropdown */}
         {isBusinessDropdownOpen && (
-          <div className="absolute left-2 right-2 top-12 bg-white rounded-lg shadow-lg border border-[#eaeaea] overflow-hidden z-50">
+          <div className="absolute left-3 right-3 top-14 bg-white rounded-lg shadow-lg border border-[#eaeaea] z-50 divide-y divide-[#eaeaea]">
             {/* User Info */}
-            {userEmail && (
-              <div className="px-3 py-2.5 border-b border-[#eaeaea]">
-                <p className="text-[11px] text-[#999]">Signed in as</p>
-                <p className="text-sm text-[#444] truncate">{userEmail}</p>
+            {(userName || userEmail) && (
+              <div className="p-1.5">
+                <Link
+                  href={`${basePath}/account`}
+                  onClick={() => setIsBusinessDropdownOpen(false)}
+                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-[#f5f5f5] transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    {userName && (
+                      <p className="text-[14px] font-medium text-[#171717] truncate">{userName}</p>
+                    )}
+                    {userEmail && (
+                      <p className="text-[14px] font-normal text-[#666] truncate">{userEmail}</p>
+                    )}
+                  </div>
+                  <Settings className="h-4 w-4 text-[#666] shrink-0" />
+                </Link>
               </div>
             )}
 
-            {/* Current Business */}
-            <div className="py-1">
-              <div className="flex items-center gap-2.5 px-3 py-2 bg-[#fafafa]">
+            {/* Businesses */}
+            <div className="p-1.5 flex flex-col gap-0.5">
+              {/* Current Business */}
+              <div className="flex items-center gap-2.5 px-2 h-9 rounded-md bg-[#f0f0f0]">
                 {business.logoUrl ? (
                   <img src={business.logoUrl} alt={business.name} className="h-5 w-5 rounded object-cover" />
                 ) : (
@@ -154,40 +172,42 @@ export const LinearSidebar = memo(function LinearSidebar({
                     <span className="text-white font-semibold text-[10px]">{business.name.charAt(0).toUpperCase()}</span>
                   </div>
                 )}
-                <span className="text-sm text-[#171717] truncate flex-1">{business.name}</span>
-                <Check className="h-4 w-4 text-[#171717]" />
+                <span className="text-sm font-medium text-[#171717] truncate flex-1">{business.name}</span>
               </div>
+
+              {/* Other Businesses */}
+              {otherBusinesses.map((b) => (
+                <Link
+                  key={b.id}
+                  href={`/app/${b.slug}`}
+                  onClick={() => setIsBusinessDropdownOpen(false)}
+                  className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-[#666] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
+                >
+                  {b.logoUrl ? (
+                    <img src={b.logoUrl} alt={b.name} className="h-5 w-5 rounded object-cover" />
+                  ) : (
+                    <div className="h-5 w-5 rounded bg-[#eaeaea] flex items-center justify-center">
+                      <span className="text-[#666] font-semibold text-[10px]">{b.name.charAt(0).toUpperCase()}</span>
+                    </div>
+                  )}
+                  <span className="truncate">{b.name}</span>
+                </Link>
+              ))}
             </div>
 
-            {/* Other Businesses */}
-            {otherBusinesses.length > 0 && (
-              <div className="py-1 border-t border-[#eaeaea]">
-                <p className="px-3 py-1 text-[11px] text-[#999] uppercase tracking-wide">Switch workspace</p>
-                {otherBusinesses.map((b) => (
-                  <Link
-                    key={b.id}
-                    href={`/app/${b.slug}`}
-                    onClick={() => setIsBusinessDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#fafafa] transition-colors"
-                  >
-                    {b.logoUrl ? (
-                      <img src={b.logoUrl} alt={b.name} className="h-5 w-5 rounded object-cover" />
-                    ) : (
-                      <div className="h-5 w-5 rounded bg-[#eaeaea] flex items-center justify-center">
-                        <span className="text-[#666] font-semibold text-[10px]">{b.name.charAt(0).toUpperCase()}</span>
-                      </div>
-                    )}
-                    <span className="text-sm text-[#666] truncate">{b.name}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {/* Sign Out */}
-            <div className="py-1 border-t border-[#eaeaea]">
+            {/* Add Business & Sign Out */}
+            <div className="p-1.5 flex flex-col gap-0.5">
+              <Link
+                href="/onboarding"
+                onClick={() => setIsBusinessDropdownOpen(false)}
+                className="w-full flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-[#666] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Add business
+              </Link>
               <button
                 onClick={handleSignOut}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[#666] hover:bg-[#fafafa] hover:text-black transition-colors"
+                className="w-full flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-[#666] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 Sign out
@@ -208,7 +228,7 @@ export const LinearSidebar = memo(function LinearSidebar({
             pointerEvents: showSettingsNav ? "none" : "auto",
           }}
         >
-          <nav className="px-2 py-1 flex flex-col gap-0.5">
+          <nav className="px-3 py-1 flex flex-col gap-0.5">
             {mainNavItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -277,7 +297,7 @@ export const LinearSidebar = memo(function LinearSidebar({
           </div>
 
           {/* Settings Nav Items */}
-          <nav className="px-2 py-1 flex flex-col gap-0.5">
+          <nav className="px-3 py-1 flex flex-col gap-0.5">
             {settingsNavItems.map((item) => {
               const active = isSettingsActive(item.href);
               return (
