@@ -6,8 +6,10 @@ import {
   Download,
   DollarSign,
   UserPlus,
+  UserX,
   XCircle,
   Clock,
+  CirclePause,
   RotateCcw,
   Receipt,
   type LucideIcon,
@@ -65,7 +67,7 @@ function CardBrandIcon({ brand }: { brand: string }) {
     <img
       src={logo || "/card-brands/generic.svg"}
       alt={CARD_BRAND_LABELS[key] || brand}
-      className="h-[18px] w-auto"
+      className="h-4 w-auto"
     />
   );
 }
@@ -73,10 +75,10 @@ function CardBrandIcon({ brand }: { brand: string }) {
 function PaymentMethod({ brand, last4 }: { brand: string | null; last4: string | null }) {
   if (!brand || !last4) return <span className="text-muted-foreground">—</span>;
   return (
-    <span className="inline-flex items-center gap-2">
+    <div className="flex items-center">
       <CardBrandIcon brand={brand} />
-      <span className="text-sm text-muted-foreground">•••• {last4}</span>
-    </span>
+      <span className="text-xs ml-2" style={{ letterSpacing: "0.1em" }}>••••</span><span className="text-sm ml-1">{last4}</span>
+    </div>
   );
 }
 
@@ -88,30 +90,49 @@ const TYPE_ICON_CONFIG: Record<string, { icon: LucideIcon; color: string; bg: st
   PAYMENT:              { icon: DollarSign, color: "#16a34a", bg: "rgba(22, 163, 74, 0.1)" },
   CHARGE:               { icon: DollarSign, color: "#16a34a", bg: "rgba(22, 163, 74, 0.1)" },
   SUBSCRIPTION_CREATED: { icon: UserPlus,   color: "#2563eb", bg: "rgba(37, 99, 235, 0.1)" },
-  VOIDED:               { icon: XCircle,    color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
-  PENDING:              { icon: Clock,      color: "#d97706", bg: "rgba(217, 119, 6, 0.1)" },
-  REFUND:               { icon: RotateCcw,  color: "#9333ea", bg: "rgba(147, 51, 234, 0.1)" },
-  PAYOUT_FEE:           { icon: Receipt,    color: "#666666", bg: "rgba(102, 102, 102, 0.1)" },
+  VOIDED:                   { icon: XCircle,    color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
+  PENDING:                  { icon: Clock,      color: "#d97706", bg: "rgba(217, 119, 6, 0.1)" },
+  REFUND:                   { icon: RotateCcw,  color: "#9333ea", bg: "rgba(147, 51, 234, 0.1)" },
+  SUBSCRIPTION_CANCELLED:   { icon: UserX,      color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
+  SUBSCRIPTION_PAUSED:      { icon: CirclePause, color: "#d97706", bg: "rgba(217, 119, 6, 0.1)" },
+  PAYOUT_FEE:               { icon: Receipt,    color: "#666666", bg: "rgba(102, 102, 102, 0.1)" },
 };
 
 const DEFAULT_TYPE_ICON = { icon: DollarSign, color: "#666666", bg: "rgba(102, 102, 102, 0.1)" };
+
+function TypeIcon({ type }: { type: string }) {
+  const config = TYPE_ICON_CONFIG[type] || DEFAULT_TYPE_ICON;
+  const Icon = config.icon;
+  return (
+    <div
+      className="flex items-center justify-center rounded shrink-0"
+      style={{ width: 16, height: 16, backgroundColor: config.bg }}
+    >
+      <Icon style={{ width: 10, height: 10, color: config.color }} strokeWidth={3} />
+    </div>
+  );
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  SUBSCRIPTION_CREATED: "Subscription started",
+};
 
 function TransactionTypeLabel({ type }: { type: string }) {
   const config = TYPE_ICON_CONFIG[type] || DEFAULT_TYPE_ICON;
   const Icon = config.icon;
   const raw = type.replace(/_/g, " ");
-  const label = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+  const label = TYPE_LABELS[type] || raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
 
   return (
-    <span className="inline-flex items-center gap-2">
-      <span
-        className="inline-flex items-center justify-center rounded shrink-0"
+    <div className="flex items-center gap-1.5">
+      <div
+        className="flex items-center justify-center rounded shrink-0"
         style={{ width: 16, height: 16, backgroundColor: config.bg }}
       >
-        <Icon style={{ width: 10, height: 10, color: config.color }} strokeWidth={2.5} />
-      </span>
+        <Icon style={{ width: 10, height: 10, color: config.color }} strokeWidth={3} />
+      </div>
       <span>{label}</span>
-    </span>
+    </div>
   );
 }
 
@@ -139,16 +160,19 @@ const FILTER_CONFIGS: FilterConfig[] = [
     key: "type",
     label: "Type",
     options: [
-      { value: "PAYMENT", label: "Payment" },
-      { value: "SUBSCRIPTION_CREATED", label: "Subscription Created" },
-      { value: "VOIDED", label: "Voided" },
-      { value: "PENDING", label: "Pending" },
+      { value: "PAYMENT", label: "Payment", icon: <TypeIcon type="PAYMENT" /> },
+      { value: "PENDING", label: "Pending", icon: <TypeIcon type="PENDING" /> },
+      { value: "REFUND", label: "Refund", icon: <TypeIcon type="REFUND" /> },
+      { value: "SUBSCRIPTION_CANCELLED", label: "Subscription canceled", icon: <TypeIcon type="SUBSCRIPTION_CANCELLED" /> },
+      { value: "SUBSCRIPTION_PAUSED", label: "Subscription paused", icon: <TypeIcon type="SUBSCRIPTION_PAUSED" /> },
+      { value: "SUBSCRIPTION_CREATED", label: "Subscription started", icon: <TypeIcon type="SUBSCRIPTION_CREATED" /> },
+      { value: "VOIDED", label: "Voided", icon: <TypeIcon type="VOIDED" /> },
     ],
   },
   {
     type: "text",
     key: "last4",
-    label: "Card",
+    label: "Payment method",
     placeholder: "e.g. 4242",
     maxLength: 4,
     inputTransform: (v) => v.replace(/\D/g, ""),
@@ -189,7 +213,7 @@ export function TransactionTable({ transactions, timeZone }: { transactions: Tra
     {
       key: "type",
       label: "Type",
-      cellClassName: "font-medium text-[#171717]",
+      cellClassName: "font-medium",
       render: (t) => <TransactionTypeLabel type={t.type} />,
     },
     {
@@ -210,7 +234,6 @@ export function TransactionTable({ transactions, timeZone }: { transactions: Tra
     {
       key: "email",
       label: "Email",
-      cellClassName: "text-muted-foreground",
       render: (t) => t.customerEmail,
     },
     {

@@ -64,7 +64,7 @@ export function FilterPillFromConfig({
 
     return (
       <FilterPill label={config.label} activeValue={displayValue} active={active} onToggle={onToggle} isOpen={isOpen}>
-        <div className="w-64">
+        <div className="w-[240px] max-h-[300px] overflow-y-auto">
           <div className="p-3">
             <p className="text-sm font-medium text-[#171717] mb-2">Filter by: {config.label.toLowerCase()}</p>
             <DelayedFocusInput
@@ -155,9 +155,9 @@ function MultiSelectFilterPill({
 
   return (
     <FilterPill label={config.label} activeValue={displayValue} active={active} onToggle={onToggle} isOpen={isOpen}>
-      <div className="w-56">
-        <p className="px-3 pt-3 pb-2 text-sm font-medium text-[#171717]">Filter by: {config.label.toLowerCase()}</p>
-        <div className="max-h-64 overflow-y-auto px-2 pb-3">
+      <div className="w-[240px] max-h-[270px] flex flex-col">
+        <p className="px-3 pt-3 pb-2 text-sm font-medium text-[#171717] shrink-0">Filter by: {config.label.toLowerCase()}</p>
+        <div className="overflow-y-auto px-2 pb-3 min-h-0">
           <div className="flex flex-col gap-0.5">
             {config.options.map((opt) => {
               const checked = pending.has(opt.value);
@@ -176,13 +176,20 @@ function MultiSelectFilterPill({
                   >
                     {checked && <Check className="h-3 w-3 text-white" />}
                   </span>
-                  {opt.label}
+                  {opt.icon ? (
+                    <span className="flex items-center gap-1.5">
+                      <span className="shrink-0">{opt.icon}</span>
+                      {opt.label}
+                    </span>
+                  ) : (
+                    opt.label
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
-        <div className="p-3 border-t border-[#eaeaea]">
+        <div className="p-3 border-t border-[#eaeaea] shrink-0">
           <button
             onClick={applySelection}
             className="w-full px-3 h-9 text-sm font-medium text-white bg-[#171717] rounded-md hover:bg-black transition-colors"

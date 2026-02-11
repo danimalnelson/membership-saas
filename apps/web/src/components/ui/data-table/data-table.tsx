@@ -191,13 +191,14 @@ export function DataTable<T>({
         <Card className="shadow-none overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full border-collapse">
                 <thead className="border-b bg-[#fafafa]">
                   <tr className="text-left">
                     {columns.map((col) => (
                       <th
                         key={col.key}
-                        className={`px-3 h-[42px] font-medium text-sm text-muted-foreground ${
+                        scope="col"
+                        className={`px-3 h-[42px] align-middle font-medium text-sm text-muted-foreground ${
                           col.align === "right" ? "text-right" : ""
                         } ${col.headerClassName || ""}`}
                       >
@@ -210,13 +211,13 @@ export function DataTable<T>({
                   {paginated.map((item) => (
                     <tr
                       key={keyExtractor(item)}
-                      className={`hover:bg-muted/50 ${onRowClick ? "cursor-pointer" : ""}`}
+                      className={`hover:bg-muted/50 h-[42px] ${onRowClick ? "cursor-pointer" : ""}`}
                       onClick={onRowClick ? () => onRowClick(item) : undefined}
                     >
                       {columns.map((col) => (
                         <td
                           key={col.key}
-                          className={`px-3 py-2.5 text-sm align-middle ${
+                          className={`px-3 text-sm align-middle ${
                             col.align === "right" ? "text-right" : ""
                           } ${col.cellClassName || ""}`}
                         >

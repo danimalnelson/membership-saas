@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useState, useCallback } from "react";
 
 export interface TextFilterConfig {
@@ -18,7 +19,7 @@ export interface SelectFilterConfig {
   type: "select";
   key: string;
   label: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; icon?: React.ReactNode }[];
   /** Format the active pill label */
   formatActive?: (value: string) => string;
 }
