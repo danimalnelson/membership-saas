@@ -55,6 +55,25 @@ export async function POST(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
+    // Audit log: trace who triggered cancel for future investigation
+    await prisma.auditLog.create({
+      data: {
+        businessId: planSubscription.plan.businessId,
+        actorUserId: session.user.id,
+        type: "SUBSCRIPTION_CANCEL_REQUESTED",
+        metadata: {
+          source: "admin_dashboard",
+          adminEmail: session.user.email,
+          reason: data.reason || null,
+          subscriptionId,
+          stripeSubscriptionId: planSubscription.stripeSubscriptionId,
+          consumerId: planSubscription.consumerId,
+          ip: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown",
+          userAgent: req.headers.get("user-agent") || "unknown",
+        },
+      },
+    });
+
     const stripe = getStripeClient(planSubscription.plan.business.stripeAccountId!);
 
     // Cancel subscription at period end in Stripe

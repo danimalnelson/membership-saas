@@ -3,12 +3,14 @@ import { prisma } from "@wine-club/db";
 
 export async function GET(req: NextRequest) {
   try {
-    // Get recent webhook events with full details
+    const { searchParams } = new URL(req.url);
+    const typeFilter = searchParams.get("type"); // e.g. customer.subscription.deleted
+    const take = Math.min(parseInt(searchParams.get("take") || "20", 10), 100);
+
     const recentWebhooks = await prisma.webhookEvent.findMany({
-      orderBy: {
-        id: "desc",
-      },
-      take: 10,
+      where: typeFilter ? { type: typeFilter } : undefined,
+      orderBy: { receivedAt: "desc" },
+      take,
       select: {
         id: true,
         type: true,
@@ -16,24 +18,30 @@ export async function GET(req: NextRequest) {
         signatureValid: true,
         processingError: true,
         accountId: true,
-        body: true, // Get the full payload to see metadata
+        receivedAt: true,
+        body: true,
       },
     });
 
     return NextResponse.json({
       webhooks: recentWebhooks.map(wh => {
         const parsedPayload = wh.body as any;
-
+        const obj = parsedPayload?.data?.object || {};
         return {
           id: wh.id,
+          stripeEventId: parsedPayload?.id || null,
           type: wh.type,
           processed: wh.processed,
           signatureValid: wh.signatureValid,
           error: wh.processingError,
           accountId: wh.accountId,
-          metadata: parsedPayload?.data?.object?.metadata || null,
-          subscriptionId: parsedPayload?.data?.object?.subscription || null,
-          customerId: parsedPayload?.data?.object?.customer || null,
+          receivedAt: wh.receivedAt,
+          subscriptionId: obj.subscription || obj.id,
+          customerId: obj.customer,
+          status: obj.status,
+          cancellation_details: obj.cancellation_details || null,
+          cancel_at_period_end: obj.cancel_at_period_end,
+          metadata: obj.metadata || null,
         };
       }),
     });

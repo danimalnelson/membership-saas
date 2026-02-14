@@ -104,19 +104,39 @@ export default async function TransactionsPage({
         paymentMethodLast4: card?.last4 ?? null,
       };
     }),
-    ...planSubscriptions.map((sub) => ({
-      id: `sub-${sub.id}`,
-      date: sub.createdAt,
-      type: "SUBSCRIPTION_CREATED",
-      amount: 0,
-      currency: "usd",
-      customerEmail: sub.consumer.email,
-      customerName: sub.consumer.name,
-      description: sub.plan.name,
-      stripeId: sub.stripeSubscriptionId,
-      paymentMethodBrand: null,
-      paymentMethodLast4: null,
-    })),
+    ...planSubscriptions.flatMap((sub) => {
+      const items = [
+        {
+          id: `sub-created-${sub.id}`,
+          date: sub.createdAt,
+          type: "SUBSCRIPTION_CREATED" as const,
+          amount: 0,
+          currency: "usd" as const,
+          customerEmail: sub.consumer.email,
+          customerName: sub.consumer.name,
+          description: sub.plan.name,
+          stripeId: sub.stripeSubscriptionId,
+          paymentMethodBrand: null as string | null,
+          paymentMethodLast4: null as string | null,
+        },
+      ];
+      if (sub.status === "canceled") {
+        items.push({
+          id: `sub-cancelled-${sub.id}`,
+          date: sub.lastSyncedAt,
+          type: "SUBSCRIPTION_CANCELLED" as const,
+          amount: 0,
+          currency: "usd" as const,
+          customerEmail: sub.consumer.email,
+          customerName: sub.consumer.name,
+          description: sub.plan.name,
+          stripeId: sub.stripeSubscriptionId,
+          paymentMethodBrand: null as string | null,
+          paymentMethodLast4: null as string | null,
+        });
+      }
+      return items;
+    }),
   ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   return (

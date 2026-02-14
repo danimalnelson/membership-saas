@@ -99,6 +99,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  // Idempotency: skip if we've already processed this Stripe event (prevents duplicate emails on retries)
+  const alreadyProcessed = await prisma.$queryRaw<{ count: bigint }[]>`
+    SELECT 1 as count FROM webhook_events 
+    WHERE (body->>'id') = ${event.id} AND processed = true 
+    LIMIT 1
+  `;
+  if (alreadyProcessed.length > 0) {
+    console.log(`[Webhook] Idempotency: event ${event.id} already processed, skipping`);
+    return NextResponse.json({ received: true, idempotent: true });
+  }
+
   // Log webhook event
   await prisma.webhookEvent.create({
     data: {
@@ -410,7 +421,17 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription, acco
 
   if (planSubscription) {
     // NEW MODEL: Handle PlanSubscription deletion
-    console.log(`[Webhook] Deleting new model PlanSubscription ${planSubscription.id}`);
+    const cancelDetails = (subscription as any).cancellation_details;
+    console.log(`[Webhook] Deleting new model PlanSubscription ${planSubscription.id}`, {
+      subscriptionId: subscription.id,
+      cancellationDetails: cancelDetails
+        ? {
+            reason: cancelDetails.reason,
+            feedback: cancelDetails.feedback,
+            comment: cancelDetails.comment ? "(present)" : undefined,
+          }
+        : null,
+    });
     try {
       await handlePlanSubscriptionDeleted(prisma, subscription);
       console.log(`[Webhook] ✅ Deleted PlanSubscription ${planSubscription.id}`);
@@ -418,6 +439,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription, acco
       // Send cancellation email to member
       if (planSubscription.consumer.email) {
         const cancellationDate = new Date(subscription.current_period_end * 1000);
+        console.log(`[Webhook] Sending subscription cancelled email to ${planSubscription.consumer.email} for sub ${subscription.id}`);
         await sendEmail({
           to: planSubscription.consumer.email,
           subject: `Subscription Cancelled - ${planSubscription.plan.business.name}`,
@@ -477,6 +499,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription, acco
   // Send cancellation email
   if (existingSub.member.consumer.email) {
     const cancellationDate = new Date(subscription.current_period_end * 1000);
+    console.log(`[Webhook] Sending subscription cancelled email (legacy) to ${existingSub.member.consumer.email} for sub ${subscription.id}`);
     await sendEmail({
       to: existingSub.member.consumer.email,
       subject: `Subscription Cancelled - ${existingSub.member.business.name}`,

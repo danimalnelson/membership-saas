@@ -46,10 +46,34 @@ export async function POST(
       return NextResponse.json({ error: "Subscription not found" }, { status: 404 });
     }
 
+    // Audit log: trace who triggered cancel for future investigation
+    const consumer = await prisma.consumer.findUnique({
+      where: { id: session.consumerId },
+      select: { email: true },
+    });
+    await prisma.auditLog.create({
+      data: {
+        businessId: business.id,
+        type: "SUBSCRIPTION_CANCEL_REQUESTED",
+        metadata: {
+          source: "member_portal",
+          consumerId: session.consumerId,
+          consumerEmail: consumer?.email,
+          subscriptionId,
+          stripeSubscriptionId: planSubscription.stripeSubscriptionId,
+          ip: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown",
+          userAgent: req.headers.get("user-agent") || "unknown",
+        },
+      },
+    });
+
     // Cancel at period end in Stripe
     const stripe = getStripeClient(business.stripeAccountId);
     await stripe.subscriptions.update(planSubscription.stripeSubscriptionId, {
       cancel_at_period_end: true,
+      cancellation_details: {
+        comment: "Customer cancelled via member portal",
+      },
     });
 
     // Update local status
