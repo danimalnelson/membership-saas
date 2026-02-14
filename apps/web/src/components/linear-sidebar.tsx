@@ -125,7 +125,7 @@ export const LinearSidebar = memo(function LinearSidebar({
               </span>
             </div>
           )}
-          <span className="text-sm font-medium text-neutral-950 truncate flex-1 text-left">
+          <span className="text-sm font-semibold text-neutral-950 truncate flex-1 text-left">
             {business.name}
           </span>
           <ChevronDown className={cn(

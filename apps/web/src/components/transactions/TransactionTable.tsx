@@ -152,8 +152,6 @@ function formatTransactionDate(date: Date, timeZone?: string) {
 // ---------------------------------------------------------------------------
 
 const FILTER_CONFIGS: FilterConfig[] = [
-  { type: "text", key: "name", label: "Name" },
-  { type: "text", key: "email", label: "Email" },
   {
     type: "select",
     key: "type",
@@ -168,6 +166,9 @@ const FILTER_CONFIGS: FilterConfig[] = [
       { value: "VOIDED", label: "Voided", icon: <TypeIcon type="VOIDED" /> },
     ],
   },
+  { type: "text", key: "name", label: "Name" },
+  { type: "text", key: "email", label: "Email" },
+  { type: "text", key: "plan", label: "Plan" },
   {
     type: "text",
     key: "last4",
@@ -186,6 +187,9 @@ function filterFn(t: Transaction, filters: Record<string, string>): boolean {
   }
   if (filters.email) {
     if (!t.customerEmail.toLowerCase().includes(filters.email.toLowerCase())) return false;
+  }
+  if (filters.plan) {
+    if (!t.description.toLowerCase().includes(filters.plan.toLowerCase())) return false;
   }
   if (filters.type) {
     const types = filters.type.split(",");
@@ -216,9 +220,14 @@ export function TransactionTable({ transactions, timeZone }: { transactions: Tra
       render: (t) => <TransactionTypeLabel type={t.type} />,
     },
     {
-      key: "amount",
-      label: "Amount",
-      render: (t) => (t.amount > 0 ? formatCurrency(t.amount, t.currency) : "—"),
+      key: "name",
+      label: "Name",
+      render: (t) => t.customerName || t.customerEmail.split("@")[0],
+    },
+    {
+      key: "email",
+      label: "Email",
+      render: (t) => t.customerEmail,
     },
     {
       key: "plan",
@@ -226,14 +235,9 @@ export function TransactionTable({ transactions, timeZone }: { transactions: Tra
       render: (t) => t.description,
     },
     {
-      key: "customer",
-      label: "Customer",
-      render: (t) => t.customerName || t.customerEmail.split("@")[0],
-    },
-    {
-      key: "email",
-      label: "Email",
-      render: (t) => t.customerEmail,
+      key: "amount",
+      label: "Amount",
+      render: (t) => (t.amount > 0 ? formatCurrency(t.amount, t.currency) : "—"),
     },
     {
       key: "paymentMethod",
@@ -248,17 +252,17 @@ export function TransactionTable({ transactions, timeZone }: { transactions: Tra
   ];
 
   const exportCsv = useCallback(() => {
-    const headers = ["Date", "Customer", "Email", "Plan", "Type", "Payment Method", "Amount"];
+    const headers = ["Type", "Name", "Email", "Plan", "Amount", "Payment Method", "Date"];
     const rows = table.filtered.map((t) => [
-      t.date instanceof Date ? t.date.toISOString().split("T")[0] : String(t.date).split("T")[0],
+      t.type.replace(/_/g, " "),
       (t.customerName || t.customerEmail.split("@")[0]).replace(/,/g, ""),
       t.customerEmail,
       t.description.replace(/,/g, ""),
-      t.type.replace(/_/g, " "),
+      t.amount > 0 ? (t.amount / 100).toFixed(2) : "0.00",
       t.paymentMethodBrand && t.paymentMethodLast4
         ? `${t.paymentMethodBrand} ****${t.paymentMethodLast4}`
         : "",
-      t.amount > 0 ? (t.amount / 100).toFixed(2) : "0.00",
+      t.date instanceof Date ? t.date.toISOString().split("T")[0] : String(t.date).split("T")[0],
     ]);
     const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });

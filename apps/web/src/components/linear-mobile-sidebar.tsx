@@ -100,7 +100,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
                 </span>
               </div>
             )}
-            <span className="font-medium text-neutral-950 text-sm truncate max-w-[150px]">
+            <span className="font-semibold text-neutral-950 text-sm truncate max-w-[150px]">
               {business.name}
             </span>
           </div>

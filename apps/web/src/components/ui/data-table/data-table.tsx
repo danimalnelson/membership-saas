@@ -149,7 +149,7 @@ export function DataTable<T>({
     <>
       {/* Sticky header: title + filters + actions */}
       <div className="sticky top-0 z-10 -mx-3 px-3 pt-3 flex items-center gap-2 pb-3 mb-3 border-b border-neutral-400 bg-neutral-50">
-        <h1 className="text-sm font-medium text-foreground w-[120px] shrink-0">{title}</h1>
+        <h1 className="text-sm font-semibold text-foreground w-[120px] shrink-0">{title}</h1>
         <div className="flex items-center gap-1">
           {filterConfigs.map((config) => (
             <FilterPillFromConfig
