@@ -81,6 +81,15 @@ export default async function TransactionsPage({
     }
   }
 
+  // Format dates on server to avoid hydration mismatch (Intl can differ server vs client)
+  const formatDate = (date: Date, tz?: string | null) => {
+    const d = date instanceof Date ? date : new Date(date);
+    const month = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: tz || undefined }).format(d);
+    const day = new Intl.DateTimeFormat("en-US", { day: "numeric", timeZone: tz || undefined }).format(d);
+    const time = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz || undefined }).format(d);
+    return `${month} ${day}, ${time}`;
+  };
+
   // Create combined transaction list
   const transactions = [
     ...stripeInvoices.data.map((invoice) => {
@@ -90,9 +99,11 @@ export default async function TransactionsPage({
       const planName = invoice.subscription
         ? subIdToPlanName.get(typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription.id) ?? null
         : null;
+      const date = new Date(invoice.created * 1000);
       return {
         id: invoice.id,
-        date: new Date(invoice.created * 1000),
+        date,
+        dateDisplay: formatDate(date, business.timeZone),
         type: invoice.status === "paid" ? "PAYMENT" : invoice.status === "void" ? "VOIDED" : "PENDING",
         amount: invoice.amount_paid,
         currency: invoice.currency,
@@ -105,34 +116,50 @@ export default async function TransactionsPage({
       };
     }),
     ...planSubscriptions.flatMap((sub) => {
-      const items = [
+      type SubTx = {
+        id: string;
+        date: Date;
+        dateDisplay: string;
+        type: "SUBSCRIPTION_CREATED" | "SUBSCRIPTION_CANCELLED";
+        amount: number;
+        currency: string;
+        customerEmail: string;
+        customerName: string | null;
+        description: string;
+        stripeId: string | null;
+        paymentMethodBrand: string | null;
+        paymentMethodLast4: string | null;
+      };
+      const items: SubTx[] = [
         {
           id: `sub-created-${sub.id}`,
           date: sub.createdAt,
-          type: "SUBSCRIPTION_CREATED" as const,
+          dateDisplay: formatDate(sub.createdAt, business.timeZone),
+          type: "SUBSCRIPTION_CREATED",
           amount: 0,
-          currency: "usd" as const,
+          currency: "usd",
           customerEmail: sub.consumer.email,
           customerName: sub.consumer.name,
           description: sub.plan.name,
           stripeId: sub.stripeSubscriptionId,
-          paymentMethodBrand: null as string | null,
-          paymentMethodLast4: null as string | null,
+          paymentMethodBrand: null,
+          paymentMethodLast4: null,
         },
       ];
       if (sub.status === "canceled") {
         items.push({
           id: `sub-cancelled-${sub.id}`,
           date: sub.lastSyncedAt,
-          type: "SUBSCRIPTION_CANCELLED" as const,
+          dateDisplay: formatDate(sub.lastSyncedAt, business.timeZone),
+          type: "SUBSCRIPTION_CANCELLED",
           amount: 0,
-          currency: "usd" as const,
+          currency: "usd",
           customerEmail: sub.consumer.email,
           customerName: sub.consumer.name,
           description: sub.plan.name,
           stripeId: sub.stripeSubscriptionId,
-          paymentMethodBrand: null as string | null,
-          paymentMethodLast4: null as string | null,
+          paymentMethodBrand: null,
+          paymentMethodLast4: null,
         });
       }
       return items;

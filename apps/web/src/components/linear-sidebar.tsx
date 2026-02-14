@@ -12,13 +12,13 @@ import {
   ArrowLeftRight,
   ChartPie,
   SettingsGear,
-  ChevronDown,
-  ChevronRight,
-  ChevronLeft,
   Logout,
   Plus,
   Layers,
 } from "geist-icons";
+import { ChevronUpDown } from "@/components/icons/ChevronUpDown";
+import { ChevronRight } from "@/components/icons/ChevronRight";
+import { ChevronLeft } from "@/components/icons/ChevronLeft";
 
 interface Business {
   id: string;
@@ -128,10 +128,7 @@ export const LinearSidebar = memo(function LinearSidebar({
           <span className="text-sm font-semibold text-neutral-950 truncate flex-1 text-left">
             {business.name}
           </span>
-          <ChevronDown className={cn(
-            "h-3.5 w-3.5 text-neutral-800 transition-transform",
-            isBusinessDropdownOpen && "rotate-180"
-          )} />
+          <ChevronUpDown size={14} className="text-neutral-800 shrink-0" />
         </button>
 
         {/* Workspace Dropdown */}
@@ -259,7 +256,7 @@ export const LinearSidebar = memo(function LinearSidebar({
             >
               <SettingsGear className="h-4 w-4" />
               <span className="flex-1 text-left">Settings</span>
-              <ChevronRight className="h-3.5 w-3.5 text-neutral-800" />
+              <ChevronRight size={14} className="text-neutral-800" />
             </button>
             <a
               href="mailto:support@example.com"
@@ -288,7 +285,7 @@ export const LinearSidebar = memo(function LinearSidebar({
               onClick={() => setShowSettingsNav(false)}
               className="w-full flex items-center px-2 h-9 rounded-md hover:bg-neutral-100 transition-colors text-sm font-medium text-neutral-950 relative"
             >
-              <ChevronLeft className="h-4 w-4 text-neutral-800 absolute left-2" />
+              <ChevronLeft size={16} className="text-neutral-800 absolute left-2" />
               <span className="flex-1 text-center">Settings</span>
             </button>
           </div>

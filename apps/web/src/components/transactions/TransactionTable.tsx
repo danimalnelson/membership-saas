@@ -26,6 +26,7 @@ import {
 export interface Transaction {
   id: string;
   date: Date;
+  dateDisplay: string;
   type: string;
   amount: number;
   currency: string;
@@ -139,14 +140,6 @@ function TransactionTypeLabel({ type }: { type: string }) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatTransactionDate(date: Date, timeZone?: string) {
-  const d = date instanceof Date ? date : new Date(date);
-  const month = new Intl.DateTimeFormat("en-US", { month: "short", timeZone }).format(d);
-  const day = new Intl.DateTimeFormat("en-US", { day: "numeric", timeZone }).format(d);
-  const time = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone }).format(d);
-  return `${month} ${day}, ${time}`;
-}
-
 // ---------------------------------------------------------------------------
 // Filter + column config
 // ---------------------------------------------------------------------------
@@ -205,7 +198,7 @@ function filterFn(t: Transaction, filters: Record<string, string>): boolean {
 // Component
 // ---------------------------------------------------------------------------
 
-export function TransactionTable({ transactions, timeZone }: { transactions: Transaction[]; timeZone?: string }) {
+export function TransactionTable({ transactions }: { transactions: Transaction[]; timeZone?: string }) {
   const table = useDataTable({
     data: transactions,
     filters: FILTER_CONFIGS,
@@ -247,7 +240,7 @@ export function TransactionTable({ transactions, timeZone }: { transactions: Tra
     {
       key: "date",
       label: "Date",
-      render: (t) => formatTransactionDate(t.date, timeZone),
+      render: (t) => t.dateDisplay,
     },
   ];
 
