@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@wine-club/ui";
-import { Pause, Play, Cross as XIcon } from "geist-icons";
+import { Pause, Play } from "geist-icons";
+import { Cross } from "@/components/icons/Cross";
 
 interface SubscriptionActionsProps {
   subscriptionId: string;
@@ -138,7 +139,7 @@ export function SubscriptionActions({
           disabled={loading}
           className="gap-2 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950"
         >
-          <XIcon className="h-4 w-4" />
+          <Cross size={16} className="h-4 w-4" />
           Cancel
         </Button>
       )}
@@ -152,7 +153,7 @@ export function SubscriptionActions({
                 onClick={() => setShowCancelDialog(false)}
                 className="text-muted-foreground hover:text-foreground"
               >
-                <XIcon className="h-5 w-5" />
+                <Cross size={20} className="h-5 w-5" />
               </button>
             </div>
 

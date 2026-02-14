@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect, notFound } from "next/navigation";
+import { prisma, Prisma } from "@wine-club/db";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@wine-club/db";
 import { getStripeClient } from "@wine-club/lib";
 import { Card, CardContent } from "@wine-club/ui";
 import { getBusinessBySlug } from "@/lib/data/business";
@@ -38,8 +38,9 @@ export default async function TransactionsPage({
   }
 
   // Run Stripe API call and DB query in parallel (with error handling)
+  type PlanSubWithPlan = Prisma.PlanSubscriptionGetPayload<{ include: { plan: true; consumer: true } }>;
   let stripeInvoices: Awaited<ReturnType<ReturnType<typeof getStripeClient>["invoices"]["list"]>> | null = null;
-  let planSubscriptions: Awaited<ReturnType<typeof prisma.planSubscription.findMany>> = [];
+  let planSubscriptions: PlanSubWithPlan[] = [];
 
   try {
     const stripe = getStripeClient(business.stripeAccountId);

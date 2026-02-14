@@ -21,7 +21,7 @@ Icons accept `size` (number), `color` (string), and standard SVG props like `cla
 | Icon | Used in |
 |------|---------|
 | Check | filter-popover, PlanModal, MembershipListing, CheckoutModal, filter checkbox |
-| X | PlanModal, CheckoutModal, drawer, AlertBanner, settings, portal |
+| Cross (X) | PlanModal, CheckoutModal, drawer, settings, portal, SubscriptionActions, EditMemberInfoDialog, linear-mobile-sidebar — SVG from [vercel.com/geist/icons](https://vercel.com/geist/icons) |
 | DollarSign | TransactionTable, dashboard, ActionItems |
 | UserPlus | TransactionTable, ActivityFeed |
 | UserX | TransactionTable |

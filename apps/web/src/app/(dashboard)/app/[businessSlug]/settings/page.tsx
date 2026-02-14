@@ -11,7 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@wine-club/ui";
-import { CloudUpload, Cross, MagnifyingGlassPlus, MagnifyingGlassMinus } from "geist-icons";
+import { CloudUpload, MagnifyingGlassPlus, MagnifyingGlassMinus } from "geist-icons";
+import { Cross } from "@/components/icons/Cross";
 import { useBusinessContext } from "@/contexts/business-context";
 
 export default function SettingsPage() {
@@ -248,7 +249,7 @@ export default function SettingsPage() {
                     onClick={removeLogo}
                     className="inline-flex items-center gap-1 text-xs text-neutral-800 hover:text-neutral-950 transition-colors"
                   >
-                    <Cross className="h-3 w-3" />
+                    <Cross size={12} className="h-3 w-3" />
                     Remove
                   </button>
                 </div>

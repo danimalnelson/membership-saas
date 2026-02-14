@@ -4,7 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, formatCurrency } from "@wine-club/ui";
 import Link from "next/link";
-import { Pause, Play, Cross as XIcon, Plus, CreditCard } from "geist-icons";
+import { Pause, Play, Plus, CreditCard } from "geist-icons";
+import { Cross } from "@/components/icons/Cross";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { PaymentMethodForm } from "@/components/portal/PaymentMethodForm";
@@ -476,7 +477,7 @@ export default function MemberPortalPage() {
                         disabled={actionLoading === subscription.id}
                         className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                       >
-                        <XIcon className="h-3 w-3" />
+                        <Cross size={12} className="h-3 w-3" />
                         Cancel
                       </Button>
                     )}
@@ -621,7 +622,7 @@ export default function MemberPortalPage() {
                 onClick={() => setShowCancelDialog(null)}
                 className="text-muted-foreground hover:text-foreground"
               >
-                <XIcon className="h-5 w-5" />
+                <Cross size={20} className="h-5 w-5" />
               </button>
             </div>
 

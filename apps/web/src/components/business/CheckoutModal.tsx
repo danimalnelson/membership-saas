@@ -1,7 +1,8 @@
 "use client";
 
 import { Button, formatCurrency } from "@wine-club/ui";
-import { Cross, Check } from "geist-icons";
+import { Check } from "geist-icons";
+import { Cross } from "@/components/icons/Cross";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -94,7 +95,7 @@ export function CheckoutModal({
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-accent transition-colors z-10"
           aria-label="Close"
         >
-          <Cross className="w-5 h-5" />
+          <Cross size={20} className="w-5 h-5 text-foreground" />
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2">

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { formatCurrency } from "@wine-club/ui";
 import { Card, CardContent } from "@wine-club/ui";
 import { Plus } from "geist-icons";
+import { CornerDownRight } from "@/components/icons/CornerDownRight";
 import {
   useDataTable,
   StatusBadge,
@@ -418,9 +419,7 @@ function MembershipSection({
         >
           <td className="pl-3 pr-3 text-sm font-medium">
             <div className="flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-neutral-700">
-                <path d="M6 4V10H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <CornerDownRight size={16} className="shrink-0 text-neutral-700" />
               {plan.name}
               <StatusBadge status={plan.status} />
             </div>

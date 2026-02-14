@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Warning, Cross } from "geist-icons";
+import { Warning } from "geist-icons";
 
 interface Alert {
   id: string;

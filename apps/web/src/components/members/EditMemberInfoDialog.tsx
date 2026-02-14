@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Label } from "@wine-club/ui";
-import { Pencil, Cross } from "geist-icons";
+import { Pencil } from "geist-icons";
+import { Cross } from "@/components/icons/Cross";
 
 interface EditMemberInfoDialogProps {
   businessId: string;
@@ -79,7 +80,7 @@ export function EditMemberInfoDialog({
             onClick={() => setIsOpen(false)}
             className="text-muted-foreground hover:text-foreground"
           >
-            <Cross className="h-5 w-5" />
+            <Cross size={20} className="h-5 w-5" />
           </button>
         </div>
 

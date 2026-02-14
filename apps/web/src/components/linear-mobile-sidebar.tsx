@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@wine-club/ui";
+import { Cross } from "@/components/icons/Cross";
 import { Dashboard } from "@/components/icons/Dashboard";
 import { Lifebuoy } from "@/components/icons/Lifebuoy";
 import { Users } from "@/components/icons/Users";
@@ -16,7 +17,6 @@ import {
   Logout,
   Check,
   Menu,
-  Cross,
   Plus,
 } from "geist-icons";
 
@@ -151,7 +151,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
               className="p-1.5 rounded-md hover:bg-neutral-100 transition-colors"
               aria-label="Close menu"
             >
-              <Cross className="h-4 w-4 text-neutral-900" />
+              <Cross size={16} className="h-4 w-4 text-neutral-900" />
             </button>
           </div>
 
