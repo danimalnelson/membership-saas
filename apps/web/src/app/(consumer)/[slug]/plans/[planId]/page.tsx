@@ -3,7 +3,7 @@ import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@wine-club/db";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, formatCurrency } from "@wine-club/ui";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "geist-icons";
 
 export const revalidate = 300;
 

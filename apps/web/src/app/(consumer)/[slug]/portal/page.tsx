@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, formatCurrency } from "@wine-club/ui";
 import Link from "next/link";
-import { Pause, Play, X as XIcon, Plus, CreditCard } from "lucide-react";
+import { Pause, Play, Cross as XIcon, Plus, CreditCard } from "geist-icons";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { PaymentMethodForm } from "@/components/portal/PaymentMethodForm";
@@ -594,7 +594,7 @@ export default function MemberPortalPage() {
                     appearance: {
                       theme: "stripe",
                       variables: {
-                        colorPrimary: "#3b82f6",
+                        colorPrimary: "#3867d6",
                       },
                     },
                   }}

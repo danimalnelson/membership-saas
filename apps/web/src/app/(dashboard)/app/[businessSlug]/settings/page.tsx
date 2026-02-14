@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@wine-club/ui";
-import { Upload, X, ZoomIn, ZoomOut } from "lucide-react";
+import { CloudUpload, Cross, MagnifyingGlassPlus, MagnifyingGlassMinus } from "geist-icons";
 import { useBusinessContext } from "@/contexts/business-context";
 
 export default function SettingsPage() {
@@ -230,7 +230,7 @@ export default function SettingsPage() {
                     <img
                       src={formData.logoUrl}
                       alt="Logo preview"
-                      className="h-20 w-20 rounded-lg object-cover border border-[#eaeaea]"
+                      className="h-20 w-20 rounded-lg object-cover border border-neutral-400"
                     />
                     <button
                       type="button"
@@ -246,9 +246,9 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={removeLogo}
-                    className="inline-flex items-center gap-1 text-xs text-[#999] hover:text-[#171717] transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-neutral-800 hover:text-neutral-950 transition-colors"
                   >
-                    <X className="h-3 w-3" />
+                    <Cross className="h-3 w-3" />
                     Remove
                   </button>
                 </div>
@@ -257,12 +257,12 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="flex items-center justify-center gap-2 w-20 h-20 rounded-lg border border-dashed border-[#ccc] hover:border-[#999] bg-[#fafafa] hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+                  className="flex items-center justify-center gap-2 w-20 h-20 rounded-lg border border-dashed border-neutral-700 hover:border-neutral-800 bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer"
                 >
                   {uploading ? (
-                    <div className="h-5 w-5 border-2 border-[#ccc] border-t-[#171717] rounded-full animate-spin" />
+                    <div className="h-5 w-5 border-2 border-neutral-700 border-t-neutral-950 rounded-full animate-spin" />
                   ) : (
-                    <Upload className="h-5 w-5 text-[#999]" />
+                    <CloudUpload className="h-5 w-5 text-neutral-800" />
                   )}
                 </button>
               )}
@@ -279,7 +279,7 @@ export default function SettingsPage() {
             {cropFile && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                 <div className="bg-white rounded-xl shadow-xl w-[420px] overflow-hidden">
-                  <div className="flex items-center justify-center bg-[#f5f5f5] p-4">
+                  <div className="flex items-center justify-center bg-neutral-100 p-4">
                     <AvatarEditor
                       ref={editorRef}
                       image={cropFile}
@@ -289,11 +289,11 @@ export default function SettingsPage() {
                       borderRadius={0}
                       scale={zoom}
                       rotate={0}
-                      backgroundColor="#f5f5f5"
+                      backgroundColor="var(--color-neutral-100)"
                     />
                   </div>
                   <div className="px-4 py-3 flex items-center gap-3">
-                    <ZoomOut className="h-3.5 w-3.5 text-[#999] shrink-0" />
+                    <MagnifyingGlassMinus className="h-3.5 w-3.5 text-neutral-800 shrink-0" />
                     <input
                       type="range"
                       min={1}
@@ -301,22 +301,22 @@ export default function SettingsPage() {
                       step={0.05}
                       value={zoom}
                       onChange={(e) => setZoom(Number(e.target.value))}
-                      className="flex-1 accent-[#171717]"
+                      className="flex-1 accent-neutral-950"
                     />
-                    <ZoomIn className="h-3.5 w-3.5 text-[#999] shrink-0" />
+                    <MagnifyingGlassPlus className="h-3.5 w-3.5 text-neutral-800 shrink-0" />
                   </div>
-                  <div className="px-4 py-3 border-t border-[#eaeaea] flex items-center justify-between">
+                  <div className="px-4 py-3 border-t border-neutral-400 flex items-center justify-between">
                     <button
                       type="button"
                       onClick={cancelCrop}
-                      className="text-sm font-medium text-[#666] hover:text-[#171717] transition-colors"
+                      className="text-sm font-medium text-neutral-900 hover:text-neutral-950 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
                       onClick={handleCropConfirm}
-                      className="px-4 h-9 rounded-lg bg-[#171717] text-white text-sm font-medium hover:bg-[#333] transition-colors"
+                      className="px-4 h-9 rounded-lg bg-neutral-950 text-white text-sm font-medium hover:bg-neutral-925 transition-colors"
                     >
                       Set Logo
                     </button>

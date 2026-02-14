@@ -20,7 +20,7 @@ export function BusinessHeader({
           variant="ghost"
           size="sm"
           asChild
-          className="bg-[#F5F5F5] hover:bg-[#E5E5E5] transition-colors shrink-0 h-9 px-4 rounded-full"
+          className="bg-neutral-100 hover:bg-neutral-200 transition-colors shrink-0 h-9 px-4 rounded-full"
         >
           <Link href={`/${businessSlug}/portal`}>Manage membership</Link>
         </Button>

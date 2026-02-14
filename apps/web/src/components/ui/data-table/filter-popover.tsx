@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Check } from "lucide-react";
+import { Check } from "geist-icons";
 import { FilterPill } from "./filter-pill";
 import type { FilterConfig, TextFilterConfig, SelectFilterConfig } from "./use-data-table";
 
@@ -24,7 +24,7 @@ function DelayedFocusInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
       ref={inputRef}
       type="text"
       {...props}
-      className="w-full px-3 py-2 text-sm border rounded-md outline-none ring-0 ring-[#171717]/0 focus:ring-2 focus:ring-[#171717]/20 focus:border-[#999] transition-all duration-1000"
+      className="w-full px-3 py-2 text-sm border rounded-md outline-none ring-0 ring-neutral-950/0 focus:ring-2 focus:ring-neutral-950/20 focus:border-neutral-800 transition-all duration-1000"
     />
   );
 }
@@ -64,9 +64,9 @@ export function FilterPillFromConfig({
 
     return (
       <FilterPill label={config.label} activeValue={displayValue} active={active} onToggle={onToggle} isOpen={isOpen}>
-        <div className="w-[240px] max-h-[300px] overflow-y-auto">
+        <div className="w-[240px] overflow-y-auto">
           <div className="p-3">
-            <p className="text-sm font-medium text-[#171717] mb-2">Filter by: {config.label.toLowerCase()}</p>
+            <p className="text-sm font-medium text-neutral-950 mb-2">Filter by: {config.label.toLowerCase()}</p>
             <DelayedFocusInput
               placeholder={textConfig.placeholder || "contains..."}
               maxLength={textConfig.maxLength}
@@ -78,10 +78,10 @@ export function FilterPillFromConfig({
               onKeyDown={(e) => e.key === "Enter" && onApplyText()}
             />
           </div>
-          <div className="p-3 border-t border-[#eaeaea]">
+          <div className="p-3 border-t border-neutral-400">
             <button
               onClick={onApplyText}
-              className="w-full px-3 h-9 text-sm font-medium text-white bg-[#171717] rounded-md hover:bg-black transition-colors"
+              className="w-full px-3 h-9 text-sm font-medium text-white bg-neutral-950 rounded-md hover:bg-neutral-925 transition-colors"
             >
               Apply
             </button>
@@ -155,8 +155,8 @@ function MultiSelectFilterPill({
 
   return (
     <FilterPill label={config.label} activeValue={displayValue} active={active} onToggle={onToggle} isOpen={isOpen}>
-      <div className="w-[240px] max-h-[270px] flex flex-col">
-        <p className="px-3 pt-3 pb-2 text-sm font-medium text-[#171717] shrink-0">Filter by: {config.label.toLowerCase()}</p>
+      <div className="w-[240px] flex flex-col">
+        <p className="px-3 pt-3 pb-2 text-sm font-medium text-neutral-950 shrink-0">Filter by: {config.label.toLowerCase()}</p>
         <div className="overflow-y-auto px-2 pb-3 min-h-0">
           <div className="flex flex-col gap-0.5">
             {config.options.map((opt) => {
@@ -165,13 +165,13 @@ function MultiSelectFilterPill({
                 <button
                   key={opt.value}
                   onClick={() => toggleOption(opt.value)}
-                  className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-[#666] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
+                  className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
                 >
                   <span
                     className={`flex items-center justify-center h-4 w-4 rounded border transition-colors shrink-0 ${
                       checked
-                        ? "bg-[#171717] border-[#171717]"
-                        : "border-[#d0d0d0] bg-white"
+                        ? "bg-neutral-950 border-neutral-950"
+                        : "border-neutral-600 bg-white"
                     }`}
                   >
                     {checked && <Check className="h-3 w-3 text-white" />}
@@ -189,10 +189,10 @@ function MultiSelectFilterPill({
             })}
           </div>
         </div>
-        <div className="p-3 border-t border-[#eaeaea] shrink-0">
+        <div className="p-3 border-t border-neutral-400 shrink-0">
           <button
             onClick={applySelection}
-            className="w-full px-3 h-9 text-sm font-medium text-white bg-[#171717] rounded-md hover:bg-black transition-colors"
+            className="w-full px-3 h-9 text-sm font-medium text-white bg-neutral-950 rounded-md hover:bg-neutral-925 transition-colors"
           >
             Apply
           </button>

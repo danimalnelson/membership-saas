@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RefreshCw, CheckCircle, XCircle, Clock, CreditCard, FileText, AlertTriangle } from "lucide-react";
+import { RefreshClockwise, CheckCircle, CrossCircle, Clock, CreditCard, FileText, Warning } from "geist-icons";
 import { Button } from "@wine-club/ui";
 
 interface TimelineEvent {
@@ -127,7 +127,7 @@ export function EventTimeline({ testClockId, frozenTime }: EventTimelineProps) {
     if (type.includes("payment")) {
       return <CreditCard className="w-4 h-4" />;
     }
-    return <AlertTriangle className="w-4 h-4" />;
+    return <Warning className="w-4 h-4" />;
   };
 
   const getEventColor = (type: string) => {
@@ -151,7 +151,7 @@ export function EventTimeline({ testClockId, frozenTime }: EventTimelineProps) {
       return <Clock className="w-4 h-4 text-yellow-500" />;
     }
     if (status === "uncollectible" || status === "void") {
-      return <XCircle className="w-4 h-4 text-red-500" />;
+      return <CrossCircle className="w-4 h-4 text-red-500" />;
     }
     return <FileText className="w-4 h-4 text-gray-500" />;
   };
@@ -159,7 +159,7 @@ export function EventTimeline({ testClockId, frozenTime }: EventTimelineProps) {
   if (loading && !details) {
     return (
       <div className="flex items-center justify-center py-8">
-        <RefreshCw className="w-5 h-5 animate-spin text-muted-foreground" />
+        <RefreshClockwise className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -186,7 +186,7 @@ export function EventTimeline({ testClockId, frozenTime }: EventTimelineProps) {
       {/* Refresh Button */}
       <div className="flex justify-end">
         <Button variant="ghost" size="sm" onClick={fetchDetails} disabled={loading}>
-          <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
+          <RefreshClockwise className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </Button>
       </div>

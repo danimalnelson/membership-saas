@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@wine-club/ui";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ChartTrendingUp, ChartTrendingDown, Minus } from "geist-icons";
 
 interface MetricCardProps {
   title: string;
@@ -71,7 +71,7 @@ function TrendIndicator({ value, label }: TrendIndicatorProps) {
     <div className="flex items-center gap-1">
       {isPositive && (
         <>
-          <TrendingUp className="h-4 w-4 text-green-600" />
+          <ChartTrendingUp className="h-4 w-4 text-green-600" />
           <span className="text-sm font-medium text-green-600">
             +{value.toFixed(1)}%
           </span>
@@ -79,7 +79,7 @@ function TrendIndicator({ value, label }: TrendIndicatorProps) {
       )}
       {isNegative && (
         <>
-          <TrendingDown className="h-4 w-4 text-red-600" />
+          <ChartTrendingDown className="h-4 w-4 text-red-600" />
           <span className="text-sm font-medium text-red-600">
             {value.toFixed(1)}%
           </span>

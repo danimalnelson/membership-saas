@@ -1,14 +1,14 @@
 "use client";
 
 const STATUS_STYLES: Record<string, { border: string; text: string; bg: string }> = {
-  ACTIVE: { border: "#34C759", text: "#34C759", bg: "rgba(52, 199, 89, 0.08)" },
-  PAYMENT: { border: "#34C759", text: "#34C759", bg: "rgba(52, 199, 89, 0.08)" },
-  CANCELLED: { border: "#E5484D", text: "#E5484D", bg: "rgba(229, 72, 77, 0.08)" },
-  VOIDED: { border: "#E5484D", text: "#E5484D", bg: "rgba(229, 72, 77, 0.08)" },
-  PENDING: { border: "#EAB308", text: "#EAB308", bg: "rgba(234, 179, 8, 0.08)" },
+  ACTIVE: { border: "var(--color-green-100)", text: "var(--color-green-100)", bg: "var(--color-green-25)" },
+  PAYMENT: { border: "var(--color-green-100)", text: "var(--color-green-100)", bg: "var(--color-green-25)" },
+  CANCELLED: { border: "var(--color-red-100)", text: "var(--color-red-100)", bg: "var(--color-red-25)" },
+  VOIDED: { border: "var(--color-red-100)", text: "var(--color-red-100)", bg: "var(--color-red-25)" },
+  PENDING: { border: "var(--color-yellow-100)", text: "var(--color-yellow-100)", bg: "var(--color-yellow-25)" },
 };
 
-const DEFAULT_STYLE = { border: "#999", text: "#999", bg: "rgba(153, 153, 153, 0.08)" };
+const DEFAULT_STYLE = { border: "var(--color-neutral-800)", text: "var(--color-neutral-800)", bg: "var(--color-neutral-100)" };
 
 interface StatusBadgeProps {
   status: string;

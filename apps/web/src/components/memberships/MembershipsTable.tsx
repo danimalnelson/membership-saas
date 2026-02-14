@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus } from "geist-icons";
 import {
   DataTable,
   useDataTable,
@@ -150,7 +150,7 @@ export function MembershipsTable({
       actions={
         <button
           onClick={() => setDrawerOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium border border-[#e0e0e0] bg-white text-[#171717] hover:border-[#ccc] transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium border border-neutral-500 bg-white text-neutral-950 hover:border-neutral-700 transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
           Create membership

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@wine-club/db";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@wine-club/ui";
-import { XCircle } from "lucide-react";
+import { CrossCircle } from "geist-icons";
 
 export default async function CancelPage({
   params,
@@ -24,7 +24,7 @@ export default async function CancelPage({
       <Card className="max-w-md w-full">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
-            <XCircle className="h-10 w-10 text-yellow-600 dark:text-yellow-400" />
+            <CrossCircle className="h-10 w-10 text-yellow-600 dark:text-yellow-400" />
           </div>
           <CardTitle className="text-2xl">Checkout Cancelled</CardTitle>
           <CardDescription>

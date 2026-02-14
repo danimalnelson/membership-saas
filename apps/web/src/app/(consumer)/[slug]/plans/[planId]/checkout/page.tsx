@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@wine-club/ui";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, LoaderCircle } from "geist-icons";
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -72,7 +72,7 @@ export default function CheckoutPage() {
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <LoaderCircle size={32} className="animate-spin" />
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">

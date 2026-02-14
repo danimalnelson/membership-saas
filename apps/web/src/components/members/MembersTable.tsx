@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Download, Plus } from "lucide-react";
+import { Download, Plus } from "geist-icons";
 import {
   DataTable,
   useDataTable,
@@ -179,14 +179,14 @@ export function MembersTable({
         <div className="flex items-center gap-1.5">
           <button
             onClick={exportCsv}
-            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium border border-[#e0e0e0] bg-white text-[#171717] hover:border-[#ccc] transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium border border-neutral-500 bg-white text-neutral-950 hover:border-neutral-700 transition-colors"
           >
             <Download className="h-3.5 w-3.5" />
             Export
           </button>
           <button
             onClick={() => setDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium bg-[#171717] text-white hover:bg-black transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium bg-neutral-950 text-white hover:bg-neutral-925 transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
             Add customer

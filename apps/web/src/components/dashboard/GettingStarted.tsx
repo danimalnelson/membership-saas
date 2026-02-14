@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@wine-club/ui";
-import { Check, Circle, ArrowRight } from "lucide-react";
+import { Check, MinusCircle, ArrowRight } from "geist-icons";
 
 interface GettingStartedProps {
   businessId: string;
@@ -115,7 +115,7 @@ function ChecklistItemRow({ item }: { item: ChecklistItem }) {
           </div>
         ) : (
           <div className="h-6 w-6 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center">
-            <Circle className="h-3 w-3 text-muted-foreground/30" />
+            <MinusCircle className="h-3 w-3 text-muted-foreground/30" />
           </div>
         )}
       </div>

@@ -57,15 +57,15 @@ export function FilterPill({ label, activeValue, active, onToggle, children, isO
         onClick={onToggle}
         className={`group inline-flex items-center gap-1.5 px-2 h-6 rounded-full text-xs font-medium border transition-all duration-300 ${
           showActive
-            ? "bg-[#171717] text-white border-[#171717]"
-            : "bg-white text-[#666] border-[#e0e0e0] hover:border-[#ccc] hover:text-[#171717]"
+            ? "bg-neutral-950 text-white border-neutral-950"
+            : "bg-white text-neutral-900 border-neutral-500 hover:border-neutral-700 hover:text-neutral-950"
         }`}
       >
         {/* Fixed 12x12 icon container — rotate + to × when active */}
         <span className="flex items-center justify-center w-3 h-3 shrink-0">
           <PlusIcon
             active={showActive}
-            className={showActive ? "" : "group-hover:text-[#171717]"}
+            className={showActive ? "" : "group-hover:text-neutral-950"}
           />
         </span>
         <span>{label}</span>
@@ -77,7 +77,7 @@ export function FilterPill({ label, activeValue, active, onToggle, children, isO
         )}
       </button>
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 z-50 bg-white rounded-lg shadow-lg border border-[#eaeaea] overflow-hidden">
+        <div className="absolute top-full left-0 mt-2 z-50 bg-white rounded-lg shadow-lg border border-neutral-400 overflow-hidden">
           {children}
         </div>
       )}

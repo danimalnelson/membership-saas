@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button } from "@wine-club/ui";
-import { Play, Clock, Trash2, ChevronRight, RefreshCw } from "lucide-react";
+import { Play, Clock, Trash, ChevronRight, RefreshClockwise } from "geist-icons";
 import { TimeControls } from "./components/TimeControls";
 import { EventTimeline } from "./components/EventTimeline";
 
@@ -211,7 +211,7 @@ export default function ScenariosPage() {
                     disabled={loading}
                   >
                     {runningScenario === scenario.type ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <RefreshClockwise className="w-4 h-4 animate-spin" />
                     ) : (
                       <Play className="w-4 h-4" />
                     )}
@@ -335,7 +335,7 @@ export default function ScenariosPage() {
               onClick={cleanupAllTestClocks}
               className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
+              <Trash className="w-4 h-4 mr-2" />
               End Test & Clean Up
             </Button>
           </div>

@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@wine-club/db";
 import { getBusinessBySlug } from "@/lib/data/business";
 import { Card, CardContent, CardHeader, CardTitle, formatDate, formatCurrency, Button } from "@wine-club/ui";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, External } from "geist-icons";
 import { EditMemberInfoDialog } from "@/components/members/EditMemberInfoDialog";
 import { SubscriptionActions } from "@/components/members/SubscriptionActions";
 import { MemberNotes } from "@/components/members/MemberNotes";
@@ -185,7 +185,7 @@ export default async function MemberDetailPage({
                           rel="noopener noreferrer"
                           className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
                         >
-                          View in Stripe <ExternalLink className="h-3 w-3" />
+                          View in Stripe <External className="h-3 w-3" />
                         </a>
                         <span className="text-xs text-muted-foreground">
                           Created {formatDate(sub.createdAt)}

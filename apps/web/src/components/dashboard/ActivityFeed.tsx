@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, formatCurrency } from "@wine-club/ui";
-import { UserPlus, UserMinus, CreditCard, AlertCircle } from "lucide-react";
+import { UserPlus, UserMinus, CreditCard, Warning } from "geist-icons";
 
 export type ActivityType = "new_member" | "cancellation" | "payment" | "failed_payment";
 
@@ -30,7 +30,7 @@ const ACTIVITY_ICONS: Record<ActivityType, React.ReactNode> = {
   new_member: <UserPlus className="h-4 w-4 text-green-600" />,
   cancellation: <UserMinus className="h-4 w-4 text-gray-500" />,
   payment: <CreditCard className="h-4 w-4 text-blue-600" />,
-  failed_payment: <AlertCircle className="h-4 w-4 text-red-600" />,
+  failed_payment: <Warning className="h-4 w-4 text-red-600" />,
 };
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {

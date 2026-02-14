@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, X } from "lucide-react";
+import { Warning, Cross } from "geist-icons";
 
 interface Alert {
   id: string;
@@ -60,7 +60,7 @@ export function AlertBanner({ alerts, businessId, businessSlug }: AlertBannerPro
       className={`${styles.bg} ${styles.border} border-l-4 rounded-lg p-4 mb-6`}
     >
       <div className="flex items-start gap-3">
-        <AlertTriangle className={`h-5 w-5 ${styles.text} flex-shrink-0 mt-0.5`} />
+        <Warning className={`h-5 w-5 ${styles.text} flex-shrink-0 mt-0.5`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-4">
             <h3 className={`font-semibold ${styles.text}`}>

@@ -37,22 +37,40 @@ export default async function TransactionsPage({
     );
   }
 
-  // Run Stripe API call and DB query in parallel
-  const stripe = getStripeClient(business.stripeAccountId);
-  const [stripeInvoices, planSubscriptions] = await Promise.all([
-    stripe.invoices.list({ limit: 100, expand: ["data.charge"] }),
-    prisma.planSubscription.findMany({
-      where: {
-        plan: { businessId: business.id },
-      },
-      include: {
-        consumer: true,
-        plan: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    }),
-  ]);
+  // Run Stripe API call and DB query in parallel (with error handling)
+  let stripeInvoices: Awaited<ReturnType<ReturnType<typeof getStripeClient>["invoices"]["list"]>> | null = null;
+  let planSubscriptions: Awaited<ReturnType<typeof prisma.planSubscription.findMany>> = [];
+
+  try {
+    const stripe = getStripeClient(business.stripeAccountId);
+    [stripeInvoices, planSubscriptions] = await Promise.all([
+      stripe.invoices.list({ limit: 100, expand: ["data.charge"] }),
+      prisma.planSubscription.findMany({
+        where: {
+          plan: { businessId: business.id },
+        },
+        include: {
+          consumer: true,
+          plan: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+      }),
+    ]);
+  } catch (error) {
+    console.error("Transactions page error:", error);
+    return (
+      <div className="max-w-7xl mx-auto">
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              Failed to load transactions. Please try again later.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Build a lookup from Stripe subscription ID to plan name
   const subIdToPlanName = new Map<string, string>();

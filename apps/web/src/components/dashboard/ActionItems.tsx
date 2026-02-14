@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@wine-club/ui";
 import {
-  AlertCircle,
+  Information,
   CreditCard,
   Plus,
-  Share2,
-  CheckCircle2,
-  DollarSign,
+  Share,
+  CheckCircle,
+  Dollar,
   ArrowRight,
-} from "lucide-react";
+} from "geist-icons";
 
 export interface ActionItem {
   id: string;
@@ -59,7 +59,7 @@ export function ActionItems({
       <CardContent>
         {actions.length === 0 ? (
           <div className="text-center py-6">
-            <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" />
+            <CheckCircle size={48} className="mx-auto mb-3 text-green-600" />
             <p className="font-medium text-green-700 dark:text-green-400">
               All caught up!
             </p>
@@ -136,7 +136,7 @@ function getContextualActions(params: {
       description: "Dynamic pricing plans need next month's price",
       href: `/app/${params.businessSlug}/alerts`,
       priority: "high",
-      icon: <DollarSign className="h-4 w-4" />,
+      icon: <Dollar className="h-4 w-4" />,
     });
   }
 
@@ -149,7 +149,7 @@ function getContextualActions(params: {
       description: "Review and resolve pending alerts",
       href: `/app/${params.businessSlug}/alerts`,
       priority: "high",
-      icon: <AlertCircle className="h-4 w-4" />,
+      icon: <Information className="h-4 w-4" />,
     });
   }
 
@@ -173,7 +173,7 @@ function getContextualActions(params: {
       description: "Invite your first members to join",
       href: `/app/${params.businessSlug}/settings`,
       priority: "medium",
-      icon: <Share2 className="h-4 w-4" />,
+      icon: <Share className="h-4 w-4" />,
     });
   }
 

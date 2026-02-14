@@ -13,7 +13,8 @@ import { GettingStarted } from "@/components/dashboard/GettingStarted";
 import { AlertBanner } from "@/components/dashboard/AlertBanner";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { getStripeClient } from "@wine-club/lib";
-import { Users, DollarSign, TrendingDown, CreditCard } from "lucide-react";
+import { Users } from "@/components/icons/Users";
+import { Dollar, ChartTrendingDown, CreditCard } from "geist-icons";
 
 export default async function BusinessDashboardPage({
   params,
@@ -376,7 +377,7 @@ export default async function BusinessDashboardPage({
               value: Math.round(mrrTrendPercent * 10) / 10,
               label: "vs last month",
             }}
-            icon={<DollarSign className="h-4 w-4" />}
+            icon={<Dollar className="h-4 w-4" />}
           />
           <MetricCard
             title="Active Members"
@@ -400,7 +401,7 @@ export default async function BusinessDashboardPage({
             title="Revenue This Month"
             value={formatCurrency(thisMonthRevenue, business.currency)}
             description={new Date().toLocaleDateString("en-US", { month: "long" })}
-            icon={<TrendingDown className="h-4 w-4" />}
+            icon={<ChartTrendingDown className="h-4 w-4" />}
             href={`/app/${business.slug}/transactions`}
           />
         </div>

@@ -5,23 +5,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@wine-club/ui";
+import { Dashboard } from "@/components/icons/Dashboard";
+import { Lifebuoy } from "@/components/icons/Lifebuoy";
+import { Users } from "@/components/icons/Users";
 import {
-  Users,
   ArrowLeftRight,
-
-
-  PieChart,
-  Settings,
-  HelpCircle,
+  ChartPie,
+  SettingsGear,
   ChevronDown,
   ChevronRight,
   ChevronLeft,
-  LogOut,
-
-  Inbox,
+  Logout,
   Plus,
   Layers,
-} from "lucide-react";
+} from "geist-icons";
 
 interface Business {
   id: string;
@@ -39,11 +36,11 @@ interface LinearSidebarProps {
 }
 
 const mainNavItems = [
-  { href: "", label: "Dashboard", icon: Inbox },
+  { href: "", label: "Dashboard", icon: Dashboard },
   { href: "/members", label: "Members", icon: Users },
   { href: "/transactions", label: "Activity", icon: ArrowLeftRight },
   { href: "/plans", label: "Plans", icon: Layers },
-  { href: "/reports", label: "Reports", icon: PieChart },
+  { href: "/reports", label: "Reports", icon: ChartPie },
 ];
 
 const settingsNavItems = [
@@ -108,12 +105,12 @@ export const LinearSidebar = memo(function LinearSidebar({
   const otherBusinesses = allBusinesses.filter(b => b.id !== businessId);
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 z-40 w-[241px] flex flex-col bg-[#fafafa] border-r border-[#eaeaea] overflow-hidden">
+    <aside className="fixed left-0 top-0 bottom-0 z-40 w-[241px] flex flex-col bg-neutral-50 border-r border-neutral-400 overflow-hidden">
       {/* Workspace Header — stays fixed at top */}
       <div className="px-3 py-3 shrink-0" ref={dropdownRef}>
         <button
           onClick={() => setIsBusinessDropdownOpen(!isBusinessDropdownOpen)}
-          className="w-full flex items-center gap-1.5 px-2 h-9 rounded-md hover:bg-[#f5f5f5] transition-colors"
+          className="w-full flex items-center gap-1.5 px-2 h-9 rounded-md hover:bg-neutral-100 transition-colors"
         >
           {business.logoUrl ? (
             <img
@@ -128,35 +125,35 @@ export const LinearSidebar = memo(function LinearSidebar({
               </span>
             </div>
           )}
-          <span className="text-sm font-medium text-[#171717] truncate flex-1 text-left">
+          <span className="text-sm font-medium text-neutral-950 truncate flex-1 text-left">
             {business.name}
           </span>
           <ChevronDown className={cn(
-            "h-3.5 w-3.5 text-[#999] transition-transform",
+            "h-3.5 w-3.5 text-neutral-800 transition-transform",
             isBusinessDropdownOpen && "rotate-180"
           )} />
         </button>
 
         {/* Workspace Dropdown */}
         {isBusinessDropdownOpen && (
-          <div className="absolute left-3 right-3 top-14 bg-white rounded-lg shadow-lg border border-[#eaeaea] z-50 divide-y divide-[#eaeaea]">
+          <div className="absolute left-3 right-3 top-14 bg-white rounded-lg shadow-lg border border-neutral-400 z-50 divide-y divide-neutral-400">
             {/* User Info */}
             {(userName || userEmail) && (
               <div className="p-1.5">
                 <Link
                   href={`${basePath}/account`}
                   onClick={() => setIsBusinessDropdownOpen(false)}
-                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-[#f5f5f5] transition-colors group"
+                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-neutral-100 transition-colors group"
                 >
                   <div className="flex-1 min-w-0">
                     {userName && (
-                      <p className="text-[14px] font-medium text-[#171717] truncate">{userName}</p>
+                      <p className="text-[14px] font-medium text-neutral-950 truncate">{userName}</p>
                     )}
                     {userEmail && (
-                      <p className="text-[14px] font-normal text-[#666] truncate">{userEmail}</p>
+                      <p className="text-[14px] font-normal text-neutral-900 truncate">{userEmail}</p>
                     )}
                   </div>
-                  <Settings className="h-4 w-4 text-[#666] shrink-0" />
+                  <SettingsGear className="h-4 w-4 text-neutral-900 shrink-0" />
                 </Link>
               </div>
             )}
@@ -164,7 +161,7 @@ export const LinearSidebar = memo(function LinearSidebar({
             {/* Businesses */}
             <div className="p-1.5 flex flex-col gap-0.5">
               {/* Current Business */}
-              <div className="flex items-center gap-2.5 px-2 h-9 rounded-md bg-[#f0f0f0]">
+              <div className="flex items-center gap-2.5 px-2 h-9 rounded-md bg-neutral-200">
                 {business.logoUrl ? (
                   <img src={business.logoUrl} alt={business.name} className="h-5 w-5 rounded object-cover" />
                 ) : (
@@ -172,7 +169,7 @@ export const LinearSidebar = memo(function LinearSidebar({
                     <span className="text-white font-semibold text-[10px]">{business.name.charAt(0).toUpperCase()}</span>
                   </div>
                 )}
-                <span className="text-sm font-medium text-[#171717] truncate flex-1">{business.name}</span>
+                <span className="text-sm font-medium text-neutral-950 truncate flex-1">{business.name}</span>
               </div>
 
               {/* Other Businesses */}
@@ -181,13 +178,13 @@ export const LinearSidebar = memo(function LinearSidebar({
                   key={b.id}
                   href={`/app/${b.slug}`}
                   onClick={() => setIsBusinessDropdownOpen(false)}
-                  className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-[#666] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
+                  className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
                 >
                   {b.logoUrl ? (
                     <img src={b.logoUrl} alt={b.name} className="h-5 w-5 rounded object-cover" />
                   ) : (
-                    <div className="h-5 w-5 rounded bg-[#eaeaea] flex items-center justify-center">
-                      <span className="text-[#666] font-semibold text-[10px]">{b.name.charAt(0).toUpperCase()}</span>
+                    <div className="h-5 w-5 rounded bg-neutral-400 flex items-center justify-center">
+                      <span className="text-neutral-900 font-semibold text-[10px]">{b.name.charAt(0).toUpperCase()}</span>
                     </div>
                   )}
                   <span className="truncate">{b.name}</span>
@@ -200,16 +197,16 @@ export const LinearSidebar = memo(function LinearSidebar({
               <Link
                 href="/onboarding"
                 onClick={() => setIsBusinessDropdownOpen(false)}
-                className="w-full flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-[#666] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
+                className="w-full flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
               >
                 <Plus className="h-4 w-4" />
                 Add business
               </Link>
               <button
                 onClick={handleSignOut}
-                className="w-full flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-[#666] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
+                className="w-full flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
               >
-                <LogOut className="h-4 w-4" />
+                <Logout className="h-4 w-4" />
                 Sign out
               </button>
             </div>
@@ -239,8 +236,8 @@ export const LinearSidebar = memo(function LinearSidebar({
                   className={cn(
                     "flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium transition-colors",
                     active
-                      ? "bg-[#f0f0f0] text-[#171717]"
-                      : "text-[#666] hover:text-black hover:bg-[#f5f5f5]"
+                      ? "bg-neutral-200 text-neutral-950"
+                      : "text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -249,26 +246,26 @@ export const LinearSidebar = memo(function LinearSidebar({
               );
             })}
 
-            <div className="border-t border-[#eaeaea] mt-[4px] mb-[4px]" />
+            <div className="border-t border-neutral-400 mt-[4px] mb-[4px]" />
 
             <button
               onClick={() => setShowSettingsNav(true)}
               className={cn(
                 "flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium transition-colors w-full",
                 isOnSettingsPage
-                  ? "bg-[#f0f0f0] text-[#171717]"
-                  : "text-[#666] hover:text-black hover:bg-[#f5f5f5]"
+                  ? "bg-neutral-200 text-neutral-950"
+                  : "text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100"
               )}
             >
-              <Settings className="h-4 w-4" />
+              <SettingsGear className="h-4 w-4" />
               <span className="flex-1 text-left">Settings</span>
-              <ChevronRight className="h-3.5 w-3.5 text-[#999]" />
+              <ChevronRight className="h-3.5 w-3.5 text-neutral-800" />
             </button>
             <a
               href="mailto:support@example.com"
-              className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-[#666] hover:text-black hover:bg-[#f5f5f5] transition-colors"
+              className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
             >
-              <HelpCircle className="h-4 w-4" />
+              <Lifebuoy className="h-4 w-4" />
               <span>Help & Support</span>
             </a>
           </nav>
@@ -289,9 +286,9 @@ export const LinearSidebar = memo(function LinearSidebar({
           <div className="px-2 pt-1 pb-1">
             <button
               onClick={() => setShowSettingsNav(false)}
-              className="w-full flex items-center px-2 h-9 rounded-md hover:bg-[#f5f5f5] transition-colors text-sm font-medium text-[#171717] relative"
+              className="w-full flex items-center px-2 h-9 rounded-md hover:bg-neutral-100 transition-colors text-sm font-medium text-neutral-950 relative"
             >
-              <ChevronLeft className="h-4 w-4 text-[#999] absolute left-2" />
+              <ChevronLeft className="h-4 w-4 text-neutral-800 absolute left-2" />
               <span className="flex-1 text-center">Settings</span>
             </button>
           </div>
@@ -307,8 +304,8 @@ export const LinearSidebar = memo(function LinearSidebar({
                   className={cn(
                     "flex items-center px-2 h-9 rounded-md text-sm font-medium transition-colors",
                     active
-                      ? "bg-[#f0f0f0] text-[#171717]"
-                      : "text-[#666] hover:text-black hover:bg-[#f5f5f5]"
+                      ? "bg-neutral-200 text-neutral-950"
+                      : "text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100"
                   )}
                 >
                   <span>{item.label}</span>

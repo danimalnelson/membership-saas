@@ -7,7 +7,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { PaymentMethodForm } from "@/components/portal/PaymentMethodForm";
 import { PaymentMethodList } from "@/components/portal/PaymentMethodList";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "geist-icons";
 
 interface PaymentMethod {
   id: string;
@@ -244,7 +244,7 @@ export default function PaymentMethodsPage({
                 appearance: {
                   theme: "stripe",
                   variables: {
-                    colorPrimary: "#3b82f6",
+                    colorPrimary: "#3867d6",
                   },
                 },
               }}

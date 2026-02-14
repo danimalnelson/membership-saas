@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Label } from "@wine-club/ui";
-import { Pencil, X } from "lucide-react";
+import { Pencil, Cross } from "geist-icons";
 
 interface EditMemberInfoDialogProps {
   businessId: string;
@@ -64,7 +64,7 @@ export function EditMemberInfoDialog({
         onClick={() => setIsOpen(true)}
         className="gap-2"
       >
-        <Pencil className="h-4 w-4" />
+        <Pencil size={16} />
         Edit Info
       </Button>
     );
@@ -79,7 +79,7 @@ export function EditMemberInfoDialog({
             onClick={() => setIsOpen(false)}
             className="text-muted-foreground hover:text-foreground"
           >
-            <X className="h-5 w-5" />
+            <Cross className="h-5 w-5" />
           </button>
         </div>
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@wine-club/db";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@wine-club/ui";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle } from "geist-icons";
 
 export default async function SuccessPage({
   params,

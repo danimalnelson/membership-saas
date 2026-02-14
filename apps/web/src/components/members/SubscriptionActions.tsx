@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@wine-club/ui";
-import { Pause, Play, X as XIcon } from "lucide-react";
+import { Pause, Play, Cross as XIcon } from "geist-icons";
 
 interface SubscriptionActionsProps {
   subscriptionId: string;

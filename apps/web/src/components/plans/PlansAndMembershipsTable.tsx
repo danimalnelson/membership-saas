@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@wine-club/ui";
 import { Card, CardContent } from "@wine-club/ui";
-import { Plus } from "lucide-react";
+import { Plus } from "geist-icons";
 import {
   useDataTable,
   StatusBadge,
@@ -131,7 +131,7 @@ function TableFooter({ count }: { count: number }) {
   return (
     <div
       key={count}
-      className="sticky bottom-0 -mx-3 px-3 mt-3 flex items-center justify-between h-10 border-t border-[#eaeaea] bg-[#fafafa] text-xs text-muted-foreground"
+      className="sticky bottom-0 -mx-3 px-3 mt-3 flex items-center justify-between h-10 border-t border-neutral-400 bg-neutral-50 text-xs text-muted-foreground"
     >
       <span>{`${count} ${count === 1 ? "plan" : "plans"}`}</span>
     </div>
@@ -205,7 +205,7 @@ export function PlansAndMembershipsTable({
   return (
     <>
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 -mx-3 px-3 pt-3 flex items-center gap-2 pb-3 mb-3 border-b border-[#eaeaea] bg-[#fafafa]">
+      <div className="sticky top-0 z-10 -mx-3 px-3 pt-3 flex items-center gap-2 pb-3 mb-3 border-b border-neutral-400 bg-neutral-50">
         <h1 className="text-sm font-medium text-foreground w-[120px] shrink-0">Plans</h1>
         <div className="flex items-center gap-1">
           {filterConfigs.map((config) => (
@@ -233,14 +233,14 @@ export function PlansAndMembershipsTable({
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setMembershipDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium border border-[#e0e0e0] bg-white text-[#171717] hover:border-[#ccc] transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium border border-neutral-500 bg-white text-neutral-950 hover:border-neutral-700 transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
             Create membership
           </button>
           <button
             onClick={() => setPlanDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium bg-[#171717] text-white hover:bg-black transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium bg-neutral-950 text-white hover:bg-neutral-925 transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
             Create plan
@@ -392,7 +392,7 @@ function MembershipSection({
     <>
       {/* Membership row */}
       <tr
-        className="h-[42px] bg-white border-b cursor-pointer hover:bg-[#f5f5f5] active:bg-[#ebebeb] transition-colors"
+        className="h-[42px] bg-white border-b cursor-pointer hover:bg-neutral-100 active:bg-neutral-300 transition-colors"
         onClick={onMembershipClick}
       >
         <td colSpan={colCount} className="px-3">
@@ -413,12 +413,12 @@ function MembershipSection({
       {group.plans.map((plan) => (
         <tr
           key={plan.id}
-          className="h-[42px] hover:bg-[#f5f5f5] active:bg-[#ebebeb] cursor-pointer border-b transition-colors"
+          className="h-[42px] hover:bg-neutral-100 active:bg-neutral-300 cursor-pointer border-b transition-colors"
           onClick={() => onPlanClick(plan)}
         >
           <td className="pl-3 pr-3 text-sm font-medium">
             <div className="flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-[#ccc]">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-neutral-700">
                 <path d="M6 4V10H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {plan.name}

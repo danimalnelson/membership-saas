@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Button } from "@wine-club/ui";
-import { Clock, FastForward, Calendar } from "lucide-react";
+import { Clock, Forward10Seconds, Calendar } from "geist-icons";
 
 interface TimeControlsProps {
   testClockId: string;
@@ -184,7 +184,7 @@ export function TimeControls({ testClockId, currentTime, onTimeAdvanced }: TimeC
               onClick={() => advanceByDuration(preset.seconds)}
               disabled={loading}
             >
-              <FastForward className="w-3 h-3 mr-1" />
+              <Forward10Seconds className="w-3 h-3 mr-1" />
               {preset.label}
             </Button>
           ))}

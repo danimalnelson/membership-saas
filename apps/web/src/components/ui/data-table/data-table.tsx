@@ -75,7 +75,7 @@ function DataTableFooter({
   return (
     <div
       key={count}
-      className="sticky bottom-0 -mx-3 px-3 mt-3 flex items-center justify-between h-10 border-t border-[#eaeaea] bg-[#fafafa] text-xs text-muted-foreground"
+      className="sticky bottom-0 -mx-3 px-3 mt-3 flex items-center justify-between h-10 border-t border-neutral-400 bg-neutral-50 text-xs text-muted-foreground"
     >
       <span>
         {`${count} ${count === 1 ? "result" : "results"}`}
@@ -85,7 +85,7 @@ function DataTableFooter({
           <button
             onClick={() => setPage((p: number) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="px-2 h-7 rounded-md border border-[#e0e0e0] bg-white text-[#171717] text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#ccc] transition-colors"
+            className="px-2 h-7 rounded-md border border-neutral-500 bg-white text-neutral-950 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:border-neutral-700 transition-colors"
           >
             Previous
           </button>
@@ -95,7 +95,7 @@ function DataTableFooter({
           <button
             onClick={() => setPage((p: number) => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}
-            className="px-2 h-7 rounded-md border border-[#e0e0e0] bg-white text-[#171717] text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#ccc] transition-colors"
+            className="px-2 h-7 rounded-md border border-neutral-500 bg-white text-neutral-950 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:border-neutral-700 transition-colors"
           >
             Next
           </button>
@@ -148,7 +148,7 @@ export function DataTable<T>({
   return (
     <>
       {/* Sticky header: title + filters + actions */}
-      <div className="sticky top-0 z-10 -mx-3 px-3 pt-3 flex items-center gap-2 pb-3 mb-3 border-b border-[#eaeaea] bg-[#fafafa]">
+      <div className="sticky top-0 z-10 -mx-3 px-3 pt-3 flex items-center gap-2 pb-3 mb-3 border-b border-neutral-400 bg-neutral-50">
         <h1 className="text-sm font-medium text-foreground w-[120px] shrink-0">{title}</h1>
         <div className="flex items-center gap-1">
           {filterConfigs.map((config) => (
@@ -192,7 +192,7 @@ export function DataTable<T>({
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
-                <thead className="border-b bg-[#fafafa]">
+                <thead className="border-b bg-neutral-50">
                   <tr className="text-left">
                     {columns.map((col) => (
                       <th

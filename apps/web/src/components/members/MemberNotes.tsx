@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@wine-club/ui";
 import { formatDate } from "@wine-club/ui";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash } from "geist-icons";
 
 interface Note {
   id: string;
@@ -143,7 +143,7 @@ export function MemberNotes({ consumerId, notes: initialNotes }: MemberNotesProp
                 className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700 transition-opacity"
                 title="Delete note"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>

@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@wine-club/db";
 import { getBusinessBySlug } from "@/lib/data/business";
 import { PlanForm } from "@/components/plans/PlanForm";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "geist-icons";
 
 export default async function EditPlanPage({
   params,

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, formatCurrency } from "@wine-club/ui";
-import { Check, X } from "lucide-react";
+import { Check, Cross } from "geist-icons";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -92,7 +92,7 @@ export function PlanModal({
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-accent transition-colors"
           aria-label="Close"
         >
-          <X className="w-5 h-5" />
+          <Cross className="w-5 h-5" />
         </button>
 
         <div className="p-8 md:p-10">

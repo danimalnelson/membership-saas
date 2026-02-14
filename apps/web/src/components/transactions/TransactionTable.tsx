@@ -1,19 +1,17 @@
 "use client";
 
-import { useCallback } from "react";
+import React, { useCallback } from "react";
 import { formatCurrency } from "@wine-club/ui";
-import {
-  Download,
-  DollarSign,
-  UserPlus,
-  UserX,
-  XCircle,
-  Clock,
-  CirclePause,
-  RotateCcw,
-  Receipt,
-  type LucideIcon,
-} from "lucide-react";
+import { Download, CrossCircle, FileText } from "geist-icons";
+import { Clock } from "@/components/icons/Clock";
+import { Dollar } from "@/components/icons/Dollar";
+import { Amex } from "@/components/icons/Amex";
+import { Mastercard } from "@/components/icons/Mastercard";
+import { Visa } from "@/components/icons/Visa";
+import { PauseCircle } from "@/components/icons/PauseCircle";
+import { RefreshCounterClockwise } from "@/components/icons/RefreshCounterClockwise";
+import { SubscriptionCancelled } from "@/components/icons/SubscriptionCancelled";
+import { SubscriptionCreated } from "@/components/icons/SubscriptionCreated";
 import {
   DataTable,
   useDataTable,
@@ -45,8 +43,6 @@ export interface Transaction {
 
 const CARD_BRAND_LOGOS: Record<string, string> = {
   visa: "/card-brands/visa.svg",
-  mastercard: "/card-brands/mastercard.svg",
-  amex: "/card-brands/amex.svg",
   discover: "/card-brands/discover.svg",
 };
 
@@ -62,6 +58,9 @@ const CARD_BRAND_LABELS: Record<string, string> = {
 
 function CardBrandIcon({ brand }: { brand: string }) {
   const key = brand.toLowerCase();
+  if (key === "visa") return <Visa size={16} className="h-4 w-auto" />;
+  if (key === "mastercard") return <Mastercard size={16} className="h-4 w-auto" />;
+  if (key === "amex") return <Amex size={16} className="h-4 w-auto" />;
   const logo = CARD_BRAND_LOGOS[key];
   return (
     <img
@@ -86,19 +85,19 @@ function PaymentMethod({ brand, last4 }: { brand: string | null; last4: string |
 // Transaction type icons
 // ---------------------------------------------------------------------------
 
-const TYPE_ICON_CONFIG: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
-  PAYMENT:              { icon: DollarSign, color: "#16a34a", bg: "rgba(22, 163, 74, 0.1)" },
-  CHARGE:               { icon: DollarSign, color: "#16a34a", bg: "rgba(22, 163, 74, 0.1)" },
-  SUBSCRIPTION_CREATED: { icon: UserPlus,   color: "#2563eb", bg: "rgba(37, 99, 235, 0.1)" },
-  VOIDED:                   { icon: XCircle,    color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
-  PENDING:                  { icon: Clock,      color: "#d97706", bg: "rgba(217, 119, 6, 0.1)" },
-  REFUND:                   { icon: RotateCcw,  color: "#9333ea", bg: "rgba(147, 51, 234, 0.1)" },
-  SUBSCRIPTION_CANCELLED:   { icon: UserX,      color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
-  SUBSCRIPTION_PAUSED:      { icon: CirclePause, color: "#d97706", bg: "rgba(217, 119, 6, 0.1)" },
-  PAYOUT_FEE:               { icon: Receipt,    color: "#666666", bg: "rgba(102, 102, 102, 0.1)" },
+const TYPE_ICON_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
+  PAYMENT:              { icon: Dollar, color: "var(--color-green-100)", bg: "var(--color-green-10)" },
+  CHARGE:               { icon: Dollar, color: "var(--color-green-100)", bg: "var(--color-green-10)" },
+  SUBSCRIPTION_CREATED: { icon: SubscriptionCreated, color: "var(--color-blue-100)", bg: "var(--color-blue-10)" },
+  VOIDED:                   { icon: CrossCircle,    color: "var(--color-red-100)", bg: "var(--color-red-10)" },
+  PENDING:                  { icon: Clock,      color: "var(--color-yellow-100)", bg: "var(--color-yellow-10)" },
+  REFUND:                   { icon: RefreshCounterClockwise,  color: "var(--color-purple-100)", bg: "var(--color-purple-10)" },
+  SUBSCRIPTION_CANCELLED:   { icon: SubscriptionCancelled, color: "var(--color-red-100)", bg: "var(--color-red-10)" },
+  SUBSCRIPTION_PAUSED:      { icon: PauseCircle, color: "var(--color-yellow-100)", bg: "var(--color-yellow-10)" },
+  PAYOUT_FEE:               { icon: FileText,    color: "var(--color-neutral-900)", bg: "var(--color-neutral-10)" },
 };
 
-const DEFAULT_TYPE_ICON = { icon: DollarSign, color: "#666666", bg: "rgba(102, 102, 102, 0.1)" };
+const DEFAULT_TYPE_ICON = { icon: Dollar, color: "var(--color-neutral-900)", bg: "var(--color-neutral-10)" };
 
 function TypeIcon({ type }: { type: string }) {
   const config = TYPE_ICON_CONFIG[type] || DEFAULT_TYPE_ICON;
@@ -106,9 +105,9 @@ function TypeIcon({ type }: { type: string }) {
   return (
     <div
       className="flex items-center justify-center rounded shrink-0"
-      style={{ width: 16, height: 16, backgroundColor: config.bg }}
+      style={{ width: 24, height: 24, backgroundColor: config.bg }}
     >
-      <Icon style={{ width: 10, height: 10, color: config.color }} strokeWidth={3} />
+        <Icon size={16} color={config.color} />
     </div>
   );
 }
@@ -127,9 +126,9 @@ function TransactionTypeLabel({ type }: { type: string }) {
     <div className="flex items-center gap-1.5">
       <div
         className="flex items-center justify-center rounded shrink-0"
-        style={{ width: 16, height: 16, backgroundColor: config.bg }}
+        style={{ width: 24, height: 24, backgroundColor: config.bg }}
       >
-        <Icon style={{ width: 10, height: 10, color: config.color }} strokeWidth={3} />
+        <Icon size={16} color={config.color} />
       </div>
       <span>{label}</span>
     </div>
@@ -294,7 +293,7 @@ export function TransactionTable({ transactions, timeZone }: { transactions: Tra
       actions={
         <button
           onClick={exportCsv}
-          className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium border border-[#e0e0e0] bg-white text-[#171717] hover:border-[#ccc] transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium border border-neutral-500 bg-white text-neutral-950 hover:border-neutral-700 transition-colors"
         >
           <Download className="h-3.5 w-3.5" />
           Export
