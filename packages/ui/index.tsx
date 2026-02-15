@@ -6,5 +6,6 @@ export * from "./components/icon-button";
 export * from "./components/input";
 export * from "./components/label";
 export * from "./components/menu";
+export * from "./components/text";
 export * from "./lib/utils";
 

@@ -175,7 +175,7 @@ export function MemberActivity({
         emptyMessage="No activity yet"
       />
       {events.length > 0 && (
-        <div className="flex items-center justify-between h-10 border-t border-gray-300 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-800">
+        <div className="flex items-center justify-between h-10 px-3 border-t border-gray-300 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-800">
           <span>
             {events.length} {events.length === 1 ? "event" : "events"}
           </span>

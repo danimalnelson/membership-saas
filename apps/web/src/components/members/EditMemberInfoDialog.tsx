@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, Label } from "@wine-club/ui";
+import { Button, IconButton, Input, Label } from "@wine-club/ui";
 import { Pencil } from "geist-icons";
 import { Cross } from "@/components/icons/Cross";
 
@@ -59,14 +59,14 @@ export function EditMemberInfoDialog({
 
   if (!isOpen) {
     return (
-      <Button
-        variant="secondary"
+      <IconButton
+        label="Edit member information"
         size="small"
+        variant="outline"
         onClick={() => setIsOpen(true)}
-        prefix={<Pencil size={16} />}
       >
-        Edit Info
-      </Button>
+        <Pencil size={14} />
+      </IconButton>
     );
   }
 

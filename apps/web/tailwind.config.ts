@@ -16,6 +16,17 @@ const config: Config = {
         sans: ["var(--font-geist-sans)", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica", "Arial", "sans-serif"],
         mono: ["var(--font-geist-mono)", "ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
       },
+      /* Geist type scale — each key is the px size, value is [fontSize, { lineHeight, letterSpacing }] */
+      fontSize: {
+        "12": ["0.75rem", { lineHeight: "1rem", letterSpacing: "0" }],
+        "13": ["0.8125rem", { lineHeight: "1.25rem", letterSpacing: "0" }],
+        "14": ["0.875rem", { lineHeight: "1.25rem", letterSpacing: "0" }],
+        "16": ["1rem", { lineHeight: "1.5rem", letterSpacing: "0" }],
+        "20": ["1.25rem", { lineHeight: "1.75rem", letterSpacing: "-0.01em" }],
+        "24": ["1.5rem", { lineHeight: "2rem", letterSpacing: "-0.015em" }],
+        "32": ["2rem", { lineHeight: "2.5rem", letterSpacing: "-0.02em" }],
+        "48": ["3rem", { lineHeight: "3.5rem", letterSpacing: "-0.025em" }],
+      },
       colors: {
         /* Geist Design System chromatic scales (https://vercel.com/geist/colors) */
         red: {

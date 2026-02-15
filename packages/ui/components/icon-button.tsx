@@ -14,7 +14,7 @@ export interface IconButtonProps
   /** Size variant */
   size?: "small" | "medium" | "large";
   /** Visual variant */
-  variant?: "default" | "ghost" | "error";
+  variant?: "default" | "outline" | "ghost" | "error";
 }
 
 // ---------------------------------------------------------------------------
@@ -22,14 +22,16 @@ export interface IconButtonProps
 // ---------------------------------------------------------------------------
 
 const SIZE_CLASSES = {
-  small: "h-7 w-7",
-  medium: "h-8 w-8",
-  large: "h-9 w-9",
+  small: "h-8 w-8",
+  medium: "h-9 w-9",
+  large: "h-10 w-10",
 } as const;
 
 const VARIANT_CLASSES = {
   default:
     "text-gray-600 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-700 dark:hover:bg-gray-200 dark:hover:text-white",
+  outline:
+    "border border-gray-300 text-gray-600 hover:border-gray-500 hover:text-gray-950 dark:border-gray-600 dark:text-gray-700 dark:hover:border-gray-400 dark:hover:text-white",
   ghost:
     "text-gray-600 hover:text-gray-950 dark:text-gray-700 dark:hover:text-white",
   error:

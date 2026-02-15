@@ -2,34 +2,43 @@ import * as React from "react";
 import { cn } from "@wine-club/ui";
 
 /**
- * Reusable section card with a 61px header (60px interior + 1px border).
- * Title on the left, actions/buttons on the right.
+ * Reusable section card.
+ * Title floats above the card. Optional header action (e.g. edit icon) to the right of the title.
+ * Optional footer actions row at the bottom of the card.
  */
 export interface SectionCardProps {
-  /** Section title (left side of header) */
+  /** Section title rendered above the card */
   title: React.ReactNode;
-  /** Optional actions/buttons (right side of header) */
+  /** Optional element rendered to the right of the title (e.g. an IconButton) */
+  headerAction?: React.ReactNode;
+  /** Optional actions/buttons rendered in a footer row at the bottom of the card */
   actions?: React.ReactNode;
-  /** Main content below the header */
+  /** Main content inside the card */
   children: React.ReactNode;
+  /** Remove content padding so children sit flush against the card edges. */
+  flush?: boolean;
   className?: string;
 }
 
 export const SectionCard = React.forwardRef<HTMLDivElement, SectionCardProps>(
-  ({ title, actions, children, className }, ref) => (
-    <div
-      ref={ref}
-      className={cn("w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-100 text-gray-950 dark:text-white shadow-sm overflow-hidden", className)}
-    >
-      <div className="flex items-center justify-between gap-4 px-6 h-[61px] border-b border-gray-400 dark:border-gray-600 shrink-0">
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <h2 className="text-lg font-semibold text-gray-950 dark:text-white truncate">{title}</h2>
-        </div>
-        {actions && (
-          <div className="ml-4 shrink-0 flex items-center gap-2">{actions}</div>
+  ({ title, headerAction, actions, children, flush, className }, ref) => (
+    <div ref={ref} className={cn("w-full", className)}>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-14 font-medium text-gray-950 dark:text-white">
+          {title}
+        </h2>
+        {headerAction && (
+          <div className="shrink-0">{headerAction}</div>
         )}
       </div>
-      <div className="p-6">{children}</div>
+      <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-100 text-gray-950 dark:text-white overflow-hidden">
+        <div className={flush ? undefined : "p-4"}>{children}</div>
+        {actions && (
+          <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-gray-300 dark:border-gray-600 bg-ds-background-200">
+            {actions}
+          </div>
+        )}
+      </div>
     </div>
   )
 );

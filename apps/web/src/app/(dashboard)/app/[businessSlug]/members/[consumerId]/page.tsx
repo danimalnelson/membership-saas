@@ -11,7 +11,8 @@ import { SectionCard } from "@/components/ui/section-card";
 import { EditMemberInfoDialog } from "@/components/members/EditMemberInfoDialog";
 import { ActiveSubscriptionsTable } from "@/components/members/ActiveSubscriptionsTable";
 import { MemberActivity, type MemberActivityEvent } from "@/components/members/MemberActivity";
-import { MemberNotes } from "@/components/members/MemberNotes";
+import { MemberNote } from "@/components/members/MemberNote";
+import { MemberInsights } from "@/components/members/MemberInsights";
 
 export default async function MemberDetailPage({
   params,
@@ -33,8 +34,8 @@ export default async function MemberDetailPage({
     notFound();
   }
 
-  // Run consumer, subscriptions, transactions, and notes queries in parallel
-  const [consumer, subscriptions, transactions, notes] = await Promise.all([
+  // Run consumer, subscriptions, transactions, and note queries in parallel
+  const [consumer, subscriptions, transactions, note] = await Promise.all([
     prisma.consumer.findUnique({
       where: { id: consumerId },
     }),
@@ -56,19 +57,14 @@ export default async function MemberDetailPage({
     (async () => {
       try {
         if (prisma.memberNote) {
-          return await prisma.memberNote.findMany({
+          return await prisma.memberNote.findFirst({
             where: { consumerId },
-            include: {
-              createdBy: {
-                select: { name: true, email: true },
-              },
-            },
             orderBy: { createdAt: "desc" },
           });
         }
-        return [];
+        return null;
       } catch {
-        return [];
+        return null;
       }
     })(),
   ]);
@@ -137,6 +133,15 @@ export default async function MemberDetailPage({
   // Sort by date, newest first
   activityEvents.sort((a, b) => b.date.getTime() - a.date.getTime());
 
+  // Calculate total spend from transactions
+  const totalCharged = transactions
+    .filter((tx) => tx.type === "CHARGE")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+  const totalRefunded = transactions
+    .filter((tx) => tx.type === "REFUND")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+  const currency = transactions[0]?.currency || "usd";
+
   const memberName = consumer.name || consumer.email.split("@")[0];
 
   return (
@@ -155,64 +160,70 @@ export default async function MemberDetailPage({
       </PageHeader>
 
       <div className="p-6">
-        <div className="w-full">
-        {/* Member Info Card */}
-        <SectionCard
-          title="Member Information"
-          actions={
-            <EditMemberInfoDialog
-              businessId={business.id}
-              consumerId={consumer.id}
-              initialName={consumer.name}
-              initialPhone={consumer.phone}
-              email={consumer.email}
+        <div className="flex gap-6">
+          {/* Left column — main content */}
+          <div className="flex-1 min-w-0">
+            {/* Subscriptions */}
+            <SectionCard title="Subscriptions" flush className="mb-6">
+              <ActiveSubscriptionsTable
+                subscriptions={activeSubscriptions}
+                stripeAccountId={business.stripeAccountId}
+                businessSlug={businessSlug}
+                emptyMessage={
+                  subscriptions.length === 0
+                    ? "This member has no subscriptions in this business."
+                    : undefined
+                }
+              />
+            </SectionCard>
+
+            {/* Activity */}
+            <SectionCard title="Activity" flush>
+              <MemberActivity events={activityEvents} />
+            </SectionCard>
+          </div>
+
+          {/* Right column — info, note & insights */}
+          <div className="w-80 shrink-0 space-y-6 hidden lg:block">
+            <SectionCard
+              title="Member Information"
+              headerAction={
+                <EditMemberInfoDialog
+                  businessId={business.id}
+                  consumerId={consumer.id}
+                  initialName={consumer.name}
+                  initialPhone={consumer.phone}
+                  email={consumer.email}
+                />
+              }
+            >
+              <div className="space-y-3">
+                <div>
+                  <div className="text-12 text-gray-600">Name</div>
+                  <div className="text-14 font-medium">{consumer.name || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-12 text-gray-600">Email</div>
+                  <div className="text-14 font-medium">{consumer.email}</div>
+                </div>
+                <div>
+                  <div className="text-12 text-gray-600">Phone</div>
+                  <div className="text-14 font-medium">{consumer.phone || "—"}</div>
+                </div>
+              </div>
+            </SectionCard>
+            <MemberInsights
+              totalCharged={totalCharged}
+              totalRefunded={totalRefunded}
+              currency={currency}
+              memberSince={consumer.createdAt}
             />
-          }
-          className="mb-6"
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="text-sm text-muted-foreground">Email</div>
-                <div className="font-medium">{consumer.email}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Phone</div>
-                <div className="font-medium">{consumer.phone || "—"}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Member Since</div>
-                <div className="font-medium">{formatDate(consumer.createdAt)}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Active Subscriptions</div>
-                <div className="font-medium">{activeSubscriptions.length}</div>
-              </div>
-            </div>
-        </SectionCard>
-
-        {/* Active Subscriptions */}
-        <SectionCard title="Active Subscriptions" className="mb-6">
-          <ActiveSubscriptionsTable
-            subscriptions={activeSubscriptions}
-            stripeAccountId={business.stripeAccountId}
-            businessSlug={businessSlug}
-            emptyMessage={
-              subscriptions.length === 0
-                ? "This member has no subscriptions in this business."
-                : undefined
-            }
-          />
-        </SectionCard>
-
-        {/* Activity */}
-        <SectionCard title="Activity" className="mb-6">
-          <MemberActivity events={activityEvents} />
-        </SectionCard>
-
-        {/* Internal Notes */}
-        <div className="mt-6">
-          <MemberNotes consumerId={consumer.id} notes={notes} />
-        </div>
+            <MemberNote
+              consumerId={consumer.id}
+              noteContent={note?.content ?? null}
+              noteId={note?.id ?? null}
+            />
+          </div>
         </div>
       </div>
     </>

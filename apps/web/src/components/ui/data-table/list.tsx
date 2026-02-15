@@ -194,7 +194,7 @@ export function List<T, G = undefined>(
 
     if (totalItems === 0 && groups.length === 0 && emptyMessage) {
       return (
-        <div className={cn("rounded-lg border bg-white dark:bg-gray-100 py-12 text-center", className)}>
+        <div className={cn("py-12 text-center", className)}>
           <EmptyState message={emptyMessage} description={emptyDescription} />
         </div>
       );
@@ -217,7 +217,7 @@ export function List<T, G = undefined>(
     );
 
     return (
-      <div className={cn("overflow-hidden rounded-lg border bg-white dark:bg-gray-100", className)}>
+      <div className={cn("overflow-hidden", className)}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px] table-fixed border-collapse">
             {showGroupHeader && renderTableHeader({
@@ -289,7 +289,7 @@ export function List<T, G = undefined>(
 
   if (items.length === 0 && emptyMessage) {
     return (
-      <div className={cn("rounded-lg border bg-white dark:bg-gray-100 py-12 text-center", className)}>
+      <div className={cn("py-12 text-center", className)}>
         <EmptyState message={emptyMessage} description={emptyDescription} />
       </div>
     );
@@ -308,7 +308,7 @@ export function List<T, G = undefined>(
   );
 
   return (
-    <div className={cn("overflow-hidden rounded-lg border bg-white dark:bg-gray-100", className)}>
+    <div className={cn("overflow-hidden", className)}>
       <div className="overflow-x-auto">
         <table className="w-full table-fixed border-collapse">
           {renderTableHeader({
