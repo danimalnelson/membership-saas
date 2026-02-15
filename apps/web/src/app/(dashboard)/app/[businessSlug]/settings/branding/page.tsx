@@ -16,7 +16,6 @@ import { useRequirePermission } from "@/hooks/use-require-permission";
 export default function BrandingPage() {
   const { businessId } = useBusinessContext();
   const { allowed } = useRequirePermission("settings.branding");
-  if (!allowed) return null;
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
@@ -78,6 +77,8 @@ export default function BrandingPage() {
       setSaving(false);
     }
   };
+
+  if (!allowed) return null;
 
   if (loading) {
     return (

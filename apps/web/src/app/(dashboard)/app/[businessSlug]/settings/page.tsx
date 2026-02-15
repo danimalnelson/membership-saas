@@ -19,7 +19,6 @@ import { useRequirePermission } from "@/hooks/use-require-permission";
 export default function SettingsPage() {
   const { businessId } = useBusinessContext();
   const { allowed } = useRequirePermission("settings.general");
-  if (!allowed) return null;
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
@@ -177,6 +176,8 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
+
+  if (!allowed) return null;
 
   if (loading) {
     return (
