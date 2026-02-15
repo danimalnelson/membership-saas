@@ -1,9 +1,11 @@
 import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import EmailProvider from "next-auth/providers/email";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@wine-club/db";
 import type { Adapter } from "next-auth/adapters";
 import { Resend } from "resend";
+import bcrypt from "bcryptjs";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const isDev = process.env.NODE_ENV === "development";
@@ -11,6 +13,35 @@ const isDev = process.env.NODE_ENV === "development";
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
+    CredentialsProvider({
+      id: "credentials",
+      name: "Password",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email.toLowerCase().trim() },
+          select: { id: true, email: true, name: true, password: true },
+        });
+
+        if (!user || !user.password) {
+          return null;
+        }
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) {
+          return null;
+        }
+
+        return { id: user.id, email: user.email, name: user.name };
+      },
+    }),
     EmailProvider({
       from: process.env.EMAIL_FROM || "onboarding@resend.dev",
       async sendVerificationRequest({ identifier: email, url }) {
@@ -106,15 +137,23 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.sub!;
         session.businessId = token.businessId as string | undefined;
         session.twoFactorVerified = token.twoFactorVerified ?? false;
+        session.hasPassword = token.hasPassword ?? false;
       }
       return session;
     },
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, trigger, session, account }) {
       if (user) {
         token.sub = user.id;
         token.name = user.name;
         // New sign-in: 2FA not yet verified
         token.twoFactorVerified = false;
+
+        // Check if user has a password set
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { password: true },
+        });
+        token.hasPassword = !!dbUser?.password;
       }
 
       // Allow updating via session.update()
@@ -128,6 +167,9 @@ export const authOptions: NextAuthOptions = {
         if (typeof session?.twoFactorVerified === "boolean") {
           token.twoFactorVerified = session.twoFactorVerified;
         }
+        if (typeof session?.hasPassword === "boolean") {
+          token.hasPassword = session.hasPassword;
+        }
       }
 
       // Load user data from DB if missing
@@ -136,6 +178,7 @@ export const authOptions: NextAuthOptions = {
           where: { id: token.sub },
           select: {
             name: true,
+            password: true,
             businesses: {
               select: { businessId: true },
               orderBy: { createdAt: "asc" },
@@ -150,6 +193,8 @@ export const authOptions: NextAuthOptions = {
           if (!token.businessId && dbUser.businesses[0]) {
             token.businessId = dbUser.businesses[0].businessId;
           }
+          // Keep hasPassword in sync
+          token.hasPassword = !!dbUser.password;
         }
       }
 

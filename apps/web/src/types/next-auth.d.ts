@@ -10,6 +10,7 @@ declare module "next-auth" {
     };
     businessId?: string;
     twoFactorVerified?: boolean;
+    hasPassword?: boolean;
   }
 }
 
@@ -18,5 +19,6 @@ declare module "next-auth/jwt" {
     sub: string;
     businessId?: string;
     twoFactorVerified?: boolean;
+    hasPassword?: boolean;
   }
 }

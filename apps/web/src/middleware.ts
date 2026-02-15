@@ -27,6 +27,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(signInUrl);
     }
 
+    // Password gate: if user has no password set, redirect to set-password page
+    if (!token.hasPassword) {
+      const setPasswordUrl = new URL("/auth/set-password", request.url);
+      setPasswordUrl.searchParams.set("callbackUrl", effectivePathname);
+      return NextResponse.redirect(setPasswordUrl);
+    }
+
     // 2FA gate: check if session has been verified
     if (!token.twoFactorVerified) {
       // Check for device trust cookie
@@ -49,8 +56,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Allow /auth/set-password for authenticated users without a password
   // Allow /auth/verify-code for authenticated but unverified users
-  // (no additional checks needed — the page itself handles the flow)
+  // (no additional checks needed — the pages themselves handle the flow)
 
   if (isDashboardHost && effectivePathname !== pathname) {
     const url = request.nextUrl.clone();

@@ -1,48 +1,70 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useSearchParams, useRouter } from "next/navigation";
 import { useState, Suspense } from "react";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@wine-club/ui";
 
-function SignInForm() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const callbackUrl = searchParams.get("callbackUrl") || "/app";
+function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email || sending) return;
 
-    setLoading(true);
+    setSending(true);
     setError("");
 
     try {
-      const result = await signIn("credentials", {
+      // Use NextAuth's email provider to send a magic link
+      // The callback URL takes the user to set-password after sign-in
+      const result = await signIn("email", {
         email: email.toLowerCase().trim(),
-        password,
+        callbackUrl: "/auth/set-password",
         redirect: false,
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("Failed to send reset email. Please try again.");
         return;
       }
 
-      // Successful sign-in — redirect to callback URL
-      // (middleware will handle 2FA gate if needed)
-      router.push(callbackUrl);
+      setSent(true);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   };
+
+  if (sent) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="rounded-lg border border-gray-300 bg-white p-8">
+            <div className="text-center">
+              <h1 className="text-20 font-semibold text-gray-950 mb-2">
+                Check your email
+              </h1>
+              <p className="text-14 text-gray-600 mb-6">
+                We sent a sign-in link to <strong>{email}</strong>. Click the
+                link to sign in and set a new password.
+              </p>
+              <Link
+                href="/auth/signin"
+                className="text-13 text-gray-600 hover:text-gray-950 underline transition-colors"
+              >
+                Back to sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -50,10 +72,11 @@ function SignInForm() {
         <div className="rounded-lg border border-gray-300 bg-white p-8">
           <div className="text-center mb-8">
             <h1 className="text-20 font-semibold text-gray-950 mb-2">
-              Sign in
+              Reset your password
             </h1>
             <p className="text-14 text-gray-600">
-              Enter your email and password to continue
+              Enter your email and we&apos;ll send you a link to sign in and set
+              a new password.
             </p>
           </div>
 
@@ -80,28 +103,6 @@ function SignInForm() {
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-13 font-medium text-gray-950 mb-1"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError("");
-                }}
-                required
-                autoComplete="current-password"
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-500 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
-                placeholder="Enter your password"
-              />
-            </div>
-
             {error && (
               <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-14 text-red-800">
                 {error}
@@ -110,18 +111,18 @@ function SignInForm() {
 
             <Button
               type="submit"
-              disabled={loading || !email || !password}
+              disabled={sending || !email}
               className="w-full"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {sending ? "Sending..." : "Send Reset Link"}
             </Button>
 
             <div className="text-center">
               <Link
-                href="/auth/forgot-password"
+                href="/auth/signin"
                 className="text-13 text-gray-600 hover:text-gray-950 underline transition-colors"
               >
-                Forgot password?
+                Back to sign in
               </Link>
             </div>
           </form>
@@ -131,7 +132,7 @@ function SignInForm() {
   );
 }
 
-export default function SignInPage() {
+export default function ForgotPasswordPage() {
   return (
     <Suspense
       fallback={
@@ -140,7 +141,7 @@ export default function SignInPage() {
         </div>
       }
     >
-      <SignInForm />
+      <ForgotPasswordForm />
     </Suspense>
   );
 }
