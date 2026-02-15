@@ -232,6 +232,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.18
         version: 18.3.7(@types/react@18.3.26)
+      next:
+        specifier: '*'
+        version: 15.5.7(@playwright/test@1.56.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
 packages:
 

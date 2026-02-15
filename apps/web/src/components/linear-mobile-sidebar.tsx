@@ -76,11 +76,11 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
   return (
     <>
       {/* Mobile Header */}
-      <header className="sticky top-0 z-50 bg-neutral-50 border-b border-neutral-400 lg:hidden">
+      <header className="sticky top-0 z-50 bg-neutral-50 border-b border-neutral-300 lg:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => setIsOpen(true)}
-            className="p-2 -ml-2 rounded-md hover:bg-neutral-100 transition-colors"
+            className="p-2 -ml-2 rounded-md hover:bg-neutral-200 transition-colors"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5 text-neutral-900" />
@@ -121,7 +121,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
       {/* Drawer */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[280px] bg-neutral-50 border-r border-neutral-400 transform transition-transform duration-300 ease-in-out lg:hidden",
+          "fixed inset-y-0 left-0 z-50 w-[280px] bg-neutral-50 border-r border-neutral-300 transform transition-transform duration-300 ease-in-out lg:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -148,7 +148,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="p-1.5 rounded-md hover:bg-neutral-100 transition-colors"
+              className="p-1.5 rounded-md hover:bg-neutral-200 transition-colors"
               aria-label="Close menu"
             >
               <Cross size={16} className="h-4 w-4 text-neutral-900" />
@@ -170,7 +170,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
                       "flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium transition-colors",
                       active
                         ? "bg-neutral-200 text-neutral-950"
-                        : "text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100"
+                        : "text-neutral-900 hover:text-neutral-950 hover:bg-neutral-200"
                     )}
                   >
                     <Icon className="h-[18px] w-[18px]" />
@@ -182,7 +182,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
           </nav>
 
           {/* Bottom Section */}
-          <div className="px-2 pb-4 border-t border-neutral-400">
+          <div className="px-2 pb-4 border-t border-neutral-300">
             <div className="space-y-0.5 py-2">
               {/* Settings sub-nav */}
               <p className="px-3 py-1.5 text-[11px] text-neutral-800 uppercase flex items-center gap-1.5">
@@ -203,7 +203,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
                       "flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium transition-colors ml-2",
                       active
                         ? "bg-neutral-200 text-neutral-950"
-                        : "text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100"
+                        : "text-neutral-900 hover:text-neutral-950 hover:bg-neutral-200"
                     )}
                   >
                     {item.label}
@@ -213,7 +213,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
               
               <a
                 href="mailto:support@example.com"
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-200 transition-colors"
               >
                 <Lifebuoy className="h-[18px] w-[18px]" />
                 Help & Support
@@ -221,7 +221,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
 
               <button
                 onClick={handleSignOut}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-200 transition-colors"
               >
                 <Logout className="h-[18px] w-[18px]" />
                 Sign Out
@@ -229,7 +229,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
             </div>
 
             {/* Current Business */}
-            <div className="pt-2 border-t border-neutral-400">
+            <div className="pt-2 border-t border-neutral-300">
               <div className="flex items-center gap-2.5 p-2.5 rounded-md bg-neutral-50">
                 {business.logoUrl ? (
                   <img
@@ -267,7 +267,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
                     key={b.id}
                     href={`/app/${b.slug}`}
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-neutral-100 transition-colors"
+                    className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-neutral-200 transition-colors"
                   >
                     {b.logoUrl ? (
                       <img src={b.logoUrl} alt={b.name} className="h-7 w-7 rounded object-cover" />
@@ -285,11 +285,11 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
             )}
 
             {/* Add Business */}
-            <div className="pt-2 border-t border-neutral-400">
+            <div className="pt-2 border-t border-neutral-300">
               <Link
                 href="/onboarding"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-200 transition-colors"
               >
                 <Plus className="h-[18px] w-[18px]" />
                 Add business
@@ -298,11 +298,11 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
 
             {/* User Info */}
             {(userName || userEmail) && (
-              <div className="pt-2 border-t border-neutral-400">
+              <div className="pt-2 border-t border-neutral-300">
                 <Link
                   href={`${basePath}/account`}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-neutral-100 transition-colors group"
+                  className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-neutral-200 transition-colors group"
                 >
                   <div className="flex-1 min-w-0">
                     {userName && (

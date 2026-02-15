@@ -8,7 +8,7 @@
     --ds-gray-100-value: 0, 0%, 95%;
     --ds-gray-200-value: 0, 0%, 92%;
     --ds-gray-300-value: 0, 0%, 90%;
-    --ds-gray-400-value: 0, 0%, 92%;
+    --ds-gray-400-value: 0, 0%, 85%;
     --ds-gray-500-value: 0, 0%, 79%;
     --ds-gray-600-value: 0, 0%, 66%;
     --ds-gray-700-value: 0, 0%, 56%;
@@ -199,8 +199,8 @@
     --accent-foreground: var(--ds-gray-1000-value);
     --destructive: var(--ds-red-700-value);
     --destructive-foreground: var(--ds-background-100-value);
-    --border: var(--ds-gray-400-value);
-    --input: var(--ds-gray-400-value);
+    --border: var(--ds-gray-300-value);
+    --input: var(--ds-gray-300-value);
     --ring: var(--ds-gray-1000-value);
     --radius: 0.5rem;
   }

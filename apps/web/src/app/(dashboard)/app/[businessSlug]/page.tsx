@@ -150,8 +150,8 @@ export default async function BusinessDashboardPage({
   ] = await Promise.all([
     prisma.$queryRaw<[{ count: bigint }]>`
       SELECT COUNT(DISTINCT ps."consumerId") as count
-      FROM "PlanSubscription" ps
-      INNER JOIN "Plan" p ON ps."planId" = p.id
+      FROM "plan_subscriptions" ps
+      INNER JOIN "plans" p ON ps."planId" = p.id
       WHERE p."businessId" = ${business.id}
     `,
     prisma.plan.count({

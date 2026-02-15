@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { MenuContainer, Menu, useMenuContext } from "@wine-club/ui";
 
 interface FilterPillProps {
   /** The base label that always stays visible (e.g., "Name") */
@@ -11,6 +12,8 @@ interface FilterPillProps {
   onToggle: () => void;
   children: React.ReactNode;
   isOpen: boolean;
+  /** Footer content pinned below menu body (e.g., Apply button) */
+  footer?: React.ReactNode;
 }
 
 function PlusIcon({ active, className }: { active?: boolean; className?: string }) {
@@ -28,8 +31,8 @@ function PlusIcon({ active, className }: { active?: boolean; className?: string 
   );
 }
 
-export function FilterPill({ label, activeValue, active, onToggle, children, isOpen }: FilterPillProps) {
-  const ref = useRef<HTMLDivElement>(null);
+function FilterPillTrigger({ label, activeValue, active }: { label: string; activeValue?: string; active: boolean }) {
+  const { toggle, triggerRef } = useMenuContext();
 
   // Defer active styling briefly on mount so the transition is visible
   const [showActive, setShowActive] = useState(false);
@@ -41,46 +44,47 @@ export function FilterPill({ label, activeValue, active, onToggle, children, isO
     setShowActive(false);
   }, [active]);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        if (isOpen) onToggle();
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen, onToggle]);
-
   return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={onToggle}
-        className={`group inline-flex items-center gap-1.5 px-2 h-6 rounded-full text-xs font-medium border transition-all duration-300 ${
-          showActive
-            ? "bg-neutral-950 text-white border-neutral-950"
-            : "bg-white text-neutral-900 border-neutral-500 hover:border-neutral-700 hover:text-neutral-950"
-        }`}
-      >
-        {/* Fixed 12x12 icon container — rotate + to × when active */}
-        <span className="flex items-center justify-center w-3 h-3 shrink-0">
-          <PlusIcon
-            active={showActive}
-            className={showActive ? "" : "group-hover:text-neutral-950"}
-          />
-        </span>
-        <span>{label}</span>
-        {active && activeValue && (
-          <>
-            <span className="opacity-40">|</span>
-            <span className="font-semibold">{activeValue}</span>
-          </>
-        )}
-      </button>
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-2 z-50 bg-white rounded-lg shadow-lg border border-neutral-400 overflow-hidden">
-          {children}
-        </div>
+    <button
+      ref={triggerRef}
+      onClick={toggle}
+      className={`group inline-flex items-center gap-1.5 px-2 h-6 rounded-full text-xs font-medium border transition-all duration-300 ${
+        showActive
+          ? "bg-neutral-950 text-white border-neutral-950"
+          : "bg-white text-neutral-900 border-neutral-300 hover:border-neutral-700 hover:text-neutral-950"
+      }`}
+    >
+      {/* Fixed 12x12 icon container — rotate + to × when active */}
+      <span className="flex items-center justify-center w-3 h-3 shrink-0">
+        <PlusIcon
+          active={showActive}
+          className={showActive ? "" : "group-hover:text-neutral-950"}
+        />
+      </span>
+      <span>{label}</span>
+      {active && activeValue && (
+        <>
+          <span className="opacity-40">|</span>
+          <span className="font-semibold">{activeValue}</span>
+        </>
       )}
-    </div>
+    </button>
+  );
+}
+
+export function FilterPill({ label, activeValue, active, onToggle, children, isOpen, footer }: FilterPillProps) {
+  return (
+    <MenuContainer
+      open={isOpen}
+      onOpenChange={(open) => {
+        // Only toggle when state actually changes
+        if (open !== isOpen) onToggle();
+      }}
+    >
+      <FilterPillTrigger label={label} activeValue={activeValue} active={active} />
+      <Menu width={240} footer={footer}>
+        {children}
+      </Menu>
+    </MenuContainer>
   );
 }

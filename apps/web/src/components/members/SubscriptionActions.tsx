@@ -1,14 +1,81 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@wine-club/ui";
+import { Button, MenuContainer, Menu, MenuItem, useMenuContext } from "@wine-club/ui";
 import { Play, Pencil, MoreVertical } from "geist-icons";
 import { PauseCircle } from "@/components/icons/PauseCircle";
 import { CrossCircle } from "geist-icons";
 import { Cross } from "@/components/icons/Cross";
+
+// ---------------------------------------------------------------------------
+// Compact three-dot menu for row actions (uses Menu components)
+// ---------------------------------------------------------------------------
+
+function CompactMoreMenuTrigger() {
+  const { toggle, triggerRef } = useMenuContext();
+  return (
+    <button
+      ref={triggerRef}
+      type="button"
+      onClick={(e) => { e.stopPropagation(); toggle(); }}
+      title="More actions"
+      className="flex h-[30px] w-[30px] shrink-0 items-center justify-center border-l border-transparent text-muted-foreground group-hover:border-neutral-200 hover:bg-neutral-100 hover:text-foreground dark:group-hover:border-neutral-600 dark:hover:bg-neutral-800"
+    >
+      <MoreVertical className="h-4 w-4" />
+    </button>
+  );
+}
+
+function CompactMoreMenu({
+  canPause,
+  canCancel,
+  loading,
+  businessSlug,
+  planId,
+  onPause,
+  onCancel,
+}: {
+  canPause: boolean;
+  canCancel: boolean;
+  loading: boolean;
+  businessSlug?: string;
+  planId?: string;
+  onPause: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <MenuContainer>
+      <CompactMoreMenuTrigger />
+      <Menu width={160} align="end">
+        {canPause && (
+          <MenuItem onClick={onPause} disabled={loading}>
+            Pause subscription
+          </MenuItem>
+        )}
+        {planId && businessSlug && (
+          <MenuItem href={`/app/${businessSlug}/plans/${planId}/edit`}>
+            Edit subscription
+          </MenuItem>
+        )}
+        {canCancel && (
+          <MenuItem onClick={onCancel} disabled={loading}>
+            Cancel subscription
+          </MenuItem>
+        )}
+        {planId && businessSlug && (
+          <MenuItem href={`/app/${businessSlug}/plans/${planId}`}>
+            View plan
+          </MenuItem>
+        )}
+      </Menu>
+    </MenuContainer>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
 
 interface SubscriptionActionsProps {
   subscriptionId: string;
@@ -35,9 +102,7 @@ export function SubscriptionActions({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [showMore, setShowMore] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
-  const moreRef = useRef<HTMLButtonElement>(null);
 
   const isPaused = pausedAt !== null;
   const coerceCancel = !!cancelAtPeriodEnd;
@@ -117,17 +182,6 @@ export function SubscriptionActions({
     }
   };
 
-  useEffect(() => {
-    if (!compact) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setShowMore(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [compact]);
-
   if (compact) {
     return (
       <>
@@ -168,48 +222,16 @@ export function SubscriptionActions({
               </button>
             )}
           </div>
-          <button
-            ref={moreRef}
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setShowMore((v) => !v); }}
-            title="More actions"
-            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center border-l border-transparent text-muted-foreground group-hover:border-neutral-200 hover:bg-neutral-100 hover:text-foreground dark:group-hover:border-neutral-600 dark:hover:bg-neutral-800"
-          >
-            <MoreVertical className="h-4 w-4" />
-          </button>
+          <CompactMoreMenu
+            canPause={canPause}
+            canCancel={canCancel}
+            loading={loading}
+            businessSlug={businessSlug}
+            planId={planId}
+            onPause={handlePause}
+            onCancel={() => setShowCancelDialog(true)}
+          />
         </div>
-        {showMore && typeof document !== "undefined" && moreRef.current && createPortal(
-                <div
-                  className="fixed z-[100] w-40 rounded-lg border border-neutral-300 bg-white py-1 shadow-lg dark:border-neutral-600 dark:bg-neutral-100"
-                  style={{
-                    top: moreRef.current.getBoundingClientRect().top - 8,
-                    left: Math.max(8, moreRef.current.getBoundingClientRect().right - 160),
-                    transform: "translateY(-100%)",
-                  }}
-                >
-                  {canPause && (
-                    <button onClick={(e) => { e.stopPropagation(); setShowMore(false); handlePause(); }} disabled={loading} className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-200">
-                      Pause subscription
-                    </button>
-                  )}
-                  {planId && businessSlug && (
-                    <Link href={`/app/${businessSlug}/plans/${planId}/edit`} onClick={() => setShowMore(false)} className="block w-full px-3 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-200">
-                      Edit subscription
-                    </Link>
-                  )}
-                  {canCancel && (
-                    <button onClick={(e) => { e.stopPropagation(); setShowMore(false); setShowCancelDialog(true); }} disabled={loading} className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-200">
-                      Cancel subscription
-                    </button>
-                  )}
-                  {planId && businessSlug && (
-                    <Link href={`/app/${businessSlug}/plans/${planId}`} onClick={() => setShowMore(false)} className="block w-full px-3 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-200">
-                      View plan
-                    </Link>
-                  )}
-                </div>,
-                document.body
-              )}
         {showCancelDialog && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-background rounded-lg shadow-lg max-w-md w-full p-6">

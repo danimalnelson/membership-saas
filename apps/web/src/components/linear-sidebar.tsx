@@ -1,10 +1,10 @@
 "use client";
 
-import { memo, useState, useRef, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { cn } from "@wine-club/ui";
+import { cn, MenuContainer, Menu, MenuSection, MenuDivider, MenuItem, useMenuContext } from "@wine-club/ui";
 import { Dashboard } from "@/components/icons/Dashboard";
 import { Lifebuoy } from "@/components/icons/Lifebuoy";
 import { Users } from "@/components/icons/Users";
@@ -48,6 +48,62 @@ const settingsNavItems = [
   { href: "/settings/branding", label: "Branding" },
 ];
 
+// ---------------------------------------------------------------------------
+// Workspace dropdown helpers (need useMenuContext for close/toggle)
+// ---------------------------------------------------------------------------
+
+function WorkspaceTrigger({ business }: { business: Business }) {
+  const { toggle, triggerRef } = useMenuContext();
+  return (
+    <button
+      ref={triggerRef}
+      onClick={toggle}
+      className="group w-full flex items-center gap-1.5 px-2 h-9 rounded-md hover:bg-[var(--ds-gray-100)] transition-colors"
+    >
+      {business.logoUrl ? (
+        <img src={business.logoUrl} alt={business.name} className="h-5 w-5 rounded object-cover" />
+      ) : (
+        <div className="h-5 w-5 rounded bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+          <span className="text-white font-semibold text-[10px]">{business.name.charAt(0).toUpperCase()}</span>
+        </div>
+      )}
+      <span className="text-sm font-semibold text-neutral-950 truncate flex-1 text-left">{business.name}</span>
+      <ChevronUpDown size={14} className="text-neutral-800 group-hover:text-neutral-950 shrink-0" />
+    </button>
+  );
+}
+
+function WorkspaceUserSection({
+  basePath,
+  userEmail,
+}: {
+  basePath: string;
+  userEmail?: string;
+}) {
+  return (
+    <MenuItem
+      href={`${basePath}/account`}
+      suffix={<ChevronRight size={16} className="text-neutral-800 group-hover:text-neutral-950" />}
+    >
+      <span className="truncate">{userEmail}</span>
+    </MenuItem>
+  );
+}
+
+function BusinessLogo({ business, className }: { business: Business; className?: string }) {
+  return business.logoUrl ? (
+    <img src={business.logoUrl} alt={business.name} className={cn("rounded object-cover", className)} />
+  ) : (
+    <div className={cn("rounded bg-neutral-400 flex items-center justify-center", className)}>
+      <span className="text-neutral-900 font-semibold text-[10px]">{business.name.charAt(0).toUpperCase()}</span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
 export const LinearSidebar = memo(function LinearSidebar({ 
   businessId, 
   business, 
@@ -57,8 +113,6 @@ export const LinearSidebar = memo(function LinearSidebar({
 }: LinearSidebarProps) {
   const pathname = usePathname();
   const basePath = `/app/${business.slug}`;
-  const [isBusinessDropdownOpen, setIsBusinessDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Determine if we're on a settings page
   const isOnSettingsPage = pathname.startsWith(`${basePath}/settings`);
@@ -90,125 +144,62 @@ export const LinearSidebar = memo(function LinearSidebar({
     signOut({ callbackUrl: "/" });
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsBusinessDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const otherBusinesses = allBusinesses.filter(b => b.id !== businessId);
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 z-40 w-[241px] flex flex-col bg-neutral-50 border-r border-neutral-400 overflow-hidden">
+    <aside className="fixed left-0 top-0 bottom-0 z-40 w-[241px] flex flex-col bg-neutral-50 border-r border-neutral-300 overflow-hidden">
       {/* Workspace Header — stays fixed at top */}
-      <div className="px-3 py-3 shrink-0" ref={dropdownRef}>
-        <button
-          onClick={() => setIsBusinessDropdownOpen(!isBusinessDropdownOpen)}
-          className="w-full flex items-center gap-1.5 px-2 h-9 rounded-md hover:bg-neutral-100 transition-colors"
-        >
-          {business.logoUrl ? (
-            <img
-              src={business.logoUrl}
-              alt={business.name}
-              className="h-5 w-5 rounded object-cover"
-            />
-          ) : (
-            <div className="h-5 w-5 rounded bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-              <span className="text-white font-semibold text-[10px]">
-                {business.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
-          <span className="text-sm font-semibold text-neutral-950 truncate flex-1 text-left">
-            {business.name}
-          </span>
-          <ChevronUpDown size={14} className="text-neutral-800 shrink-0" />
-        </button>
-
-        {/* Workspace Dropdown */}
-        {isBusinessDropdownOpen && (
-          <div className="absolute left-3 right-3 top-14 bg-white rounded-lg shadow-lg border border-neutral-400 z-50 divide-y divide-neutral-400">
+      <div className="px-3 py-3 shrink-0">
+        <MenuContainer>
+          <WorkspaceTrigger business={business} />
+          <Menu width={215} align="start">
             {/* User Info */}
-            {(userName || userEmail) && (
-              <div className="p-1.5">
-                <Link
-                  href={`${basePath}/account`}
-                  onClick={() => setIsBusinessDropdownOpen(false)}
-                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-neutral-100 transition-colors group"
-                >
-                  <div className="flex-1 min-w-0">
-                    {userName && (
-                      <p className="text-[14px] font-medium text-neutral-950 truncate">{userName}</p>
-                    )}
-                    {userEmail && (
-                      <p className="text-[14px] font-normal text-neutral-900 truncate">{userEmail}</p>
-                    )}
-                  </div>
-                  <SettingsGear className="h-4 w-4 text-neutral-900 shrink-0" />
-                </Link>
-              </div>
+            {userEmail && (
+              <>
+                <WorkspaceUserSection basePath={basePath} userEmail={userEmail} />
+                <MenuDivider />
+              </>
             )}
 
             {/* Businesses */}
-            <div className="p-1.5 flex flex-col gap-0.5">
-              {/* Current Business */}
-              <div className="flex items-center gap-2.5 px-2 h-9 rounded-md bg-neutral-200">
-                {business.logoUrl ? (
+            <MenuItem
+              disabled
+              className="bg-neutral-200 opacity-100"
+              prefix={
+                business.logoUrl ? (
                   <img src={business.logoUrl} alt={business.name} className="h-5 w-5 rounded object-cover" />
                 ) : (
                   <div className="h-5 w-5 rounded bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
                     <span className="text-white font-semibold text-[10px]">{business.name.charAt(0).toUpperCase()}</span>
                   </div>
-                )}
-                <span className="text-sm font-medium text-neutral-950 truncate flex-1">{business.name}</span>
-              </div>
+                )
+              }
+            >
+              {business.name}
+            </MenuItem>
 
-              {/* Other Businesses */}
-              {otherBusinesses.map((b) => (
-                <Link
-                  key={b.id}
-                  href={`/app/${b.slug}`}
-                  onClick={() => setIsBusinessDropdownOpen(false)}
-                  className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
-                >
-                  {b.logoUrl ? (
-                    <img src={b.logoUrl} alt={b.name} className="h-5 w-5 rounded object-cover" />
-                  ) : (
-                    <div className="h-5 w-5 rounded bg-neutral-400 flex items-center justify-center">
-                      <span className="text-neutral-900 font-semibold text-[10px]">{b.name.charAt(0).toUpperCase()}</span>
-                    </div>
-                  )}
-                  <span className="truncate">{b.name}</span>
-                </Link>
-              ))}
-            </div>
+            {/* Other Businesses */}
+            {otherBusinesses.map((b) => (
+              <MenuItem
+                key={b.id}
+                href={`/app/${b.slug}`}
+                prefix={<BusinessLogo business={b} className="h-5 w-5" />}
+              >
+                {b.name}
+              </MenuItem>
+            ))}
+
+            <MenuDivider />
 
             {/* Add Business & Sign Out */}
-            <div className="p-1.5 flex flex-col gap-0.5">
-              <Link
-                href="/onboarding"
-                onClick={() => setIsBusinessDropdownOpen(false)}
-                className="w-full flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Add business
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="w-full flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
-              >
-                <Logout className="h-4 w-4" />
-                Sign out
-              </button>
-            </div>
-          </div>
-        )}
+            <MenuItem href="/onboarding" prefix={<Plus className="h-4 w-4" />}>
+              Add business
+            </MenuItem>
+            <MenuItem onClick={handleSignOut} prefix={<Logout className="h-4 w-4" />}>
+              Sign out
+            </MenuItem>
+          </Menu>
+        </MenuContainer>
       </div>
 
       {/* Nav panels — crossfade with subtle 24px shift */}
@@ -234,7 +225,7 @@ export const LinearSidebar = memo(function LinearSidebar({
                     "flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium transition-colors",
                     active
                       ? "bg-neutral-200 text-neutral-950"
-                      : "text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100"
+                      : "text-neutral-900 hover:text-neutral-950 hover:bg-[var(--ds-gray-100)]"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -243,24 +234,24 @@ export const LinearSidebar = memo(function LinearSidebar({
               );
             })}
 
-            <div className="border-t border-neutral-400 mt-[4px] mb-[4px]" />
+            <div className="border-t border-neutral-300 mt-[4px] mb-[4px]" />
 
             <button
               onClick={() => setShowSettingsNav(true)}
               className={cn(
-                "flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium transition-colors w-full",
+                "group flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium transition-colors w-full",
                 isOnSettingsPage
                   ? "bg-neutral-200 text-neutral-950"
-                  : "text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100"
+                  : "text-neutral-900 hover:text-neutral-950 hover:bg-[var(--ds-gray-100)]"
               )}
             >
               <SettingsGear className="h-4 w-4" />
               <span className="flex-1 text-left">Settings</span>
-              <ChevronRight size={14} className="text-neutral-800" />
+              <ChevronRight size={16} className="text-neutral-800 group-hover:text-neutral-950" />
             </button>
             <a
               href="mailto:support@example.com"
-              className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
+              className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-[var(--ds-gray-100)] transition-colors"
             >
               <Lifebuoy className="h-4 w-4" />
               <span>Help & Support</span>
@@ -283,9 +274,9 @@ export const LinearSidebar = memo(function LinearSidebar({
           <div className="px-2 pt-1 pb-1">
             <button
               onClick={() => setShowSettingsNav(false)}
-              className="w-full flex items-center px-2 h-9 rounded-md hover:bg-neutral-100 transition-colors text-sm font-medium text-neutral-950 relative"
+              className="group w-full flex items-center px-2 h-9 rounded-md hover:bg-[var(--ds-gray-100)] transition-colors text-sm font-medium text-neutral-950 relative"
             >
-              <ChevronLeft size={16} className="text-neutral-800 absolute left-2" />
+              <ChevronLeft size={16} className="text-neutral-800 group-hover:text-neutral-950 absolute left-2" />
               <span className="flex-1 text-center">Settings</span>
             </button>
           </div>
@@ -302,7 +293,7 @@ export const LinearSidebar = memo(function LinearSidebar({
                     "flex items-center px-2 h-9 rounded-md text-sm font-medium transition-colors",
                     active
                       ? "bg-neutral-200 text-neutral-950"
-                      : "text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100"
+                      : "text-neutral-900 hover:text-neutral-950 hover:bg-[var(--ds-gray-100)]"
                   )}
                 >
                   <span>{item.label}</span>

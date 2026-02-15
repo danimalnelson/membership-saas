@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@wine-club/ui";
 import { Check } from "geist-icons";
 import { FilterPill } from "./filter-pill";
@@ -64,29 +64,29 @@ export function FilterPillFromConfig({
       : undefined;
 
     return (
-      <FilterPill label={config.label} activeValue={displayValue} active={active} onToggle={onToggle} isOpen={isOpen}>
-        <div className="w-[240px] overflow-y-auto">
-          <div className="p-3">
-            <p className="text-sm font-medium text-neutral-950 mb-2">Filter by: {config.label.toLowerCase()}</p>
-            <DelayedFocusInput
-              placeholder={textConfig.placeholder || "contains..."}
-              maxLength={textConfig.maxLength}
-              value={inputValue}
-              onChange={(e) => {
-                const v = textConfig.inputTransform ? textConfig.inputTransform(e.target.value) : e.target.value;
-                onSetInput(v);
-              }}
-              onKeyDown={(e) => e.key === "Enter" && onApplyText()}
-            />
-          </div>
-          <div className="p-3 border-t border-neutral-400">
-            <Button
-              className="w-full"
-              onClick={onApplyText}
-            >
-              Apply
-            </Button>
-          </div>
+      <FilterPill
+        label={config.label}
+        activeValue={displayValue}
+        active={active}
+        onToggle={onToggle}
+        isOpen={isOpen}
+        footer={
+          <Button className="w-full" onClick={onApplyText}>
+            Apply
+          </Button>
+        }
+      >
+        <div>
+          <DelayedFocusInput
+            placeholder={textConfig.placeholder || "contains..."}
+            maxLength={textConfig.maxLength}
+            value={inputValue}
+            onChange={(e) => {
+              const v = textConfig.inputTransform ? textConfig.inputTransform(e.target.value) : e.target.value;
+              onSetInput(v);
+            }}
+            onKeyDown={(e) => e.key === "Enter" && onApplyText()}
+          />
         </div>
       </FilterPill>
     );
@@ -155,48 +155,48 @@ function MultiSelectFilterPill({
     : undefined;
 
   return (
-    <FilterPill label={config.label} activeValue={displayValue} active={active} onToggle={onToggle} isOpen={isOpen}>
-      <div className="w-[240px] flex flex-col">
-        <p className="px-3 pt-3 pb-2 text-sm font-medium text-neutral-950 shrink-0">Filter by: {config.label.toLowerCase()}</p>
-        <div className="overflow-y-auto px-2 pb-3 min-h-0">
-          <div className="flex flex-col gap-0.5">
-            {config.options.map((opt) => {
-              const checked = pending.has(opt.value);
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => toggleOption(opt.value)}
-                  className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
+    <FilterPill
+      label={config.label}
+      activeValue={displayValue}
+      active={active}
+      onToggle={onToggle}
+      isOpen={isOpen}
+      footer={
+        <Button className="w-full" onClick={applySelection}>
+          Apply
+        </Button>
+      }
+    >
+      <div className="min-h-0">
+        <div className="flex flex-col gap-0.5">
+          {config.options.map((opt) => {
+            const checked = pending.has(opt.value);
+            return (
+              <button
+                key={opt.value}
+                onClick={() => toggleOption(opt.value)}
+                className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-neutral-900 hover:text-neutral-950 hover:bg-neutral-100 transition-colors"
+              >
+                <span
+                  className={`flex items-center justify-center h-4 w-4 rounded border transition-colors shrink-0 ${
+                    checked
+                      ? "bg-neutral-950 border-neutral-950"
+                      : "border-neutral-600 bg-white"
+                  }`}
                 >
-                  <span
-                    className={`flex items-center justify-center h-4 w-4 rounded border transition-colors shrink-0 ${
-                      checked
-                        ? "bg-neutral-950 border-neutral-950"
-                        : "border-neutral-600 bg-white"
-                    }`}
-                  >
-                    {checked && <Check className="h-3 w-3 text-white" />}
+                  {checked && <Check className="h-3 w-3 text-white" />}
+                </span>
+                {opt.icon ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="shrink-0">{opt.icon}</span>
+                    {opt.label}
                   </span>
-                  {opt.icon ? (
-                    <span className="flex items-center gap-1.5">
-                      <span className="shrink-0">{opt.icon}</span>
-                      {opt.label}
-                    </span>
-                  ) : (
-                    opt.label
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div className="p-3 border-t border-neutral-400 shrink-0">
-          <Button
-            className="w-full"
-            onClick={applySelection}
-          >
-            Apply
-          </Button>
+                ) : (
+                  opt.label
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
     </FilterPill>
