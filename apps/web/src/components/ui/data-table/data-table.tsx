@@ -79,9 +79,6 @@ function DataTableFooter({
           >
             Previous
           </Button>
-          <span>
-            {page + 1} / {totalPages}
-          </span>
           <Button
             variant="secondary"
             size="small"
@@ -130,6 +127,8 @@ export function DataTable<T>({
     totalPages,
   } = table;
 
+  const hasActiveFilters = Object.values(filterValues).some((v) => v !== "");
+
   return (
     <>
       {/* Sticky header: title + filters + actions */}
@@ -168,7 +167,11 @@ export function DataTable<T>({
         <Card className="shadow-none">
           <CardContent className="py-12 text-center">
             <p className="text-gray-600 dark:text-gray-800">
-              {data.length === 0 ? emptyMessage : filteredEmptyMessage}
+              {/* For server-side pagination: data and filtered are the same.
+                  Use hasActiveFilters to determine which empty message to show. */}
+              {data.length === 0 && !hasActiveFilters
+                ? emptyMessage
+                : filteredEmptyMessage}
             </p>
           </CardContent>
         </Card>
@@ -237,7 +240,7 @@ export function DataTable<T>({
 
       {/* Sticky footer: result count + pagination */}
       <DataTableFooter
-        count={filtered.length}
+        count={table.totalCount ?? filtered.length}
         page={page}
         totalPages={totalPages}
         setPage={setPage}

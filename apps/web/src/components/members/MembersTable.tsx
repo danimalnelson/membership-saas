@@ -6,7 +6,7 @@ import { Button } from "@wine-club/ui";
 import { Download, Plus } from "geist-icons";
 import {
   DataTable,
-  useDataTable,
+  useServerTable,
   type Column,
   type FilterConfig,
 } from "@/components/ui/data-table";
@@ -65,26 +65,24 @@ function buildFilterConfigs(allPlanNames: string[]): FilterConfig[] {
   ];
 }
 
-function filterFn(m: Member, filters: Record<string, string>): boolean {
-  if (filters.name && !m.name.toLowerCase().includes(filters.name.toLowerCase())) return false;
-  if (filters.email && !m.email.toLowerCase().includes(filters.email.toLowerCase())) return false;
-  if (filters.status && !filters.status.split(",").includes(m.status)) return false;
-  if (filters.plan && !m.activePlans.some((p) => filters.plan!.split(",").includes(p))) return false;
-  return true;
-}
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export function MembersTable({
   members,
+  totalCount,
+  page,
+  pageSize,
   allPlanNames,
   businessId,
   businessSlug,
   timeZone,
 }: {
   members: Member[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
   allPlanNames: string[];
   businessId: string;
   businessSlug: string;
@@ -94,10 +92,12 @@ export function MembersTable({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const filterConfigs = buildFilterConfigs(allPlanNames);
 
-  const table = useDataTable({
+  const table = useServerTable({
     data: members,
+    totalCount,
+    page,
+    pageSize,
     filters: filterConfigs,
-    filterFn,
   });
 
   const columns: Column<Member>[] = [
@@ -134,9 +134,9 @@ export function MembersTable({
     },
   ];
 
-  const exportCsv = useCallback(() => {
+  const exportCurrentPage = useCallback(() => {
     const headers = ["Name", "Email", "Status", "Created", "Active Plans"];
-    const rows = table.filtered.map((m) => [
+    const rows = members.map((m) => [
       m.name.replace(/,/g, ""),
       m.email,
       m.status,
@@ -151,7 +151,27 @@ export function MembersTable({
     a.download = `members-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [table.filtered]);
+  }, [members]);
+
+  const exportCsv = useCallback(async () => {
+    // For server-side pagination, export triggers a server-side fetch of all matching records
+    try {
+      const response = await fetch(`/api/members/export?businessId=${businessId}&${new URLSearchParams(window.location.search).toString()}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `members-${new Date().toISOString().split("T")[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        exportCurrentPage();
+      }
+    } catch {
+      exportCurrentPage();
+    }
+  }, [businessId, exportCurrentPage]);
 
   return (
   <>

@@ -14,7 +14,7 @@ import { SubscriptionCancelled } from "@/components/icons/SubscriptionCancelled"
 import { SubscriptionCreated } from "@/components/icons/SubscriptionCreated";
 import {
   DataTable,
-  useDataTable,
+  useServerTable,
   type Column,
   type FilterConfig,
 } from "@/components/ui/data-table";
@@ -137,10 +137,6 @@ function TransactionTypeLabel({ type }: { type: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
 // Filter + column config
 // ---------------------------------------------------------------------------
 
@@ -151,12 +147,10 @@ const FILTER_CONFIGS: FilterConfig[] = [
     label: "Type",
     options: [
       { value: "PAYMENT", label: "Payment", icon: <TypeIcon type="PAYMENT" /> },
-      { value: "PENDING", label: "Pending", icon: <TypeIcon type="PENDING" /> },
       { value: "REFUND", label: "Refund", icon: <TypeIcon type="REFUND" /> },
       { value: "SUBSCRIPTION_CANCELLED", label: "Subscription canceled", icon: <TypeIcon type="SUBSCRIPTION_CANCELLED" /> },
       { value: "SUBSCRIPTION_PAUSED", label: "Subscription paused", icon: <TypeIcon type="SUBSCRIPTION_PAUSED" /> },
       { value: "SUBSCRIPTION_CREATED", label: "Subscription started", icon: <TypeIcon type="SUBSCRIPTION_CREATED" /> },
-      { value: "VOIDED", label: "Voided", icon: <TypeIcon type="VOIDED" /> },
     ],
   },
   { type: "text", key: "name", label: "Name" },
@@ -173,36 +167,30 @@ const FILTER_CONFIGS: FilterConfig[] = [
   },
 ];
 
-function filterFn(t: Transaction, filters: Record<string, string>): boolean {
-  if (filters.name) {
-    const name = t.customerName || t.customerEmail.split("@")[0];
-    if (!name.toLowerCase().includes(filters.name.toLowerCase())) return false;
-  }
-  if (filters.email) {
-    if (!t.customerEmail.toLowerCase().includes(filters.email.toLowerCase())) return false;
-  }
-  if (filters.plan) {
-    if (!t.description.toLowerCase().includes(filters.plan.toLowerCase())) return false;
-  }
-  if (filters.type) {
-    const types = filters.type.split(",");
-    if (!types.includes(t.type)) return false;
-  }
-  if (filters.last4) {
-    if (!t.paymentMethodLast4 || !t.paymentMethodLast4.includes(filters.last4)) return false;
-  }
-  return true;
-}
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function TransactionTable({ transactions }: { transactions: Transaction[]; timeZone?: string }) {
-  const table = useDataTable({
+export function TransactionTable({
+  transactions,
+  totalCount,
+  page,
+  pageSize,
+  businessId,
+}: {
+  transactions: Transaction[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  timeZone?: string;
+  businessId: string;
+}) {
+  const table = useServerTable({
     data: transactions,
+    totalCount,
+    page,
+    pageSize,
     filters: FILTER_CONFIGS,
-    filterFn,
   });
 
   const columns: Column<Transaction>[] = [
@@ -244,9 +232,9 @@ export function TransactionTable({ transactions }: { transactions: Transaction[]
     },
   ];
 
-  const exportCsv = useCallback(() => {
+  const exportCurrentPage = useCallback(() => {
     const headers = ["Type", "Name", "Email", "Plan", "Amount", "Payment Method", "Date"];
-    const rows = table.filtered.map((t) => [
+    const rows = transactions.map((t) => [
       t.type.replace(/_/g, " "),
       (t.customerName || t.customerEmail.split("@")[0]).replace(/,/g, ""),
       t.customerEmail,
@@ -265,7 +253,29 @@ export function TransactionTable({ transactions }: { transactions: Transaction[]
     a.download = `transactions-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [table.filtered]);
+  }, [transactions]);
+
+  const exportCsv = useCallback(async () => {
+    // For server-side pagination, export triggers a server-side fetch of all matching records
+    try {
+      const response = await fetch(`/api/transactions/export?businessId=${businessId}&${new URLSearchParams(window.location.search).toString()}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `transactions-${new Date().toISOString().split("T")[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        // Fallback: export current page only
+        exportCurrentPage();
+      }
+    } catch {
+      // Fallback: export current page only
+      exportCurrentPage();
+    }
+  }, [businessId, exportCurrentPage]);
 
   return (
     <DataTable

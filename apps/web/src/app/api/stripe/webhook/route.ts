@@ -213,6 +213,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, account
       await createPlanSubscriptionFromCheckout(prisma, session, accountId);
       console.log(`[Webhook] ✅ Created PlanSubscription from checkout ${session.id}`);
       
+      // Create SUBSCRIPTION_CREATED transaction record for the activity feed
+      await createSubscriptionActivityTransaction(prisma, session, planId, "SUBSCRIPTION_CREATED");
+
       // ENFORCE ONE PAYMENT METHOD RULE:
       // Update all other subscriptions to use the same payment method
       await syncPaymentMethodAcrossSubscriptions(session, accountId);
@@ -344,6 +347,27 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription, accou
       const newStatus = subscription.status;
       if (oldStatus !== newStatus) {
         await notifyBusinessSubscriptionStatusChange(planSubscription.id, oldStatus, newStatus);
+
+        // Create activity transaction for pause events
+        if (newStatus === "paused" && oldStatus !== "paused") {
+          const planSub = await prisma.planSubscription.findUnique({
+            where: { id: planSubscription.id },
+            include: { plan: true },
+          });
+          if (planSub) {
+            await prisma.transaction.create({
+              data: {
+                businessId: planSub.plan.businessId,
+                consumerId: planSubscription.consumerId,
+                planSubscriptionId: planSubscription.id,
+                amount: 0,
+                currency: planSub.plan.currency || "usd",
+                type: "SUBSCRIPTION_PAUSED",
+                description: planSub.plan.name,
+              },
+            });
+          }
+        }
       }
     } catch (error) {
       console.error(`[Webhook] ❌ Failed to sync PlanSubscription:`, error);
@@ -435,6 +459,19 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription, acco
     try {
       await handlePlanSubscriptionDeleted(prisma, subscription);
       console.log(`[Webhook] ✅ Deleted PlanSubscription ${planSubscription.id}`);
+
+      // Create SUBSCRIPTION_CANCELLED transaction record for the activity feed
+      await prisma.transaction.create({
+        data: {
+          businessId: planSubscription.plan.business.id,
+          consumerId: planSubscription.consumer.id,
+          planSubscriptionId: planSubscription.id,
+          amount: 0,
+          currency: planSubscription.plan.currency || "usd",
+          type: "SUBSCRIPTION_CANCELLED",
+          description: planSubscription.plan.name,
+        },
+      });
 
       // Send cancellation email to member
       if (planSubscription.consumer.email) {
@@ -707,7 +744,11 @@ async function handleInvoicePaid(invoice: Stripe.Invoice, accountId?: string) {
     return;
   }
 
-  // Create transaction record
+  // Extract payment method details from the invoice's charge
+  const chargeObj = typeof invoice.charge === "object" && invoice.charge !== null ? invoice.charge : null;
+  const cardDetails = (chargeObj as any)?.payment_method_details?.card ?? null;
+
+  // Create transaction record with payment method details and description
   await prisma.transaction.create({
     data: {
       businessId: subscription.member.businessId,
@@ -716,8 +757,12 @@ async function handleInvoicePaid(invoice: Stripe.Invoice, accountId?: string) {
       amount: invoice.amount_paid,
       currency: invoice.currency,
       type: "CHARGE",
+      description: subscription.membershipPlan.name,
+      paymentMethodBrand: cardDetails?.brand ?? null,
+      paymentMethodLast4: cardDetails?.last4 ?? null,
       stripePaymentIntentId: invoice.payment_intent as string | null,
       stripeChargeId: invoice.charge as string | null,
+      stripeInvoiceId: invoice.id,
     },
   });
 
@@ -842,10 +887,11 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, accountId?: s
 }
 
 async function handleChargeRefunded(charge: Stripe.Charge, accountId?: string) {
-  // Find the transaction
+  // Find the original charge transaction (include new fields for carry-forward)
   const transaction = await prisma.transaction.findFirst({
     where: {
       stripeChargeId: charge.id,
+      type: "CHARGE",
     },
     include: {
       consumer: true,
@@ -858,15 +904,19 @@ async function handleChargeRefunded(charge: Stripe.Charge, accountId?: string) {
     return;
   }
 
-  // Create refund transaction
+  // Create refund transaction (carry forward description and payment method from original)
   await prisma.transaction.create({
     data: {
       businessId: transaction.businessId,
       consumerId: transaction.consumerId,
       subscriptionId: transaction.subscriptionId,
+      planSubscriptionId: transaction.planSubscriptionId,
       amount: charge.amount_refunded,
       currency: charge.currency,
       type: "REFUND",
+      description: transaction.description,
+      paymentMethodBrand: transaction.paymentMethodBrand,
+      paymentMethodLast4: transaction.paymentMethodLast4,
       stripeChargeId: charge.id,
     },
   });
@@ -1139,6 +1189,71 @@ async function handlePaymentMethodAttached(paymentMethod: Stripe.PaymentMethod, 
     console.log(`[Webhook] payment_method.attached: ✅ Set as customer default`);
   } catch (error) {
     console.error(`[Webhook] payment_method.attached: ❌ Error:`, error);
+  }
+}
+
+/**
+ * Create a SUBSCRIPTION_CREATED or SUBSCRIPTION_CANCELLED transaction for the activity feed
+ */
+async function createSubscriptionActivityTransaction(
+  prismaClient: typeof prisma,
+  session: Stripe.Checkout.Session,
+  planId: string,
+  type: "SUBSCRIPTION_CREATED" | "SUBSCRIPTION_CANCELLED"
+) {
+  try {
+    const plan = await prismaClient.plan.findUnique({
+      where: { id: planId },
+      include: { business: true },
+    });
+
+    if (!plan) {
+      console.log(`[Webhook] Cannot create activity transaction: plan ${planId} not found`);
+      return;
+    }
+
+    const customerEmail = session.customer_email || session.customer_details?.email;
+    if (!customerEmail) {
+      console.log(`[Webhook] Cannot create activity transaction: no customer email`);
+      return;
+    }
+
+    const consumer = await prismaClient.consumer.findUnique({
+      where: { email: customerEmail },
+    });
+
+    if (!consumer) {
+      console.log(`[Webhook] Cannot create activity transaction: consumer not found for ${customerEmail}`);
+      return;
+    }
+
+    // Find the PlanSubscription that was just created
+    const subscriptionId = typeof session.subscription === "string"
+      ? session.subscription
+      : session.subscription?.id;
+
+    const planSubscription = subscriptionId
+      ? await prismaClient.planSubscription.findUnique({
+          where: { stripeSubscriptionId: subscriptionId },
+        })
+      : null;
+
+    await prismaClient.transaction.create({
+      data: {
+        businessId: plan.businessId,
+        consumerId: consumer.id,
+        planSubscriptionId: planSubscription?.id || null,
+        amount: 0,
+        currency: plan.currency || "usd",
+        type,
+        description: plan.name,
+      },
+    });
+
+    console.log(`[Webhook] ✅ Created ${type} activity transaction for ${customerEmail}`);
+  } catch (error) {
+    console.error(`[Webhook] Failed to create activity transaction:`, error);
+    // Don't throw - activity logging failure shouldn't fail the webhook
   }
 }
 

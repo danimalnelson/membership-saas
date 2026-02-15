@@ -3,16 +3,19 @@ import { getServerSession } from "next-auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma, Prisma } from "@wine-club/db";
 import { authOptions } from "@/lib/auth";
-import { getStripeClient } from "@wine-club/lib";
 import { Card, CardContent } from "@wine-club/ui";
 import { getBusinessBySlug } from "@/lib/data/business";
 import { TransactionTable } from "@/components/transactions/TransactionTable";
 import TransactionsLoading from "./loading";
 
+const PAGE_SIZE = 20;
+
 async function TransactionsContent({
   params,
+  searchParams,
 }: {
   params: Promise<{ businessSlug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -27,63 +30,80 @@ async function TransactionsContent({
     notFound();
   }
 
-  if (!business.stripeAccountId) {
-    return (
-      <div className="max-w-7xl mx-auto">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Stripe account not connected</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Parse searchParams for pagination and filters
+  const sp = await searchParams;
+  const page = Math.max(0, parseInt(String(sp.page || "0"), 10) || 0);
+  const filterType = typeof sp.type === "string" ? sp.type : "";
+  const filterName = typeof sp.name === "string" ? sp.name : "";
+  const filterEmail = typeof sp.email === "string" ? sp.email : "";
+  const filterPlan = typeof sp.plan === "string" ? sp.plan : "";
+  const filterLast4 = typeof sp.last4 === "string" ? sp.last4 : "";
 
-  // Run Stripe API call and DB query in parallel (with error handling)
-  type PlanSubWithPlan = Prisma.PlanSubscriptionGetPayload<{ include: { plan: true; consumer: true } }>;
-  let stripeInvoices: Awaited<ReturnType<ReturnType<typeof getStripeClient>["invoices"]["list"]>> | null = null;
-  let planSubscriptions: PlanSubWithPlan[] = [];
+  // Build Prisma where clause from filters
+  const where: Prisma.TransactionWhereInput = {
+    businessId: business.id,
+  };
 
-  try {
-    const stripe = getStripeClient(business.stripeAccountId);
-    [stripeInvoices, planSubscriptions] = await Promise.all([
-      stripe.invoices.list({ limit: 100, expand: ["data.charge"] }),
-      prisma.planSubscription.findMany({
-        where: {
-          plan: { businessId: business.id },
-        },
-        include: {
-          consumer: true,
-          plan: true,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 100,
-      }),
-    ]);
-  } catch (error) {
-    console.error("Transactions page error:", error);
-    return (
-      <div className="max-w-7xl mx-auto">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">
-              Failed to load transactions. Please try again later.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Build a lookup from Stripe subscription ID to plan name
-  const subIdToPlanName = new Map<string, string>();
-  for (const sub of planSubscriptions) {
-    if (sub.stripeSubscriptionId) {
-      subIdToPlanName.set(sub.stripeSubscriptionId, sub.plan.name);
+  // Type filter: map UI type names to TransactionType enum values
+  if (filterType) {
+    const typeMap: Record<string, string> = {
+      PAYMENT: "CHARGE",
+      CHARGE: "CHARGE",
+      REFUND: "REFUND",
+      SUBSCRIPTION_CREATED: "SUBSCRIPTION_CREATED",
+      SUBSCRIPTION_CANCELLED: "SUBSCRIPTION_CANCELLED",
+      SUBSCRIPTION_PAUSED: "SUBSCRIPTION_PAUSED",
+      PAYOUT_FEE: "PAYOUT_FEE",
+    };
+    const types = filterType.split(",").map((t) => typeMap[t] || t).filter(Boolean);
+    if (types.length > 0) {
+      where.type = { in: types as Prisma.EnumTransactionTypeFilter["in"] };
     }
   }
 
-  // Format dates on server to avoid hydration mismatch (Intl can differ server vs client)
+  // Name filter: search consumer name (case-insensitive)
+  if (filterName) {
+    where.consumer = {
+      ...((where.consumer as Prisma.ConsumerWhereInput) || {}),
+      name: { contains: filterName, mode: "insensitive" },
+    };
+  }
+
+  // Email filter: search consumer email (case-insensitive)
+  if (filterEmail) {
+    where.consumer = {
+      ...((where.consumer as Prisma.ConsumerWhereInput) || {}),
+      email: { contains: filterEmail, mode: "insensitive" },
+    };
+  }
+
+  // Plan/description filter
+  if (filterPlan) {
+    where.description = { contains: filterPlan, mode: "insensitive" };
+  }
+
+  // Payment method last4 filter
+  if (filterLast4) {
+    where.paymentMethodLast4 = { contains: filterLast4 };
+  }
+
+  // Run count + data queries in parallel
+  const [totalCount, transactions] = await Promise.all([
+    prisma.transaction.count({ where }),
+    prisma.transaction.findMany({
+      where,
+      include: {
+        consumer: {
+          select: { id: true, email: true, name: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: page * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+  ]);
+
+  // Format dates on server to avoid hydration mismatch
   const formatDate = (date: Date, tz?: string | null) => {
     const d = date instanceof Date ? date : new Date(date);
     const month = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: tz || undefined }).format(d);
@@ -92,98 +112,57 @@ async function TransactionsContent({
     return `${month} ${day}, ${time}`;
   };
 
-  // Create combined transaction list
-  const transactions = [
-    ...stripeInvoices.data.map((invoice) => {
-      const charge = typeof invoice.charge === "object" && invoice.charge !== null ? invoice.charge : null;
-      const card = charge?.payment_method_details?.card ?? null;
-      // Resolve plan name from invoice's subscription
-      const planName = invoice.subscription
-        ? subIdToPlanName.get(typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription.id) ?? null
-        : null;
-      const date = new Date(invoice.created * 1000);
-      return {
-        id: invoice.id,
-        date,
-        dateDisplay: formatDate(date, business.timeZone),
-        type: invoice.status === "paid" ? "PAYMENT" : invoice.status === "void" ? "VOIDED" : "PENDING",
-        amount: invoice.amount_paid,
-        currency: invoice.currency,
-        customerEmail: invoice.customer_email || "Unknown",
-        customerName: invoice.customer_name || null,
-        description: planName || "–",
-        stripeId: invoice.id,
-        paymentMethodBrand: card?.brand ?? null,
-        paymentMethodLast4: card?.last4 ?? null,
-      };
-    }),
-    ...planSubscriptions.flatMap((sub) => {
-      type SubTx = {
-        id: string;
-        date: Date;
-        dateDisplay: string;
-        type: "SUBSCRIPTION_CREATED" | "SUBSCRIPTION_CANCELLED";
-        amount: number;
-        currency: string;
-        customerEmail: string;
-        customerName: string | null;
-        description: string;
-        stripeId: string | null;
-        paymentMethodBrand: string | null;
-        paymentMethodLast4: string | null;
-      };
-      const items: SubTx[] = [
-        {
-          id: `sub-created-${sub.id}`,
-          date: sub.createdAt,
-          dateDisplay: formatDate(sub.createdAt, business.timeZone),
-          type: "SUBSCRIPTION_CREATED",
-          amount: 0,
-          currency: "usd",
-          customerEmail: sub.consumer.email,
-          customerName: sub.consumer.name,
-          description: sub.plan.name,
-          stripeId: sub.stripeSubscriptionId,
-          paymentMethodBrand: null,
-          paymentMethodLast4: null,
-        },
-      ];
-      if (sub.status === "canceled") {
-        items.push({
-          id: `sub-cancelled-${sub.id}`,
-          date: sub.lastSyncedAt,
-          dateDisplay: formatDate(sub.lastSyncedAt, business.timeZone),
-          type: "SUBSCRIPTION_CANCELLED",
-          amount: 0,
-          currency: "usd",
-          customerEmail: sub.consumer.email,
-          customerName: sub.consumer.name,
-          description: sub.plan.name,
-          stripeId: sub.stripeSubscriptionId,
-          paymentMethodBrand: null,
-          paymentMethodLast4: null,
-        });
-      }
-      return items;
-    }),
-  ].sort((a, b) => b.date.getTime() - a.date.getTime());
+  // Map DB type to UI display type
+  const typeDisplayMap: Record<string, string> = {
+    CHARGE: "PAYMENT",
+    REFUND: "REFUND",
+    PAYOUT_FEE: "PAYOUT_FEE",
+    SUBSCRIPTION_CREATED: "SUBSCRIPTION_CREATED",
+    SUBSCRIPTION_CANCELLED: "SUBSCRIPTION_CANCELLED",
+    SUBSCRIPTION_PAUSED: "SUBSCRIPTION_PAUSED",
+  };
+
+  // Transform to the shape the TransactionTable expects
+  const formattedTransactions = transactions.map((tx) => ({
+    id: tx.id,
+    date: tx.createdAt,
+    dateDisplay: formatDate(tx.createdAt, business.timeZone),
+    type: typeDisplayMap[tx.type] || tx.type,
+    amount: tx.amount,
+    currency: tx.currency,
+    customerEmail: tx.consumer.email,
+    customerName: tx.consumer.name,
+    description: tx.description || "–",
+    stripeId: tx.stripeChargeId || tx.stripePaymentIntentId || null,
+    paymentMethodBrand: tx.paymentMethodBrand,
+    paymentMethodLast4: tx.paymentMethodLast4,
+  }));
 
   return (
     <div className="max-w-7xl mx-auto">
-      <TransactionTable transactions={transactions} timeZone={business.timeZone} />
+      <TransactionTable
+        transactions={formattedTransactions}
+        totalCount={totalCount}
+        page={page}
+        pageSize={PAGE_SIZE}
+        timeZone={business.timeZone}
+        businessId={business.id}
+      />
     </div>
   );
 }
 
 export default async function TransactionsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ businessSlug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   return (
     <div className="max-w-7xl mx-auto">
       <Suspense fallback={<TransactionsLoading />}>
-        <TransactionsContent params={params} />
+        <TransactionsContent params={params} searchParams={searchParams} />
       </Suspense>
     </div>
   );

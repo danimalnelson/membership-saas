@@ -26,7 +26,7 @@ export interface SelectFilterConfig {
 
 export type FilterConfig = TextFilterConfig | SelectFilterConfig;
 
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 40;
 
 /** Return type of useDataTable — pass this as the `table` prop to DataTable. */
 export interface UseDataTableReturn<T> {
@@ -45,6 +45,8 @@ export interface UseDataTableReturn<T> {
   setPage: (page: number | ((p: number) => number)) => void;
   totalPages: number;
   pageSize: number;
+  /** Total count of items matching filters (for server-side pagination). */
+  totalCount?: number;
 }
 
 export function useDataTable<T>({
