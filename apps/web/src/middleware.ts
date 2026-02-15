@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+const DEVICE_TRUST_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds
+
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
@@ -25,15 +27,30 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(signInUrl);
     }
 
-    // Check business access for /app/:businessId/* routes
-    const businessIdMatch = effectivePathname.match(/^\/app\/([^\/]+)/);
-    if (businessIdMatch && businessIdMatch[1] !== "switch") {
-      const requestedBusinessId = businessIdMatch[1];
-      
-      // TODO: Verify user has access to this business
-      // For now, we allow if user is authenticated
+    // 2FA gate: check if session has been verified
+    if (!token.twoFactorVerified) {
+      // Check for device trust cookie
+      const isProduction = process.env.NODE_ENV === "production";
+      const cookieName = isProduction ? "__Host-device-trust" : "device-trust";
+      const deviceCookie = request.cookies.get(cookieName)?.value;
+
+      const isTrusted = deviceCookie
+        ? await verifyDeviceTrustToken(deviceCookie, token.sub!)
+        : false;
+
+      if (!isTrusted) {
+        // Redirect to 2FA verification page
+        const verifyUrl = new URL("/auth/verify-code", request.url);
+        verifyUrl.searchParams.set("callbackUrl", effectivePathname);
+        return NextResponse.redirect(verifyUrl);
+      }
+
+      // Device is trusted — allow through (client will update session)
     }
   }
+
+  // Allow /auth/verify-code for authenticated but unverified users
+  // (no additional checks needed — the page itself handles the flow)
 
   if (isDashboardHost && effectivePathname !== pathname) {
     const url = request.nextUrl.clone();
@@ -42,6 +59,65 @@ export async function middleware(request: NextRequest) {
   }
 
   return NextResponse.next();
+}
+
+/**
+ * Verify a device trust token (Edge Runtime compatible).
+ * Format: userId.issuedAt.signature
+ */
+async function verifyDeviceTrustToken(
+  token: string,
+  expectedUserId: string
+): Promise<boolean> {
+  try {
+    const secret = process.env.NEXTAUTH_SECRET;
+    if (!secret) return false;
+
+    const parts = token.split(".");
+    if (parts.length !== 3) return false;
+
+    const [userId, issuedAtStr, signature] = parts;
+
+    // Verify userId matches
+    if (userId !== expectedUserId) return false;
+
+    // Verify not expired
+    const issuedAt = parseInt(issuedAtStr, 10);
+    if (isNaN(issuedAt)) return false;
+    const now = Math.floor(Date.now() / 1000);
+    if (now - issuedAt > DEVICE_TRUST_MAX_AGE) return false;
+
+    // Verify signature using Web Crypto API
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+
+    const payload = `${userId}.${issuedAtStr}`;
+    const signatureBytes = await crypto.subtle.sign(
+      "HMAC",
+      key,
+      encoder.encode(payload)
+    );
+
+    const expectedSignature = Array.from(new Uint8Array(signatureBytes))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    // Constant-time comparison
+    if (signature.length !== expectedSignature.length) return false;
+    let mismatch = 0;
+    for (let i = 0; i < signature.length; i++) {
+      mismatch |= signature.charCodeAt(i) ^ expectedSignature.charCodeAt(i);
+    }
+    return mismatch === 0;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -105,4 +181,3 @@ export const config = {
     "/((?!_next/|favicon.ico|robots.txt|sitemap.xml).*)",
   ],
 };
-

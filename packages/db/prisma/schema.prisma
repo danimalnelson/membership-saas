@@ -19,12 +19,13 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  businesses  BusinessUser[]
-  auditLogs   AuditLog[]
-  Consumer    Consumer?
-  accounts    Account[]
-  sessions    Session[]
-  memberNotes MemberNote[]
+  businesses     BusinessUser[]
+  auditLogs      AuditLog[]
+  Consumer       Consumer?
+  accounts       Account[]
+  sessions       Session[]
+  memberNotes    MemberNote[]
+  twoFactorCodes TwoFactorCode[]
 
   @@map("users")
 }
@@ -67,6 +68,21 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+model TwoFactorCode {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String // hashed 6-digit code
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("two_factor_codes")
 }
 
 // ===== Business (Tenant) =====
