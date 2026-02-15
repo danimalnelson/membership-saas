@@ -114,7 +114,12 @@ function TypeIcon({ type }: { type: string }) {
 }
 
 const TYPE_LABELS: Record<string, string> = {
+  CHARGE: "Payment",
+  REFUND: "Refund",
+  PAYOUT_FEE: "Payout fee",
   SUBSCRIPTION_CREATED: "Subscription started",
+  SUBSCRIPTION_CANCELLED: "Subscription cancelled",
+  SUBSCRIPTION_PAUSED: "Subscription paused",
 };
 
 function TransactionTypeLabel({ type }: { type: string }) {
@@ -150,13 +155,11 @@ const FILTER_CONFIGS: FilterConfig[] = [
     key: "type",
     label: "Type",
     options: [
-      { value: "PAYMENT", label: "Payment", icon: <TypeIcon type="PAYMENT" /> },
-      { value: "PENDING", label: "Pending", icon: <TypeIcon type="PENDING" /> },
+      { value: "CHARGE", label: "Payment", icon: <TypeIcon type="CHARGE" /> },
       { value: "REFUND", label: "Refund", icon: <TypeIcon type="REFUND" /> },
+      { value: "SUBSCRIPTION_CREATED", label: "Subscription started", icon: <TypeIcon type="SUBSCRIPTION_CREATED" /> },
       { value: "SUBSCRIPTION_CANCELLED", label: "Subscription canceled", icon: <TypeIcon type="SUBSCRIPTION_CANCELLED" /> },
       { value: "SUBSCRIPTION_PAUSED", label: "Subscription paused", icon: <TypeIcon type="SUBSCRIPTION_PAUSED" /> },
-      { value: "SUBSCRIPTION_CREATED", label: "Subscription started", icon: <TypeIcon type="SUBSCRIPTION_CREATED" /> },
-      { value: "VOIDED", label: "Voided", icon: <TypeIcon type="VOIDED" /> },
     ],
   },
   { type: "text", key: "name", label: "Name" },
@@ -198,7 +201,7 @@ function filterFn(t: Transaction, filters: Record<string, string>): boolean {
 // Component
 // ---------------------------------------------------------------------------
 
-export function TransactionTable({ transactions }: { transactions: Transaction[]; timeZone?: string }) {
+export function TransactionTable({ transactions }: { transactions: Transaction[] }) {
   const table = useDataTable({
     data: transactions,
     filters: FILTER_CONFIGS,

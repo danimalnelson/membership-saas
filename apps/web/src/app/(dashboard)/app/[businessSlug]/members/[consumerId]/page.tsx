@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SectionCard } from "@/components/ui/section-card";
 import { EditMemberInfoDialog } from "@/components/members/EditMemberInfoDialog";
 import { ActiveSubscriptionsTable } from "@/components/members/ActiveSubscriptionsTable";
+import { MemberActivity, type MemberActivityEvent } from "@/components/members/MemberActivity";
 import { MemberNotes } from "@/components/members/MemberNotes";
 
 export default async function MemberDetailPage({
@@ -32,8 +33,8 @@ export default async function MemberDetailPage({
     notFound();
   }
 
-  // Run consumer, subscriptions, and notes queries in parallel
-  const [consumer, subscriptions, notes] = await Promise.all([
+  // Run consumer, subscriptions, transactions, and notes queries in parallel
+  const [consumer, subscriptions, transactions, notes] = await Promise.all([
     prisma.consumer.findUnique({
       where: { id: consumerId },
     }),
@@ -43,6 +44,13 @@ export default async function MemberDetailPage({
         plan: { businessId: business.id },
       },
       include: { plan: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.transaction.findMany({
+      where: {
+        consumerId,
+        businessId: business.id,
+      },
       orderBy: { createdAt: "desc" },
     }),
     (async () => {
@@ -72,9 +80,62 @@ export default async function MemberDetailPage({
   const activeSubscriptions = subscriptions.filter(
     (sub) => sub.status === "active" || sub.status === "trialing"
   );
-  const inactiveSubscriptions = subscriptions.filter(
-    (sub) => sub.status !== "active" && sub.status !== "trialing"
-  );
+
+  // Build unified activity timeline from subscriptions + transactions
+  const activityEvents: MemberActivityEvent[] = [];
+
+  // Subscription lifecycle events
+  for (const sub of subscriptions) {
+    activityEvents.push({
+      id: `sub-created-${sub.id}`,
+      type: "SUBSCRIPTION_CREATED",
+      date: sub.createdAt,
+      description: sub.plan.name,
+      planName: sub.plan.name,
+      amount: null,
+      currency: null,
+    });
+
+    if (sub.status === "canceled") {
+      activityEvents.push({
+        id: `sub-cancelled-${sub.id}`,
+        type: "SUBSCRIPTION_CANCELLED",
+        date: sub.updatedAt,
+        description: sub.plan.name,
+        planName: sub.plan.name,
+        amount: null,
+        currency: null,
+      });
+    }
+
+    if (sub.pausedAt) {
+      activityEvents.push({
+        id: `sub-paused-${sub.id}`,
+        type: "SUBSCRIPTION_PAUSED",
+        date: sub.pausedAt,
+        description: sub.plan.name,
+        planName: sub.plan.name,
+        amount: null,
+        currency: null,
+      });
+    }
+  }
+
+  // Transaction events (payments, refunds)
+  for (const tx of transactions) {
+    activityEvents.push({
+      id: `tx-${tx.id}`,
+      type: tx.type,
+      date: tx.createdAt,
+      description: "",
+      planName: null,
+      amount: tx.amount,
+      currency: tx.currency,
+    });
+  }
+
+  // Sort by date, newest first
+  activityEvents.sort((a, b) => b.date.getTime() - a.date.getTime());
 
   const memberName = consumer.name || consumer.email.split("@")[0];
 
@@ -143,41 +204,10 @@ export default async function MemberDetailPage({
           />
         </SectionCard>
 
-        {/* Inactive Subscriptions */}
-        {inactiveSubscriptions.length > 0 && (
-          <div>
-            <h2 className="text-xl font-bold mb-4">Past Subscriptions</h2>
-            <div className="space-y-4">
-              {inactiveSubscriptions.map((sub) => (
-                <SectionCard
-                  key={sub.id}
-                  title={
-                    <span className="flex items-center gap-3">
-                      {sub.plan.name}
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                        {sub.status}
-                      </span>
-                    </span>
-                  }
-                  className="opacity-75"
-                >
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <div className="text-muted-foreground">Ended</div>
-                      <div className="font-medium">{formatDate(sub.currentPeriodEnd)}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Duration</div>
-                      <div className="font-medium">
-                        {formatDate(sub.createdAt)} - {formatDate(sub.updatedAt)}
-                      </div>
-                    </div>
-                  </div>
-                </SectionCard>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Activity */}
+        <SectionCard title="Activity" className="mb-6">
+          <MemberActivity events={activityEvents} />
+        </SectionCard>
 
         {/* Internal Notes */}
         <div className="mt-6">

@@ -1,13 +1,28 @@
 import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { redirect, notFound } from "next/navigation";
-import { prisma, Prisma } from "@wine-club/db";
-import { authOptions } from "@/lib/auth";
-import { getStripeClient } from "@wine-club/lib";
+import { prisma } from "@wine-club/db";
 import { Card, CardContent } from "@wine-club/ui";
+import { authOptions } from "@/lib/auth";
 import { getBusinessBySlug } from "@/lib/data/business";
-import { TransactionTable } from "@/components/transactions/TransactionTable";
+import { TransactionTable, type Transaction } from "@/components/transactions/TransactionTable";
 import TransactionsLoading from "./loading";
+
+// ---------------------------------------------------------------------------
+// Date formatting (server-side to avoid hydration mismatch)
+// ---------------------------------------------------------------------------
+
+function formatDateDisplay(date: Date, tz?: string | null) {
+  const d = date instanceof Date ? date : new Date(date);
+  const month = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: tz || undefined }).format(d);
+  const day = new Intl.DateTimeFormat("en-US", { day: "numeric", timeZone: tz || undefined }).format(d);
+  const time = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz || undefined }).format(d);
+  return `${month} ${day}, ${time}`;
+}
+
+// ---------------------------------------------------------------------------
+// Data fetching
+// ---------------------------------------------------------------------------
 
 async function TransactionsContent({
   params,
@@ -39,104 +54,70 @@ async function TransactionsContent({
     );
   }
 
-  // Run Stripe API call and DB query in parallel (with error handling)
-  type PlanSubWithPlan = Prisma.PlanSubscriptionGetPayload<{ include: { plan: true; consumer: true } }>;
-  let stripeInvoices: Awaited<ReturnType<ReturnType<typeof getStripeClient>["invoices"]["list"]>> | null = null;
-  let planSubscriptions: PlanSubWithPlan[] = [];
-
-  try {
-    const stripe = getStripeClient(business.stripeAccountId);
-    [stripeInvoices, planSubscriptions] = await Promise.all([
-      stripe.invoices.list({ limit: 100, expand: ["data.charge"] }),
-      prisma.planSubscription.findMany({
-        where: {
-          plan: { businessId: business.id },
+  // Fetch from local DB — no Stripe API calls, no arbitrary limits
+  const [dbTransactions, planSubscriptions] = await Promise.all([
+    prisma.transaction.findMany({
+      where: { businessId: business.id },
+      include: {
+        consumer: { select: { email: true, name: true } },
+        subscription: {
+          include: { membershipPlan: { select: { name: true } } },
         },
-        include: {
-          consumer: true,
-          plan: true,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 100,
-      }),
-    ]);
-  } catch (error) {
-    console.error("Transactions page error:", error);
-    return (
-      <div className="max-w-7xl mx-auto">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">
-              Failed to load transactions. Please try again later.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.planSubscription.findMany({
+      where: { plan: { businessId: business.id } },
+      include: {
+        consumer: { select: { email: true, name: true } },
+        plan: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
-  // Build a lookup from Stripe subscription ID to plan name
-  const subIdToPlanName = new Map<string, string>();
+  // Build a lookup: consumerId → plan name (from PlanSubscription, for transactions
+  // where the old Subscription relation doesn't provide a plan name)
+  const consumerToPlanName = new Map<string, string>();
   for (const sub of planSubscriptions) {
-    if (sub.stripeSubscriptionId) {
-      subIdToPlanName.set(sub.stripeSubscriptionId, sub.plan.name);
+    // First match wins (most recent due to orderBy desc)
+    if (!consumerToPlanName.has(sub.consumerId)) {
+      consumerToPlanName.set(sub.consumerId, sub.plan.name);
     }
   }
 
-  // Format dates on server to avoid hydration mismatch (Intl can differ server vs client)
-  const formatDate = (date: Date, tz?: string | null) => {
-    const d = date instanceof Date ? date : new Date(date);
-    const month = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: tz || undefined }).format(d);
-    const day = new Intl.DateTimeFormat("en-US", { day: "numeric", timeZone: tz || undefined }).format(d);
-    const time = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz || undefined }).format(d);
-    return `${month} ${day}, ${time}`;
-  };
+  // Map DB transactions to the Transaction interface
+  const transactions: Transaction[] = [
+    // Financial events from the Transaction table
+    ...dbTransactions.map((tx) => {
+      const planName =
+        tx.subscription?.membershipPlan?.name ??
+        consumerToPlanName.get(tx.consumerId) ??
+        "–";
 
-  // Create combined transaction list
-  const transactions = [
-    ...stripeInvoices.data.map((invoice) => {
-      const charge = typeof invoice.charge === "object" && invoice.charge !== null ? invoice.charge : null;
-      const card = charge?.payment_method_details?.card ?? null;
-      // Resolve plan name from invoice's subscription
-      const planName = invoice.subscription
-        ? subIdToPlanName.get(typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription.id) ?? null
-        : null;
-      const date = new Date(invoice.created * 1000);
       return {
-        id: invoice.id,
-        date,
-        dateDisplay: formatDate(date, business.timeZone),
-        type: invoice.status === "paid" ? "PAYMENT" : invoice.status === "void" ? "VOIDED" : "PENDING",
-        amount: invoice.amount_paid,
-        currency: invoice.currency,
-        customerEmail: invoice.customer_email || "Unknown",
-        customerName: invoice.customer_name || null,
-        description: planName || "–",
-        stripeId: invoice.id,
-        paymentMethodBrand: card?.brand ?? null,
-        paymentMethodLast4: card?.last4 ?? null,
+        id: tx.id,
+        date: tx.createdAt,
+        dateDisplay: formatDateDisplay(tx.createdAt, business.timeZone),
+        type: tx.type, // CHARGE, REFUND, PAYOUT_FEE
+        amount: tx.amount,
+        currency: tx.currency,
+        customerEmail: tx.consumer.email,
+        customerName: tx.consumer.name,
+        description: planName,
+        stripeId: tx.stripeChargeId || tx.stripePaymentIntentId,
+        paymentMethodBrand: null,
+        paymentMethodLast4: null,
       };
     }),
+
+    // Subscription lifecycle events from PlanSubscription
     ...planSubscriptions.flatMap((sub) => {
-      type SubTx = {
-        id: string;
-        date: Date;
-        dateDisplay: string;
-        type: "SUBSCRIPTION_CREATED" | "SUBSCRIPTION_CANCELLED";
-        amount: number;
-        currency: string;
-        customerEmail: string;
-        customerName: string | null;
-        description: string;
-        stripeId: string | null;
-        paymentMethodBrand: string | null;
-        paymentMethodLast4: string | null;
-      };
-      const items: SubTx[] = [
+      const items: Transaction[] = [
         {
           id: `sub-created-${sub.id}`,
           date: sub.createdAt,
-          dateDisplay: formatDate(sub.createdAt, business.timeZone),
+          dateDisplay: formatDateDisplay(sub.createdAt, business.timeZone),
           type: "SUBSCRIPTION_CREATED",
           amount: 0,
           currency: "usd",
@@ -148,11 +129,12 @@ async function TransactionsContent({
           paymentMethodLast4: null,
         },
       ];
+
       if (sub.status === "canceled") {
         items.push({
           id: `sub-cancelled-${sub.id}`,
-          date: sub.lastSyncedAt,
-          dateDisplay: formatDate(sub.lastSyncedAt, business.timeZone),
+          date: sub.updatedAt,
+          dateDisplay: formatDateDisplay(sub.updatedAt, business.timeZone),
           type: "SUBSCRIPTION_CANCELLED",
           amount: 0,
           currency: "usd",
@@ -164,13 +146,31 @@ async function TransactionsContent({
           paymentMethodLast4: null,
         });
       }
+
+      if (sub.pausedAt) {
+        items.push({
+          id: `sub-paused-${sub.id}`,
+          date: sub.pausedAt,
+          dateDisplay: formatDateDisplay(sub.pausedAt, business.timeZone),
+          type: "SUBSCRIPTION_PAUSED",
+          amount: 0,
+          currency: "usd",
+          customerEmail: sub.consumer.email,
+          customerName: sub.consumer.name,
+          description: sub.plan.name,
+          stripeId: sub.stripeSubscriptionId,
+          paymentMethodBrand: null,
+          paymentMethodLast4: null,
+        });
+      }
+
       return items;
     }),
   ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   return (
     <div className="max-w-7xl mx-auto">
-      <TransactionTable transactions={transactions} timeZone={business.timeZone} />
+      <TransactionTable transactions={transactions} />
     </div>
   );
 }
