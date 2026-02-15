@@ -19,7 +19,7 @@ async function verifyAccess(consumerId: string, userId: string) {
             include: {
               business: {
                 include: {
-                  users: { where: { userId } },
+                  users: { where: { userId, role: { in: ["OWNER", "ADMIN"] } } },
                 },
               },
             },

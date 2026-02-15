@@ -9,7 +9,7 @@ import { prisma } from "@wine-club/db";
  */
 export const getBusinessBySlug = cache(
   async (slug: string, userId: string) => {
-    return prisma.business.findFirst({
+    const business = await prisma.business.findFirst({
       where: {
         slug,
         users: {
@@ -18,7 +18,23 @@ export const getBusinessBySlug = cache(
           },
         },
       },
+      include: {
+        users: {
+          where: { userId },
+          select: { role: true },
+          take: 1,
+        },
+      },
     });
+
+    if (!business) return null;
+
+    // Flatten: pull the user's role to the top level
+    const { users, ...rest } = business;
+    return {
+      ...rest,
+      userRole: (users[0]?.role ?? "STAFF") as "OWNER" | "ADMIN" | "STAFF",
+    };
   }
 );
 

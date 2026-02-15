@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -19,6 +19,8 @@ import {
 import { ChevronUpDown } from "@/components/icons/ChevronUpDown";
 import { ChevronRight } from "@/components/icons/ChevronRight";
 import { ChevronLeft } from "@/components/icons/ChevronLeft";
+import { useBusinessContext } from "@/contexts/business-context";
+import { hasPermission, type Permission } from "@/lib/permissions";
 
 interface Business {
   id: string;
@@ -43,10 +45,10 @@ const mainNavItems = [
   { href: "/reports", label: "Reports", icon: ChartPie },
 ];
 
-const settingsNavItems = [
-  { href: "/settings", label: "General" },
-  { href: "/settings/branding", label: "Branding" },
-  { href: "/settings/notifications", label: "Notifications" },
+const settingsNavItems: { href: string; label: string; permission: Permission }[] = [
+  { href: "/settings", label: "General", permission: "settings.general" },
+  { href: "/settings/branding", label: "Branding", permission: "settings.branding" },
+  { href: "/settings/team", label: "Team", permission: "settings.team" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -114,6 +116,13 @@ export const LinearSidebar = memo(function LinearSidebar({
 }: LinearSidebarProps) {
   const pathname = usePathname();
   const basePath = `/app/${business.slug}`;
+  const { userRole } = useBusinessContext();
+
+  // Filter settings items by role
+  const visibleSettingsItems = useMemo(
+    () => settingsNavItems.filter((item) => hasPermission(userRole, item.permission)),
+    [userRole]
+  );
 
   // Determine if we're on a settings page
   const isOnSettingsPage = pathname.startsWith(`${basePath}/settings`);
@@ -284,7 +293,7 @@ export const LinearSidebar = memo(function LinearSidebar({
 
           {/* Settings Nav Items */}
           <nav className="px-3 py-1 flex flex-col gap-0.5">
-            {settingsNavItems.map((item) => {
+            {visibleSettingsItems.map((item) => {
               const active = isSettingsActive(item.href);
               return (
                 <Link

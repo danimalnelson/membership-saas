@@ -14,9 +14,12 @@ import {
 import { CloudUpload, MagnifyingGlassPlus, MagnifyingGlassMinus } from "geist-icons";
 import { Cross } from "@/components/icons/Cross";
 import { useBusinessContext } from "@/contexts/business-context";
+import { useRequirePermission } from "@/hooks/use-require-permission";
 
 export default function SettingsPage() {
   const { businessId } = useBusinessContext();
+  const { allowed } = useRequirePermission("settings.general");
+  if (!allowed) return null;
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);

@@ -59,6 +59,8 @@ export {
   subscriptionResumedAlertEmail,
   PaymentReceivedEmail,
   paymentReceivedEmail,
+  TeamInviteEmail,
+  teamInviteEmail,
 } from "./templates/business";
 
 export type {
@@ -70,4 +72,5 @@ export type {
   SubscriptionPausedAlertEmailProps,
   SubscriptionResumedAlertEmailProps,
   PaymentReceivedEmailProps,
+  TeamInviteEmailProps,
 } from "./templates/business";

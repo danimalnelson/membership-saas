@@ -11,9 +11,12 @@ import {
   CardTitle,
 } from "@wine-club/ui";
 import { useBusinessContext } from "@/contexts/business-context";
+import { useRequirePermission } from "@/hooks/use-require-permission";
 
 export default function BrandingPage() {
   const { businessId } = useBusinessContext();
+  const { allowed } = useRequirePermission("settings.branding");
+  if (!allowed) return null;
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);

@@ -18,7 +18,7 @@ export async function GET(
   const business = await prisma.business.findFirst({
     where: {
       id: businessId,
-      users: { some: { userId: session.user.id } },
+      users: { some: { userId: session.user.id, role: { in: ["OWNER", "ADMIN"] } } },
     },
     select: { id: true, name: true },
   });

@@ -11,3 +11,4 @@ export * from "./payment-alert";
 export * from "./subscription-paused";
 export * from "./subscription-resumed";
 export * from "./payment-received";
+export * from "./team-invite";

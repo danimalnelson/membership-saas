@@ -31,7 +31,7 @@ export default async function BusinessLayout({
   }
 
   return (
-    <BusinessProvider businessId={business.id} businessSlug={business.slug}>
+    <BusinessProvider businessId={business.id} businessSlug={business.slug} userRole={business.userRole}>
       <LinearLayout
         businessId={business.id}
         business={business}

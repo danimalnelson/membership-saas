@@ -58,7 +58,7 @@ const NOTIFICATION_OPTIONS: {
   },
 ];
 
-export default function NotificationSettingsPage() {
+export default function AccountNotificationsPage() {
   const { businessId } = useBusinessContext();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -125,7 +125,7 @@ export default function NotificationSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Loading notification settings...</p>
+        <p className="text-gray-600">Loading notification settings...</p>
       </div>
     );
   }
@@ -139,32 +139,27 @@ export default function NotificationSettingsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-20 font-semibold text-gray-950 dark:text-white">
-          Email Notifications
-        </h1>
-        <p className="text-14 text-gray-600 dark:text-gray-800 mt-1">
-          Choose which email notifications you receive for subscription and
-          payment events. These settings apply to your account only.
-        </p>
-      </div>
+    <div>
+      <p className="text-14 text-gray-600 mb-4">
+        Choose which email notifications you receive for subscription and
+        payment events.
+      </p>
 
-      <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-100 overflow-hidden">
+      <div className="rounded-lg border border-gray-300 bg-white overflow-hidden">
         {NOTIFICATION_OPTIONS.map((option, index) => (
           <div
             key={option.key}
             className={`flex items-center justify-between px-4 py-4 ${
               index < NOTIFICATION_OPTIONS.length - 1
-                ? "border-b border-gray-300 dark:border-gray-600"
+                ? "border-b border-gray-300"
                 : ""
             }`}
           >
             <div className="mr-4">
-              <div className="text-14 font-medium text-gray-950 dark:text-white">
+              <div className="text-14 font-medium text-gray-950">
                 {option.label}
               </div>
-              <div className="text-13 text-gray-600 dark:text-gray-800 mt-0.5">
+              <div className="text-13 text-gray-600 mt-0.5">
                 {option.description}
               </div>
             </div>
@@ -175,12 +170,12 @@ export default function NotificationSettingsPage() {
               onClick={() => handleToggle(option.key)}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 ${
                 preferences[option.key]
-                  ? "bg-gray-950 dark:bg-white"
-                  : "bg-gray-300 dark:bg-gray-600"
+                  ? "bg-gray-950"
+                  : "bg-gray-300"
               }`}
             >
               <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-950 shadow ring-0 transition duration-200 ease-in-out ${
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                   preferences[option.key]
                     ? "translate-x-5"
                     : "translate-x-0"
@@ -192,13 +187,13 @@ export default function NotificationSettingsPage() {
       </div>
 
       {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-800 text-14">
+        <div className="mt-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-14 text-red-800">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md text-green-800 text-14">
+        <div className="mt-4 rounded-md bg-green-50 border border-green-200 px-4 py-3 text-14 text-green-800">
           Notification preferences saved.
         </div>
       )}

@@ -1,13 +1,14 @@
 import { prisma } from "@wine-club/db";
+import { hasPermission, type Permission, type Role } from "@/lib/permissions";
 
 /**
- * Verifies user has access to a business and returns the business if authorized
- * Throws error if unauthorized
+ * Verifies user has access to a business and returns the business if authorized.
+ * Throws error if unauthorized.
  */
 export async function requireBusinessAccess(
   userId: string,
   businessId: string,
-  requiredRoles?: ("OWNER" | "ADMIN" | "STAFF")[]
+  requiredRoles?: Role[]
 ) {
   const businessUser = await prisma.businessUser.findUnique({
     where: {
@@ -26,7 +27,7 @@ export async function requireBusinessAccess(
   }
 
   // Check role if specified
-  if (requiredRoles && !requiredRoles.includes(businessUser.role)) {
+  if (requiredRoles && !requiredRoles.includes(businessUser.role as Role)) {
     throw new Error(
       `Access denied: This operation requires ${requiredRoles.join(" or ")} role`
     );
@@ -36,8 +37,45 @@ export async function requireBusinessAccess(
 }
 
 /**
- * Verifies a resource belongs to the specified business
- * Prevents cross-tenant access
+ * Verifies user has a specific permission for a business.
+ * Returns the business and the user's role.
+ * Throws error if unauthorized.
+ */
+export async function requirePermission(
+  userId: string,
+  businessId: string,
+  permission: Permission
+) {
+  const businessUser = await prisma.businessUser.findUnique({
+    where: {
+      userId_businessId: {
+        userId,
+        businessId,
+      },
+    },
+    include: {
+      business: true,
+    },
+  });
+
+  if (!businessUser) {
+    throw new Error("Access denied: You do not have access to this business");
+  }
+
+  const role = businessUser.role as Role;
+
+  if (!hasPermission(role, permission)) {
+    throw new Error(
+      `Access denied: You do not have the "${permission}" permission`
+    );
+  }
+
+  return { business: businessUser.business, role };
+}
+
+/**
+ * Verifies a resource belongs to the specified business.
+ * Prevents cross-tenant access.
  */
 export async function verifyResourceOwnership(
   resourceType: "plan" | "member" | "price" | "subscription",
@@ -83,7 +121,7 @@ export async function verifyResourceOwnership(
 }
 
 /**
- * Audit log helper for tenant actions
+ * Audit log helper for tenant actions.
  */
 export async function logTenantAction(
   businessId: string,
@@ -100,4 +138,3 @@ export async function logTenantAction(
     },
   });
 }
-

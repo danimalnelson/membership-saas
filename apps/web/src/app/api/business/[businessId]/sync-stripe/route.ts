@@ -23,6 +23,7 @@ export async function POST(
       users: {
         some: {
           userId: session.user.id,
+          role: { in: ["OWNER", "ADMIN"] },
         },
       },
     },

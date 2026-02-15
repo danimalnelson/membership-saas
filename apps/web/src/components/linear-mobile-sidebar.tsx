@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -19,6 +19,8 @@ import {
   Menu,
   Plus,
 } from "geist-icons";
+import { useBusinessContext } from "@/contexts/business-context";
+import { hasPermission, type Permission } from "@/lib/permissions";
 
 interface Business {
   id: string;
@@ -43,10 +45,10 @@ const navItems = [
   { href: "/reports", label: "Reports", icon: ChartPie },
 ];
 
-const settingsNavItems = [
-  { href: "/settings", label: "General" },
-  { href: "/settings/branding", label: "Branding" },
-  { href: "/settings/notifications", label: "Notifications" },
+const settingsNavItems: { href: string; label: string; permission: Permission }[] = [
+  { href: "/settings", label: "General", permission: "settings.general" },
+  { href: "/settings/branding", label: "Branding", permission: "settings.branding" },
+  { href: "/settings/team", label: "Team", permission: "settings.team" },
 ];
 
 export const LinearMobileSidebar = memo(function LinearMobileSidebar({ 
@@ -59,6 +61,13 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
   const pathname = usePathname();
   const basePath = `/app/${business.slug}`;
   const [isOpen, setIsOpen] = useState(false);
+  const { userRole } = useBusinessContext();
+
+  // Filter settings items by role
+  const visibleSettingsItems = useMemo(
+    () => settingsNavItems.filter((item) => hasPermission(userRole, item.permission)),
+    [userRole]
+  );
 
   const isActive = (href: string) => {
     if (href === "") {
@@ -190,7 +199,7 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
                 <SettingsGear className="h-3.5 w-3.5" />
                 Settings
               </p>
-              {settingsNavItems.map((item) => {
+              {visibleSettingsItems.map((item) => {
                 const fullPath = `${basePath}${item.href}`;
                 const active = item.href === "/settings"
                   ? pathname === fullPath
