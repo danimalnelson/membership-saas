@@ -15,7 +15,6 @@ import {
   ChartPie,
   SettingsGear,
   Logout,
-  Check,
   Menu,
   Plus,
 } from "geist-icons";
@@ -228,102 +227,29 @@ export const LinearMobileSidebar = memo(function LinearMobileSidebar({
                 <Lifebuoy className="h-[18px] w-[18px]" />
                 Help & Support
               </a>
-
-              <button
-                onClick={handleSignOut}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium text-gray-900 hover:text-gray-950 hover:bg-gray-100 transition-colors"
-              >
-                <Logout className="h-[18px] w-[18px]" />
-                Sign Out
-              </button>
             </div>
 
-            {/* Current Business */}
-            <div className="pt-2 border-t border-gray-300">
-              <div className="flex items-center gap-2.5 p-2.5 rounded-md bg-gray-50">
-                {business.logoUrl ? (
-                  <img
-                    src={business.logoUrl}
-                    alt={business.name}
-                    className="h-8 w-8 rounded object-cover"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                    <span className="text-white font-semibold text-xs">
-                      {business.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-gray-950 truncate">
-                    {business.name}
-                  </p>
-                  {business.slug && (
-                    <p className="text-[11px] text-gray-800 truncate">
-                      {business.slug}
-                    </p>
-                  )}
+            {/* User section */}
+            {userEmail && (
+              <div className="pt-2 border-t border-gray-300 space-y-0.5">
+                <div className="px-3 py-2">
+                  <span className="text-[13px] text-gray-950 truncate">{userName || userEmail}</span>
                 </div>
-                <Check className="h-4 w-4 text-gray-950" />
-              </div>
-            </div>
-
-            {/* Other Businesses */}
-            {otherBusinesses.length > 0 && (
-              <div className="pt-2">
-                <p className="px-3 py-1 text-[11px] text-gray-800 uppercase">Switch</p>
-                {otherBusinesses.map((b) => (
-                  <Link
-                    key={b.id}
-                    href={`/app/${b.slug}`}
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-gray-100 transition-colors"
-                  >
-                    {b.logoUrl ? (
-                      <img src={b.logoUrl} alt={b.name} className="h-7 w-7 rounded object-cover" />
-                    ) : (
-                      <div className="h-7 w-7 rounded bg-gray-400 flex items-center justify-center">
-                        <span className="text-gray-900 font-semibold text-[10px]">
-                          {b.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <span className="text-[13px] text-gray-900 truncate">{b.name}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {/* Add Business */}
-            <div className="pt-2 border-t border-gray-300">
-              <Link
-                href="/onboarding"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium text-gray-900 hover:text-gray-950 hover:bg-gray-100 transition-colors"
-              >
-                <Plus className="h-[18px] w-[18px]" />
-                Add business
-              </Link>
-            </div>
-
-            {/* User Info */}
-            {(userName || userEmail) && (
-              <div className="pt-2 border-t border-gray-300">
                 <Link
                   href={`${basePath}/account`}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-gray-100 transition-colors group"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium text-gray-900 hover:text-gray-950 hover:bg-gray-100 transition-colors"
                 >
-                  <div className="flex-1 min-w-0">
-                    {userName && (
-                      <p className="text-[14px] font-medium text-gray-950 truncate">{userName}</p>
-                    )}
-                    {userEmail && (
-                      <p className="text-[14px] font-normal text-gray-900 truncate">{userEmail}</p>
-                    )}
-                  </div>
-                  <SettingsGear className="h-4 w-4 text-gray-900 shrink-0" />
+                  <SettingsGear className="h-[18px] w-[18px]" />
+                  User settings
                 </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] font-medium text-gray-900 hover:text-gray-950 hover:bg-gray-100 transition-colors"
+                >
+                  <Logout className="h-[18px] w-[18px]" />
+                  Log out
+                </button>
               </div>
             )}
           </div>

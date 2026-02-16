@@ -28,6 +28,8 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   /** Action buttons rendered on the right side of the header */
   actions?: React.ReactNode;
+  /** Extra filter elements rendered after the built-in filter pills (e.g. date picker) */
+  extraFilters?: React.ReactNode;
 
   // --- Data ---
   /** Full (unfiltered) data array — used only for empty-state detection */
@@ -63,7 +65,7 @@ function DataTableFooter({
   return (
     <div
       key={count}
-      className="sticky bottom-0 -mx-3 px-3 mt-3 flex items-center justify-between h-10 border-t border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100 text-xs text-gray-600 dark:text-gray-800"
+      className="sticky bottom-0 z-20 -mx-3 px-3 mt-3 flex items-center justify-between h-10 border-t border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100 text-xs text-gray-600 dark:text-gray-800"
     >
       <span>
         {`${count} ${count === 1 ? "result" : "results"}`}
@@ -105,6 +107,7 @@ export function DataTable<T>({
   title,
   columns,
   actions,
+  extraFilters,
   data,
   keyExtractor,
   onRowClick,
@@ -133,7 +136,7 @@ export function DataTable<T>({
   return (
     <>
       {/* Sticky header: title + filters + actions */}
-      <div className="sticky top-0 z-10 -mx-3 px-3 pt-3 flex items-center gap-2 pb-3 mb-3 border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
+      <div className="sticky top-0 z-20 -mx-3 px-3 pt-3 flex items-center gap-2 pb-3 mb-3 border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
         <h1 className="text-sm font-semibold text-gray-950 dark:text-white w-[120px] shrink-0">{title}</h1>
         <div className="flex items-center gap-1">
           {filterConfigs.map((config) => (
@@ -156,6 +159,7 @@ export function DataTable<T>({
               onSetInput={(value) => setInput(config.key, value)}
             />
           ))}
+          {extraFilters}
         </div>
 
         <div className="flex-1" />

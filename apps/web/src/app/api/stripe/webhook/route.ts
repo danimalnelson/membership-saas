@@ -874,6 +874,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, accountId?: s
     ? invoice.subscription 
     : invoice.subscription.id;
 
+  // Try OLD model first
   const subscription = await prisma.subscription.findUnique({
     where: { stripeSubscriptionId: subscriptionId },
     include: {
@@ -886,33 +887,109 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, accountId?: s
     },
   });
 
-  if (!subscription) {
+  if (subscription) {
+    // OLD MODEL
+    await prisma.member.update({
+      where: { id: subscription.memberId },
+      data: { status: "PAST_DUE" },
+    });
+
+    // Record the failed payment
+    await prisma.transaction.create({
+      data: {
+        businessId: subscription.member.businessId,
+        consumerId: subscription.member.consumerId,
+        subscriptionId: subscription.id,
+        amount: invoice.amount_due,
+        currency: invoice.currency,
+        type: "PAYMENT_FAILED",
+        stripePaymentIntentId: invoice.payment_intent as string | null,
+      },
+    });
+
+    const business = await prisma.business.findUnique({
+      where: { id: subscription.member.businessId },
+    });
+
+    if (business && subscription.member.consumer.email) {
+      const publicAppUrl = process.env.PUBLIC_APP_URL || "http://localhost:3000";
+      
+      await sendEmail({
+        to: subscription.member.consumer.email,
+        subject: `Payment Update Required - ${business.name}`,
+        html: paymentFailedEmail({
+          customerName: subscription.member.consumer.name || "Valued Member",
+          planName: subscription.membershipPlan.name,
+          amount: invoice.amount_due,
+          currency: invoice.currency,
+          businessName: business.name,
+          portalUrl: `${publicAppUrl}/${business.slug}/portal`,
+        }),
+      });
+
+      await sendBusinessNotification(
+        business.id,
+        "paymentFailed",
+        `Payment Failed Alert - ${subscription.member.consumer.name || subscription.member.consumer.email}`,
+        paymentAlertEmail({
+          businessName: business.name,
+          memberName: subscription.member.consumer.name || "Member",
+          memberEmail: subscription.member.consumer.email,
+          planName: subscription.membershipPlan.name,
+          amount: invoice.amount_due,
+          currency: invoice.currency,
+          dashboardUrl: `${publicAppUrl}/app/${business.slug}/members`,
+        }),
+        business.contactEmail
+      );
+    }
     return;
   }
 
-  // Update member status to PAST_DUE
-  await prisma.member.update({
-    where: { id: subscription.memberId },
-    data: {
-      status: "PAST_DUE",
+  // NEW MODEL: Try PlanSubscription
+  const planSubscription = await prisma.planSubscription.findUnique({
+    where: { stripeSubscriptionId: subscriptionId },
+    include: {
+      plan: {
+        include: {
+          membership: true,
+          business: true,
+        },
+      },
+      consumer: true,
     },
   });
 
-  // Send payment failed email
-  const business = await prisma.business.findUnique({
-    where: { id: subscription.member.businessId },
+  if (!planSubscription) {
+    console.log(`[Webhook] invoice.payment_failed: No subscription found for ${subscriptionId}`);
+    return;
+  }
+
+  const business = planSubscription.plan.business;
+
+  // Record the failed payment
+  await prisma.transaction.create({
+    data: {
+      businessId: business.id,
+      consumerId: planSubscription.consumerId,
+      amount: invoice.amount_due,
+      currency: invoice.currency,
+      type: "PAYMENT_FAILED",
+      stripePaymentIntentId: invoice.payment_intent as string | null,
+    },
   });
 
-  if (business && subscription.member.consumer.email) {
+  console.log(`[Webhook] ✅ Created PAYMENT_FAILED transaction for PlanSubscription ${planSubscription.id}: ${invoice.amount_due} ${invoice.currency}`);
+
+  if (planSubscription.consumer.email) {
     const publicAppUrl = process.env.PUBLIC_APP_URL || "http://localhost:3000";
-    
-    // Send payment failed email to member
+
     await sendEmail({
-      to: subscription.member.consumer.email,
+      to: planSubscription.consumer.email,
       subject: `Payment Update Required - ${business.name}`,
       html: paymentFailedEmail({
-        customerName: subscription.member.consumer.name || "Valued Member",
-        planName: subscription.membershipPlan.name,
+        customerName: planSubscription.consumer.name || "Valued Member",
+        planName: planSubscription.plan.name,
         amount: invoice.amount_due,
         currency: invoice.currency,
         businessName: business.name,
@@ -920,16 +997,15 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, accountId?: s
       }),
     });
 
-    // Notify business owner of payment failure
     await sendBusinessNotification(
       business.id,
       "paymentFailed",
-      `Payment Failed Alert - ${subscription.member.consumer.name || subscription.member.consumer.email}`,
+      `Payment Failed Alert - ${planSubscription.consumer.name || planSubscription.consumer.email}`,
       paymentAlertEmail({
         businessName: business.name,
-        memberName: subscription.member.consumer.name || "Member",
-        memberEmail: subscription.member.consumer.email,
-        planName: subscription.membershipPlan.name,
+        memberName: planSubscription.consumer.name || "Member",
+        memberEmail: planSubscription.consumer.email,
+        planName: planSubscription.plan.name,
         amount: invoice.amount_due,
         currency: invoice.currency,
         dashboardUrl: `${publicAppUrl}/app/${business.slug}/members`,

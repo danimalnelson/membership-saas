@@ -357,6 +357,8 @@ interface MenuItemProps {
   children: React.ReactNode;
   onClick?: (e: React.MouseEvent) => void;
   href?: string;
+  /** Open link in new tab */
+  target?: string;
   /** Visual variant -- "error" renders red text */
   type?: "error";
   disabled?: boolean;
@@ -371,6 +373,7 @@ function MenuItem({
   children,
   onClick,
   href,
+  target,
   type,
   disabled,
   prefix,
@@ -398,6 +401,23 @@ function MenuItem({
   );
 
   if (href && !disabled) {
+    if (target) {
+      return (
+        <a
+          href={href}
+          target={target}
+          rel={target === "_blank" ? "noopener noreferrer" : undefined}
+          role="menuitem"
+          className={baseClasses}
+          onClick={(e) => {
+            onClick?.(e);
+            close();
+          }}
+        >
+          {content}
+        </a>
+      );
+    }
     return (
       <Link
         href={href}
@@ -501,7 +521,7 @@ const MenuIconTrigger = React.forwardRef<HTMLButtonElement, MenuIconTriggerProps
         aria-label={label}
         aria-haspopup="menu"
         className={cn(
-          "flex h-[30px] w-[30px] shrink-0 items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-700 dark:hover:text-white",
+          "flex h-[30px] w-[30px] shrink-0 items-center justify-center text-gray-950 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-200",
           className,
         )}
       >

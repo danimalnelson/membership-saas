@@ -13,6 +13,7 @@ import { ActiveSubscriptionsTable } from "@/components/members/ActiveSubscriptio
 import { MemberActivity, type MemberActivityEvent } from "@/components/members/MemberActivity";
 import { MemberNote } from "@/components/members/MemberNote";
 import { MemberInsights } from "@/components/members/MemberInsights";
+import { PaymentMethodCard } from "@/components/ui/payment-method";
 
 export default async function MemberDetailPage({
   params,
@@ -40,9 +41,8 @@ export default async function MemberDetailPage({
       where: { id: consumerId },
       include: {
         paymentMethods: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { brand: true, last4: true },
+          orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+          select: { id: true, brand: true, last4: true, expMonth: true, expYear: true, isDefault: true },
         },
       },
     }),
@@ -148,9 +148,9 @@ export default async function MemberDetailPage({
     }
   }
 
-  // Transaction events (payments, refunds)
+  // Transaction events (payments, refunds, failed payments)
   for (const tx of transactions) {
-    const showPm = tx.type === "CHARGE" || tx.type === "REFUND";
+    const showPm = tx.type === "CHARGE" || tx.type === "REFUND" || tx.type === "PAYMENT_FAILED";
     activityEvents.push({
       id: `tx-${tx.id}`,
       type: tx.type,
@@ -246,6 +246,22 @@ export default async function MemberDetailPage({
                 </div>
               </div>
             </SectionCard>
+            {consumer.paymentMethods.length > 0 && (
+              <SectionCard title="Payment Methods">
+                <div className="divide-y divide-gray-200 dark:divide-gray-700 -my-0.5">
+                  {consumer.paymentMethods.map((pm) => (
+                    <PaymentMethodCard
+                      key={pm.id}
+                      brand={pm.brand}
+                      last4={pm.last4}
+                      expMonth={pm.expMonth}
+                      expYear={pm.expYear}
+                      isDefault={pm.isDefault}
+                    />
+                  ))}
+                </div>
+              </SectionCard>
+            )}
             <MemberInsights
               totalCharged={totalCharged}
               totalRefunded={totalRefunded}

@@ -15,7 +15,7 @@ const buttonVariants = cva(
         default:
           "bg-gray-950 text-white hover:bg-gray-900 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100",
         secondary:
-          "border border-gray-300 bg-white text-gray-950 hover:border-gray-500 dark:border-gray-600 dark:bg-gray-100 dark:text-white dark:hover:border-gray-400",
+          "border border-gray-300 bg-white text-gray-950 hover:bg-[--ds-gray-100] hover:border-gray-500 dark:border-gray-600 dark:bg-gray-100 dark:text-white dark:hover:border-gray-400",
         tertiary:
           "bg-transparent text-gray-950 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800",
         error:

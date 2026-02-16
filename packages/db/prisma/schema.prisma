@@ -397,6 +397,7 @@ enum TransactionType {
   CHARGE
   REFUND
   PAYOUT_FEE
+  PAYMENT_FAILED
 }
 
 // ===== Payout Summary =====

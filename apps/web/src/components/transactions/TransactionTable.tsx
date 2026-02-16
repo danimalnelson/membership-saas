@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useCallback } from "react";
-import { Button, formatCurrency } from "@wine-club/ui";
-import { Download, CrossCircle, FileText } from "geist-icons";
+import React, { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button, Dialog, formatCurrency, MenuContainer, Menu, MenuItem, MenuIconTrigger } from "@wine-club/ui";
+import { Download, CrossCircle, FileText, MoreVertical } from "geist-icons";
 import { Clock } from "@/components/icons/Clock";
 import { Dollar } from "@/components/icons/Dollar";
-import { Amex } from "@/components/icons/Amex";
-import { Mastercard } from "@/components/icons/Mastercard";
-import { Visa } from "@/components/icons/Visa";
 import { PauseCircle } from "@/components/icons/PauseCircle";
 import { RefreshCounterClockwise } from "@/components/icons/RefreshCounterClockwise";
 import { SubscriptionCancelled } from "@/components/icons/SubscriptionCancelled";
@@ -18,6 +16,8 @@ import {
   type Column,
   type FilterConfig,
 } from "@/components/ui/data-table";
+import { DateRangePicker, type DateRange } from "@/components/ui/date-range-picker";
+import { PaymentMethodInline } from "@/components/ui/payment-method";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,54 +32,14 @@ export interface Transaction {
   currency: string;
   customerEmail: string;
   customerName: string | null;
+  consumerId: string;
   description: string;
   stripeId: string | null;
+  /** Set when this event can be refunded — either a DB transaction ID (for CHARGE)
+      or a Stripe subscription ID prefixed with "stripe:" (for SUBSCRIPTION_CREATED) */
+  refundableId: string | null;
   paymentMethodBrand: string | null;
   paymentMethodLast4: string | null;
-}
-
-// ---------------------------------------------------------------------------
-// Card brand logos
-// ---------------------------------------------------------------------------
-
-const CARD_BRAND_LOGOS: Record<string, string> = {
-  visa: "/card-brands/visa.svg",
-  discover: "/card-brands/discover.svg",
-};
-
-const CARD_BRAND_LABELS: Record<string, string> = {
-  visa: "Visa",
-  mastercard: "Mastercard",
-  amex: "Amex",
-  discover: "Discover",
-  diners: "Diners",
-  jcb: "JCB",
-  unionpay: "UnionPay",
-};
-
-function CardBrandIcon({ brand }: { brand: string }) {
-  const key = brand.toLowerCase();
-  if (key === "visa") return <Visa size={16} className="h-4 w-auto" />;
-  if (key === "mastercard") return <Mastercard size={16} className="h-4 w-auto" />;
-  if (key === "amex") return <Amex size={16} className="h-4 w-auto" />;
-  const logo = CARD_BRAND_LOGOS[key];
-  return (
-    <img
-      src={logo || "/card-brands/generic.svg"}
-      alt={CARD_BRAND_LABELS[key] || brand}
-      className="h-4 w-auto"
-    />
-  );
-}
-
-function PaymentMethod({ brand, last4 }: { brand: string | null; last4: string | null }) {
-  if (!brand || !last4) return <span className="text-muted-foreground">—</span>;
-  return (
-    <div className="flex items-center">
-      <CardBrandIcon brand={brand} />
-      <span className="text-xs ml-2" style={{ letterSpacing: "0.1em" }}>••••</span><span className="text-sm ml-1">{last4}</span>
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -96,6 +56,7 @@ const TYPE_ICON_CONFIG: Record<string, { icon: React.ElementType; color: string;
   CANCELLATION_SCHEDULED:   { icon: Clock, color: "var(--ds-amber-700)", bg: "var(--ds-amber-100)" },
   SUBSCRIPTION_CANCELLED:   { icon: SubscriptionCancelled, color: "var(--ds-red-700)", bg: "var(--ds-red-100)" },
   SUBSCRIPTION_PAUSED:      { icon: PauseCircle, color: "var(--ds-amber-700)", bg: "var(--ds-amber-100)" },
+  PAYMENT_FAILED:           { icon: CrossCircle, color: "var(--ds-red-700)", bg: "var(--ds-red-100)" },
   PAYOUT_FEE:               { icon: FileText, color: "var(--ds-gray-900)", bg: "var(--ds-gray-100)" },
 };
 
@@ -122,6 +83,7 @@ const TYPE_LABELS: Record<string, string> = {
   CANCELLATION_SCHEDULED: "Canceling",
   SUBSCRIPTION_CANCELLED: "Canceled",
   SUBSCRIPTION_PAUSED: "Paused",
+  PAYMENT_FAILED: "Failed",
 };
 
 function TransactionTypeLabel({ type }: { type: string }) {
@@ -163,6 +125,7 @@ const FILTER_CONFIGS: FilterConfig[] = [
       { value: "CANCELLATION_SCHEDULED", label: "Canceling", icon: <TypeIcon type="CANCELLATION_SCHEDULED" /> },
       { value: "SUBSCRIPTION_CANCELLED", label: "Canceled", icon: <TypeIcon type="SUBSCRIPTION_CANCELLED" /> },
       { value: "SUBSCRIPTION_PAUSED", label: "Paused", icon: <TypeIcon type="SUBSCRIPTION_PAUSED" /> },
+      { value: "PAYMENT_FAILED", label: "Failed", icon: <TypeIcon type="PAYMENT_FAILED" /> },
     ],
   },
   { type: "text", key: "name", label: "Name" },
@@ -201,12 +164,127 @@ function filterFn(t: Transaction, filters: Record<string, string>): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Row actions
+// ---------------------------------------------------------------------------
+
+function TransactionActions({
+  transaction,
+  businessSlug,
+  stripeAccountId,
+}: {
+  transaction: Transaction;
+  businessSlug: string;
+  stripeAccountId: string;
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const canRefund = !!transaction.refundableId;
+  const stripeUrl = transaction.stripeId
+    ? `https://dashboard.stripe.com/${stripeAccountId ? `connect/accounts/${stripeAccountId}/` : ""}payments/${transaction.stripeId}`
+    : null;
+
+  const handleRefund = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refundableId: transaction.refundableId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to refund");
+      }
+
+      setShowRefundDialog(false);
+      router.refresh();
+    } catch (error: any) {
+      alert(`Refund failed: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-stretch gap-0 overflow-hidden rounded-md border border-transparent bg-transparent transition-[border-color,background-color] group-hover:border-gray-300 group-hover:bg-white group-hover:hover:border-gray-500 dark:group-hover:border-gray-600 dark:group-hover:bg-gray-100 dark:group-hover:hover:border-gray-400">
+        <MenuContainer>
+          <MenuIconTrigger><MoreVertical className="h-4 w-4" /></MenuIconTrigger>
+          <Menu width={192} align="end">
+            {canRefund && (
+              <MenuItem onClick={() => setShowRefundDialog(true)}>
+                Refund
+              </MenuItem>
+            )}
+            <MenuItem onClick={() => router.push(`/app/${businessSlug}/members/${transaction.consumerId}`)}>
+              View member
+            </MenuItem>
+            {stripeUrl && (
+              <MenuItem href={stripeUrl} target="_blank">
+                View on Stripe
+              </MenuItem>
+            )}
+          </Menu>
+        </MenuContainer>
+      </div>
+
+      {canRefund && (
+        <Dialog
+          open={showRefundDialog}
+          onClose={() => setShowRefundDialog(false)}
+          title="Refund Payment"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setShowRefundDialog(false)} disabled={loading}>
+                Cancel
+              </Button>
+              <Button variant="error" onClick={handleRefund} loading={loading}>
+                Refund {formatCurrency(transaction.amount, transaction.currency)}
+              </Button>
+            </>
+          }
+        >
+          <p className="text-sm text-gray-600 dark:text-gray-800">
+            This will issue a full refund of{" "}
+            <strong>{formatCurrency(transaction.amount, transaction.currency)}</strong>{" "}
+            to {transaction.customerName || transaction.customerEmail}.
+            This action cannot be undone.
+          </p>
+        </Dialog>
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function TransactionTable({ transactions }: { transactions: Transaction[] }) {
+export function TransactionTable({
+  transactions,
+  businessSlug,
+  stripeAccountId,
+}: {
+  transactions: Transaction[];
+  businessSlug: string;
+  stripeAccountId: string;
+}) {
+  const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null });
+
+  const dateFiltered = React.useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return transactions;
+    return transactions.filter((t) => {
+      const d = t.date instanceof Date ? t.date.getTime() : new Date(t.date).getTime();
+      if (dateRange.from && d < dateRange.from.getTime()) return false;
+      if (dateRange.to && d > dateRange.to.getTime()) return false;
+      return true;
+    });
+  }, [transactions, dateRange]);
+
   const table = useDataTable({
-    data: transactions,
+    data: dateFiltered,
     filters: FILTER_CONFIGS,
     filterFn,
   });
@@ -241,7 +319,7 @@ export function TransactionTable({ transactions }: { transactions: Transaction[]
     {
       key: "paymentMethod",
       label: "Payment method",
-      render: (t) => <PaymentMethod brand={t.paymentMethodBrand} last4={t.paymentMethodLast4} />,
+      render: (t) => <PaymentMethodInline brand={t.paymentMethodBrand} last4={t.paymentMethodLast4} />,
     },
     {
       key: "date",
@@ -277,9 +355,19 @@ export function TransactionTable({ transactions }: { transactions: Transaction[]
     <DataTable
       title="Activity"
       columns={columns}
-      data={transactions}
+      data={dateFiltered}
       keyExtractor={(t) => t.id}
       table={table}
+      extraFilters={
+        <DateRangePicker value={dateRange} onChange={setDateRange} />
+      }
+      rowActions={(t) => (
+        <TransactionActions
+          transaction={t}
+          businessSlug={businessSlug}
+          stripeAccountId={stripeAccountId}
+        />
+      )}
       emptyMessage="No transactions yet"
       filteredEmptyMessage="No transactions match filters"
       actions={

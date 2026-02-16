@@ -46,7 +46,7 @@ export function MemberActions({
   };
 
   return (
-    <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-stretch gap-0 overflow-hidden rounded-lg border border-transparent bg-transparent transition-[border-color,background-color,box-shadow] group-hover:border-gray-300 group-hover:bg-white group-hover:shadow-sm dark:group-hover:border-gray-600 dark:group-hover:bg-gray-100">
+    <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-stretch gap-0 overflow-hidden rounded-md border border-transparent bg-transparent transition-[border-color,background-color] group-hover:border-gray-300 group-hover:bg-white group-hover:hover:border-gray-500 dark:group-hover:border-gray-600 dark:group-hover:bg-gray-100 dark:group-hover:hover:border-gray-400">
       <MenuContainer>
         <MenuIconTrigger><MoreVertical className="h-4 w-4" /></MenuIconTrigger>
         <Menu width={192} align="end">

@@ -100,11 +100,11 @@ async function TransactionsContent({
   // where the old Subscription relation doesn't provide a plan name)
   const consumerToPlanName = new Map<string, string>();
   for (const sub of planSubscriptions) {
-    // First match wins (most recent due to orderBy desc)
     if (!consumerToPlanName.has(sub.consumerId)) {
       consumerToPlanName.set(sub.consumerId, sub.plan.name);
     }
   }
+
 
   // Map DB transactions to the Transaction interface
   const transactions: Transaction[] = [
@@ -120,13 +120,15 @@ async function TransactionsContent({
         id: tx.id,
         date: tx.createdAt,
         dateDisplay: formatDateDisplay(tx.createdAt, business.timeZone),
-        type: tx.type, // CHARGE, REFUND, PAYOUT_FEE
+        type: tx.type, // CHARGE, REFUND, PAYOUT_FEE, PAYMENT_FAILED
         amount: tx.amount,
         currency: tx.currency,
         customerEmail: tx.consumer.email,
         customerName: tx.consumer.name,
+        consumerId: tx.consumerId,
         description: planName,
         stripeId: tx.stripeChargeId || tx.stripePaymentIntentId,
+        refundableId: tx.type === "CHARGE" ? `tx:${tx.id}` : null,
         paymentMethodBrand: pm?.brand ?? null,
         paymentMethodLast4: pm?.last4 ?? null,
       };
@@ -145,8 +147,10 @@ async function TransactionsContent({
           currency: sub.plan.currency || "usd",
           customerEmail: sub.consumer.email,
           customerName: sub.consumer.name,
+          consumerId: sub.consumerId,
           description: sub.plan.name,
           stripeId: sub.stripeSubscriptionId,
+          refundableId: sub.stripeSubscriptionId ? `sub:${sub.stripeSubscriptionId}` : null,
           paymentMethodBrand: pm?.brand ?? null,
           paymentMethodLast4: pm?.last4 ?? null,
         },
@@ -163,8 +167,10 @@ async function TransactionsContent({
           currency: sub.plan.currency || "usd",
           customerEmail: sub.consumer.email,
           customerName: sub.consumer.name,
+          consumerId: sub.consumerId,
           description: sub.plan.name,
           stripeId: sub.stripeSubscriptionId,
+          refundableId: null,
           paymentMethodBrand: null,
           paymentMethodLast4: null,
         });
@@ -180,8 +186,10 @@ async function TransactionsContent({
           currency: sub.plan.currency || "usd",
           customerEmail: sub.consumer.email,
           customerName: sub.consumer.name,
+          consumerId: sub.consumerId,
           description: sub.plan.name,
           stripeId: sub.stripeSubscriptionId,
+          refundableId: null,
           paymentMethodBrand: null,
           paymentMethodLast4: null,
         });
@@ -197,8 +205,10 @@ async function TransactionsContent({
           currency: sub.plan.currency || "usd",
           customerEmail: sub.consumer.email,
           customerName: sub.consumer.name,
+          consumerId: sub.consumerId,
           description: sub.plan.name,
           stripeId: sub.stripeSubscriptionId,
+          refundableId: null,
           paymentMethodBrand: null,
           paymentMethodLast4: null,
         });
@@ -210,7 +220,11 @@ async function TransactionsContent({
 
   return (
     <div className="max-w-7xl mx-auto">
-      <TransactionTable transactions={transactions} />
+      <TransactionTable
+        transactions={transactions}
+        businessSlug={businessSlug}
+        stripeAccountId={business.stripeAccountId}
+      />
     </div>
   );
 }

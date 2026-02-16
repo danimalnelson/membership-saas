@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button, Dialog, MenuContainer, Menu, MenuItem, MenuIconTrigger } from "@wine-club/ui";
 import { Play, MoreVertical } from "geist-icons";
 import { PauseCircle } from "@/components/icons/PauseCircle";
-import { CrossCircle } from "geist-icons";
 import { Cross } from "@/components/icons/Cross";
 
 // ---------------------------------------------------------------------------
@@ -14,35 +13,39 @@ import { Cross } from "@/components/icons/Cross";
 
 function CompactMoreMenu({
   canPause,
+  canResume,
   canCancel,
   loading,
   businessSlug,
   planId,
   onPause,
+  onResume,
   onCancel,
 }: {
   canPause: boolean;
+  canResume: boolean;
   canCancel: boolean;
   loading: boolean;
   businessSlug?: string;
   planId?: string;
   onPause: () => void;
+  onResume: () => void;
   onCancel: () => void;
 }) {
   return (
     <MenuContainer>
-      <MenuIconTrigger className="border-l border-transparent group-hover:border-gray-200 dark:group-hover:border-gray-600">
+      <MenuIconTrigger>
         <MoreVertical className="h-4 w-4" />
       </MenuIconTrigger>
-      <Menu width={160} align="end">
+      <Menu width={180} align="end">
         {canPause && (
           <MenuItem onClick={onPause} disabled={loading}>
             Pause subscription
           </MenuItem>
         )}
-        {planId && businessSlug && (
-          <MenuItem href={`/app/${businessSlug}/plans/${planId}/edit`}>
-            Edit subscription
+        {canResume && (
+          <MenuItem onClick={onResume} disabled={loading}>
+            Resume subscription
           </MenuItem>
         )}
         {canCancel && (
@@ -237,50 +240,16 @@ export function SubscriptionActions({
   if (compact) {
     return (
       <>
-        {/* Combined actions bar - hover actions + three-dot, one unit on row hover */}
-        <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-stretch gap-0 overflow-hidden rounded-lg border border-transparent bg-transparent transition-[border-color,background-color,box-shadow] group-hover:border-gray-300 group-hover:bg-white group-hover:shadow-sm dark:group-hover:border-gray-600 dark:group-hover:bg-gray-100">
-          <div className="pointer-events-none flex items-center opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 [&>button:not(:first-child)]:border-l [&>button:not(:first-child)]:border-gray-200 dark:[&>button:not(:first-child)]:border-gray-600">
-            {canPause && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handlePause(); }}
-                disabled={loading}
-                title="Pause"
-                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-gray-950 disabled:opacity-50 dark:text-gray-700 dark:hover:bg-gray-200 dark:hover:text-white"
-              >
-                <PauseCircle size={16} className="h-4 w-4" />
-              </button>
-            )}
-            {canResume && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handleResume(); }}
-                disabled={loading}
-                title="Resume"
-                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-gray-950 disabled:opacity-50 dark:text-gray-700 dark:hover:bg-gray-200 dark:hover:text-white"
-              >
-                <Play className="h-4 w-4" />
-              </button>
-            )}
-            {canCancel && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setShowCancelDialog(true); }}
-                disabled={loading}
-                title="Cancel"
-                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-gray-950 disabled:opacity-50 dark:text-gray-700 dark:hover:bg-gray-200 dark:hover:text-white"
-              >
-                <CrossCircle className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+        <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-stretch gap-0 overflow-hidden rounded-md border border-transparent bg-transparent transition-[border-color,background-color] group-hover:border-gray-300 group-hover:bg-white group-hover:hover:border-gray-500 dark:group-hover:border-gray-600 dark:group-hover:bg-gray-100 dark:group-hover:hover:border-gray-400">
           <CompactMoreMenu
             canPause={canPause}
+            canResume={canResume}
             canCancel={canCancel}
             loading={loading}
             businessSlug={businessSlug}
             planId={planId}
             onPause={handlePause}
+            onResume={handleResume}
             onCancel={() => setShowCancelDialog(true)}
           />
         </div>

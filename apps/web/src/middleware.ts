@@ -19,6 +19,16 @@ export async function middleware(request: NextRequest) {
     );
   }
 
+  // Allow NextAuth API routes through without any gates
+  if (effectivePathname.startsWith("/api/auth/")) {
+    if (isDashboardHost && effectivePathname !== pathname) {
+      const url = request.nextUrl.clone();
+      url.pathname = effectivePathname;
+      return NextResponse.rewrite(url);
+    }
+    return NextResponse.next();
+  }
+
   // Protect /app routes (B2B dashboard)
   if (effectivePathname.startsWith("/app")) {
     if (!token) {

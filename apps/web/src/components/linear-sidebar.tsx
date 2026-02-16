@@ -4,7 +4,7 @@ import { memo, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { cn, MenuContainer, Menu, MenuSection, MenuDivider, MenuItem, useMenuContext } from "@wine-club/ui";
+import { cn, MenuContainer, Menu, MenuDivider, MenuItem, useMenuContext } from "@wine-club/ui";
 import { Dashboard } from "@/components/icons/Dashboard";
 import { Lifebuoy } from "@/components/icons/Lifebuoy";
 import { Users } from "@/components/icons/Users";
@@ -19,6 +19,7 @@ import {
 import { ChevronUpDown } from "@/components/icons/ChevronUpDown";
 import { ChevronRight } from "@/components/icons/ChevronRight";
 import { ChevronLeft } from "@/components/icons/ChevronLeft";
+import { UserSettings } from "@/components/icons/UserSettings";
 import { useBusinessContext } from "@/contexts/business-context";
 import { hasPermission, type Permission } from "@/lib/permissions";
 
@@ -76,20 +77,21 @@ function WorkspaceTrigger({ business }: { business: Business }) {
   );
 }
 
-function WorkspaceUserSection({
-  basePath,
-  userEmail,
-}: {
-  basePath: string;
-  userEmail?: string;
-}) {
+// ---------------------------------------------------------------------------
+// User menu (fixed to bottom of sidebar)
+// ---------------------------------------------------------------------------
+
+function UserMenuTrigger({ label }: { label: string }) {
+  const { toggle, triggerRef } = useMenuContext();
   return (
-    <MenuItem
-      href={`${basePath}/account`}
-      suffix={<ChevronRight size={16} className="text-gray-800 group-hover:text-gray-950" />}
+    <button
+      ref={triggerRef}
+      onClick={toggle}
+      className="group w-full flex items-center gap-2 px-2 h-9 rounded-md hover:bg-gray-100 transition-colors"
     >
-      <span className="truncate">{userEmail}</span>
-    </MenuItem>
+      <span className="text-sm font-semibold text-gray-950 truncate flex-1 text-left">{label}</span>
+      <ChevronUpDown size={14} className="text-gray-800 group-hover:text-gray-950 shrink-0" />
+    </button>
   );
 }
 
@@ -163,32 +165,17 @@ export const LinearSidebar = memo(function LinearSidebar({
         <MenuContainer>
           <WorkspaceTrigger business={business} />
           <Menu width={215} align="start">
-            {/* User Info */}
-            {userEmail && (
-              <>
-                <WorkspaceUserSection basePath={basePath} userEmail={userEmail} />
-                <MenuDivider />
-              </>
-            )}
-
-            {/* Businesses */}
+            {/* Active business */}
             <MenuItem
               disabled
-              className="bg-gray-200 opacity-100"
-              prefix={
-                business.logoUrl ? (
-                  <img src={business.logoUrl} alt={business.name} className="h-5 w-5 rounded object-cover" />
-                ) : (
-                  <div className="h-5 w-5 rounded bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                    <span className="text-white font-semibold text-[10px]">{business.name.charAt(0).toUpperCase()}</span>
-                  </div>
-                )
-              }
+              className="opacity-100"
+              prefix={<BusinessLogo business={business} className="h-5 w-5" />}
             >
               {business.name}
             </MenuItem>
+            <MenuDivider />
 
-            {/* Other Businesses */}
+            {/* Other businesses */}
             {otherBusinesses.map((b) => (
               <MenuItem
                 key={b.id}
@@ -199,14 +186,8 @@ export const LinearSidebar = memo(function LinearSidebar({
               </MenuItem>
             ))}
 
-            <MenuDivider />
-
-            {/* Add Business & Sign Out */}
             <MenuItem href="/onboarding" prefix={<Plus className="h-4 w-4" />}>
               Add business
-            </MenuItem>
-            <MenuItem onClick={handleSignOut} prefix={<Logout className="h-4 w-4" />}>
-              Sign out
             </MenuItem>
           </Menu>
         </MenuContainer>
@@ -315,6 +296,26 @@ export const LinearSidebar = memo(function LinearSidebar({
           <div className="flex-1" />
         </div>
       </div>
+
+      {/* User menu — fixed to bottom */}
+      {(userName || userEmail) && (
+        <div className="px-3 py-3 shrink-0">
+          <MenuContainer>
+            <UserMenuTrigger label={userName || userEmail || ""} />
+            <Menu width={215} align="start">
+              <MenuItem
+                href={`${basePath}/account`}
+                prefix={<UserSettings size={16} className="h-4 w-4" />}
+              >
+                User settings
+              </MenuItem>
+              <MenuItem onClick={handleSignOut} prefix={<Logout className="h-4 w-4" />}>
+                Log out
+              </MenuItem>
+            </Menu>
+          </MenuContainer>
+        </div>
+      )}
     </aside>
   );
 });

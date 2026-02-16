@@ -184,7 +184,7 @@ function MultiSelectFilterPill({
                       : "border-gray-600 bg-white dark:bg-gray-100"
                   }`}
                 >
-                  {checked && <Check className="h-3 w-3 text-white" />}
+                  {checked && <Check className="h-3 w-3" style={{ color: "white" }} />}
                 </span>
                 {opt.icon ? (
                   <span className="flex items-center gap-1.5">

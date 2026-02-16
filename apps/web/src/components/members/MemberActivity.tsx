@@ -5,14 +5,12 @@ import { Button, formatCurrency, formatDate } from "@wine-club/ui";
 import { CrossCircle, FileText } from "geist-icons";
 import { Clock } from "@/components/icons/Clock";
 import { Dollar } from "@/components/icons/Dollar";
-import { Amex } from "@/components/icons/Amex";
-import { Mastercard } from "@/components/icons/Mastercard";
-import { Visa } from "@/components/icons/Visa";
 import { PauseCircle } from "@/components/icons/PauseCircle";
 import { RefreshCounterClockwise } from "@/components/icons/RefreshCounterClockwise";
 import { SubscriptionCancelled } from "@/components/icons/SubscriptionCancelled";
 import { SubscriptionCreated } from "@/components/icons/SubscriptionCreated";
 import { List, type ListColumn } from "@/components/ui/data-table";
+import { PaymentMethodInline } from "@/components/ui/payment-method";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -92,6 +90,12 @@ const TYPE_ICON_CONFIG: Record<
     bg: "var(--ds-amber-100)",
     label: "Pending",
   },
+  PAYMENT_FAILED: {
+    icon: CrossCircle,
+    color: "var(--ds-red-700)",
+    bg: "var(--ds-red-100)",
+    label: "Failed",
+  },
   PAYOUT_FEE: {
     icon: FileText,
     color: "var(--ds-gray-900)",
@@ -109,29 +113,6 @@ const DEFAULT_ICON = {
 
 function getTypeConfig(type: string) {
   return TYPE_ICON_CONFIG[type] || DEFAULT_ICON;
-}
-
-// ---------------------------------------------------------------------------
-// Payment method display
-// ---------------------------------------------------------------------------
-
-function CardBrandIcon({ brand }: { brand: string }) {
-  const key = brand.toLowerCase();
-  if (key === "visa") return <Visa size={16} className="h-4 w-auto" />;
-  if (key === "mastercard") return <Mastercard size={16} className="h-4 w-auto" />;
-  if (key === "amex") return <Amex size={16} className="h-4 w-auto" />;
-  return null;
-}
-
-function PaymentMethod({ brand, last4 }: { brand: string | null; last4: string | null }) {
-  if (!brand || !last4) return <span className="text-muted-foreground">—</span>;
-  return (
-    <div className="flex items-center">
-      <CardBrandIcon brand={brand} />
-      <span className="text-xs ml-2" style={{ letterSpacing: "0.1em" }}>••••</span>
-      <span className="text-sm ml-1">{last4}</span>
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -176,7 +157,7 @@ const columns: ListColumn<MemberActivityEvent>[] = [
     key: "paymentMethod",
     label: "Payment method",
     render: (event) => (
-      <PaymentMethod brand={event.paymentMethodBrand} last4={event.paymentMethodLast4} />
+      <PaymentMethodInline brand={event.paymentMethodBrand} last4={event.paymentMethodLast4} />
     ),
   },
   {
