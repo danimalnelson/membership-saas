@@ -2,13 +2,7 @@
 
 import React, { useState } from "react";
 import { Button, formatCurrency, formatDate } from "@wine-club/ui";
-import { CrossCircle, FileText } from "geist-icons";
-import { Clock } from "@/components/icons/Clock";
-import { Dollar } from "@/components/icons/Dollar";
-import { PauseCircle } from "@/components/icons/PauseCircle";
-import { RefreshCounterClockwise } from "@/components/icons/RefreshCounterClockwise";
-import { SubscriptionCancelled } from "@/components/icons/SubscriptionCancelled";
-import { SubscriptionCreated } from "@/components/icons/SubscriptionCreated";
+import { getTypeConfig } from "@/components/transactions/transaction-utils";
 import { List, type ListColumn } from "@/components/ui/data-table";
 import { PaymentMethodInline } from "@/components/ui/payment-method";
 
@@ -28,104 +22,7 @@ export interface MemberActivityEvent {
   paymentMethodLast4: string | null;
 }
 
-// ---------------------------------------------------------------------------
-// Type icon config (shared visual language with TransactionTable)
-// ---------------------------------------------------------------------------
-
-const TYPE_ICON_CONFIG: Record<
-  string,
-  { icon: React.ElementType; color: string; bg: string; label: string }
-> = {
-  CHARGE: {
-    icon: Dollar,
-    color: "var(--ds-blue-700)",
-    bg: "var(--ds-blue-100)",
-    label: "Renewed",
-  },
-  REFUND: {
-    icon: RefreshCounterClockwise,
-    color: "var(--ds-amber-700)",
-    bg: "var(--ds-amber-100)",
-    label: "Refunded",
-  },
-  SUBSCRIPTION_CREATED: {
-    icon: SubscriptionCreated,
-    color: "var(--ds-green-700)",
-    bg: "var(--ds-green-100)",
-    label: "Started",
-  },
-  CANCELLATION_SCHEDULED: {
-    icon: Clock,
-    color: "var(--ds-amber-700)",
-    bg: "var(--ds-amber-100)",
-    label: "Cancellation scheduled",
-  },
-  SUBSCRIPTION_CANCELLED: {
-    icon: SubscriptionCancelled,
-    color: "var(--ds-amber-700)",
-    bg: "var(--ds-amber-100)",
-    label: "Canceled",
-  },
-  SUBSCRIPTION_PAUSED: {
-    icon: PauseCircle,
-    color: "var(--ds-purple-700)",
-    bg: "var(--ds-purple-100)",
-    label: "Paused",
-  },
-  SUBSCRIPTION_RESUMED: {
-    icon: SubscriptionCreated,
-    color: "var(--ds-green-700)",
-    bg: "var(--ds-green-100)",
-    label: "Resumed",
-  },
-  VOIDED: {
-    icon: CrossCircle,
-    color: "var(--ds-red-700)",
-    bg: "var(--ds-red-100)",
-    label: "Voided",
-  },
-  PENDING: {
-    icon: Clock,
-    color: "var(--ds-amber-700)",
-    bg: "var(--ds-amber-100)",
-    label: "Pending",
-  },
-  PAYMENT_FAILED: {
-    icon: CrossCircle,
-    color: "var(--ds-red-700)",
-    bg: "var(--ds-red-100)",
-    label: "Failed",
-  },
-  START_FAILED: {
-    icon: CrossCircle,
-    color: "var(--ds-gray-900)",
-    bg: "var(--ds-gray-100)",
-    label: "Payment failure (Start)",
-  },
-  RENEWAL_FAILED: {
-    icon: CrossCircle,
-    color: "var(--ds-amber-700)",
-    bg: "var(--ds-amber-100)",
-    label: "Payment failure (Renewal)",
-  },
-  PAYOUT_FEE: {
-    icon: FileText,
-    color: "var(--ds-gray-900)",
-    bg: "var(--ds-gray-100)",
-    label: "Payout fee",
-  },
-};
-
-const DEFAULT_ICON = {
-  icon: FileText,
-  color: "var(--ds-gray-900)",
-  bg: "var(--ds-gray-100)",
-  label: "Event",
-};
-
-function getTypeConfig(type: string) {
-  return TYPE_ICON_CONFIG[type] || DEFAULT_ICON;
-}
+// Type config imported from shared transaction-utils
 
 // ---------------------------------------------------------------------------
 // Columns

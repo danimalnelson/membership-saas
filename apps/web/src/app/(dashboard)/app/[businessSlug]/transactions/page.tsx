@@ -144,7 +144,8 @@ async function TransactionsContent({
       };
     }),
 
-    // Subscription lifecycle events from PlanSubscription
+    // PlanSubscription-sourced events: Subscription Started (a charge) and
+    // lifecycle status changes (cancellation, pause)
     ...planSubscriptions.flatMap((sub) => {
       const pm = sub.consumer.paymentMethods[0] ?? null;
       const items: Transaction[] = [

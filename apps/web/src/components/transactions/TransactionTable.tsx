@@ -3,13 +3,8 @@
 import React, { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Dialog, formatCurrency, MenuContainer, Menu, MenuItem, MenuIconTrigger } from "@wine-club/ui";
-import { Download, CrossCircle, FileText, MoreVertical } from "geist-icons";
-import { Clock } from "@/components/icons/Clock";
-import { Dollar } from "@/components/icons/Dollar";
-import { PauseCircle } from "@/components/icons/PauseCircle";
-import { RefreshCounterClockwise } from "@/components/icons/RefreshCounterClockwise";
-import { SubscriptionCancelled } from "@/components/icons/SubscriptionCancelled";
-import { SubscriptionCreated } from "@/components/icons/SubscriptionCreated";
+import { Download, MoreVertical } from "geist-icons";
+import { getTypeConfig, TypeBadge } from "./transaction-utils";
 import {
   DataTable,
   useDataTable,
@@ -43,66 +38,18 @@ export interface Transaction {
 }
 
 // ---------------------------------------------------------------------------
-// Transaction type icons
+// Type icon helper (for filter options)
 // ---------------------------------------------------------------------------
 
-const TYPE_ICON_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
-  PAYMENT:              { icon: Dollar, color: "var(--ds-gray-900)", bg: "var(--ds-gray-100)" },
-  CHARGE:               { icon: Dollar, color: "var(--ds-blue-700)", bg: "var(--ds-blue-100)" },
-  SUBSCRIPTION_CREATED: { icon: SubscriptionCreated, color: "var(--ds-green-700)", bg: "var(--ds-green-100)" },
-  START_FAILED:         { icon: CrossCircle, color: "var(--ds-gray-900)", bg: "var(--ds-gray-100)" },
-  RENEWAL_FAILED:       { icon: CrossCircle, color: "var(--ds-red-700)", bg: "var(--ds-red-100)" },
-  VOIDED:               { icon: CrossCircle, color: "var(--ds-red-700)", bg: "var(--ds-red-100)" },
-  PENDING:              { icon: Clock, color: "var(--ds-amber-700)", bg: "var(--ds-amber-100)" },
-  REFUND:               { icon: RefreshCounterClockwise, color: "var(--ds-gray-900)", bg: "var(--ds-gray-100)" },
-  CANCELLATION_SCHEDULED:   { icon: SubscriptionCancelled, color: "var(--ds-amber-700)", bg: "var(--ds-amber-100)" },
-  SUBSCRIPTION_CANCELLED:   { icon: SubscriptionCancelled, color: "var(--ds-amber-700)", bg: "var(--ds-amber-100)" },
-  SUBSCRIPTION_PAUSED:      { icon: PauseCircle, color: "var(--ds-purple-700)", bg: "var(--ds-purple-100)" },
-  PAYOUT_FEE:               { icon: FileText, color: "var(--ds-gray-900)", bg: "var(--ds-gray-100)" },
-};
-
-const DEFAULT_TYPE_ICON = { icon: Dollar, color: "var(--ds-gray-900)", bg: "var(--ds-gray-100)" };
-
 function TypeIcon({ type }: { type: string }) {
-  const config = TYPE_ICON_CONFIG[type] || DEFAULT_TYPE_ICON;
+  const config = getTypeConfig(type);
   const Icon = config.icon;
   return (
     <div
       className="flex items-center justify-center rounded shrink-0"
       style={{ width: 24, height: 24, backgroundColor: config.bg }}
     >
-        <Icon size={16} color={config.color} />
-    </div>
-  );
-}
-
-const TYPE_LABELS: Record<string, string> = {
-  SUBSCRIPTION_CREATED: "Started",
-  START_FAILED: "Failed",
-  CHARGE: "Renewed",
-  RENEWAL_FAILED: "Failed",
-  SUBSCRIPTION_PAUSED: "Paused",
-  CANCELLATION_SCHEDULED: "Canceled",
-  SUBSCRIPTION_CANCELLED: "Canceled",
-  REFUND: "Refunded",
-  PAYOUT_FEE: "Payout fee",
-};
-
-function TransactionTypeLabel({ type }: { type: string }) {
-  const config = TYPE_ICON_CONFIG[type] || DEFAULT_TYPE_ICON;
-  const Icon = config.icon;
-  const raw = type.replace(/_/g, " ");
-  const label = TYPE_LABELS[type] || raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <div
-        className="flex items-center justify-center rounded shrink-0"
-        style={{ width: 24, height: 24, backgroundColor: config.bg }}
-      >
-        <Icon size={16} color={config.color} />
-      </div>
-      <span>{label}</span>
+      <Icon size={16} color={config.color} />
     </div>
   );
 }
@@ -295,7 +242,7 @@ export function TransactionTable({
       key: "type",
       label: "Type",
       cellClassName: "font-medium",
-      render: (t) => <TransactionTypeLabel type={t.type} />,
+      render: (t) => <TypeBadge type={t.type} />,
     },
     {
       key: "name",
@@ -352,12 +299,15 @@ export function TransactionTable({
     URL.revokeObjectURL(url);
   }, [table.filtered]);
 
+  const router = useRouter();
+
   return (
     <DataTable
       title="Activity"
       columns={columns}
       data={dateFiltered}
       keyExtractor={(t) => t.id}
+      onRowClick={(t) => router.push(`/app/${businessSlug}/transactions/${t.id}`)}
       table={table}
       extraFilters={
         <DateRangePicker value={dateRange} onChange={setDateRange} />
