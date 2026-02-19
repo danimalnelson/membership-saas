@@ -2,6 +2,7 @@
 
 import { Button } from "@wine-club/ui";
 import { FilterPillFromConfig } from "./filter-popover";
+import { PageMenu } from "../page-menu";
 import type { UseDataTableReturn } from "./use-data-table";
 
 // ---------------------------------------------------------------------------
@@ -65,7 +66,7 @@ function DataTableFooter({
   return (
     <div
       key={count}
-      className="sticky bottom-0 z-20 -mx-3 px-3 flex items-center justify-between h-10 border-t border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100 text-xs text-gray-600 dark:text-gray-800"
+      className="sticky bottom-0 z-20 -mx-3 px-3 flex items-center justify-between h-10 border-t border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100 text-[13px] text-gray-600 dark:text-gray-800"
     >
       <span>
         {`${count} ${count === 1 ? "result" : "results"}`}
@@ -77,7 +78,6 @@ function DataTableFooter({
             size="small"
             onClick={() => setPage((p: number) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="px-2 h-7 text-xs"
           >
             Previous
           </Button>
@@ -89,7 +89,6 @@ function DataTableFooter({
             size="small"
             onClick={() => setPage((p: number) => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}
-            className="px-2 h-7 text-xs"
           >
             Next
           </Button>
@@ -138,8 +137,10 @@ export function DataTable<T>({
   return (
     <>
       {/* Row 1: Title */}
-      <div className="sticky top-0 z-20 -mx-3 px-3 flex items-center justify-center h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
-        <h1 className="text-sm font-semibold text-gray-950 dark:text-white">{title}</h1>
+      <div className="sticky top-0 z-20 -mx-3 px-3 flex items-center h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
+        <h1 className="text-sm font-medium text-gray-950 dark:text-white">{title}</h1>
+        <div className="flex-1" />
+        <PageMenu />
       </div>
 
       {/* Row 2: Filters + Actions */}

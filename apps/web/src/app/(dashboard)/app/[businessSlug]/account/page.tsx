@@ -141,7 +141,7 @@ export default function AccountProfilePage() {
                 setSuccess(false);
               }}
               placeholder="Your name"
-              className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-500 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
+              className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
             />
           </div>
 
@@ -198,7 +198,7 @@ export default function AccountProfilePage() {
                   setPwSuccess(false);
                 }}
                 autoComplete="current-password"
-                className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-500 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
+                className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
                 placeholder="Enter current password"
               />
             </div>
@@ -221,7 +221,7 @@ export default function AccountProfilePage() {
                   setPwSuccess(false);
                 }}
                 autoComplete="new-password"
-                className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-500 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
+                className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
                 placeholder="Enter new password"
               />
               {newPassword.length > 0 && (
@@ -262,7 +262,7 @@ export default function AccountProfilePage() {
                   setPwSuccess(false);
                 }}
                 autoComplete="new-password"
-                className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-500 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
+                className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
                 placeholder="Confirm new password"
               />
               {confirmNewPassword && !pwMatch && (

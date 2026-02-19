@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { MenuContainer, Menu, useMenuContext } from "@wine-club/ui";
+import { useCallback, useEffect, useState } from "react";
+import { Button, MenuContainer, Menu, useMenuContext } from "@wine-club/ui";
 
 interface FilterPillProps {
   /** The base label that always stays visible (e.g., "Name") */
@@ -31,41 +31,52 @@ function FilterPillTrigger({ label, activeValue, active, onClear }: { label: str
     setShowActive(false);
   }, [active]);
 
+  const mergedRef = useCallback(
+    (node: HTMLButtonElement | null) => {
+      triggerRef.current = node;
+    },
+    [triggerRef],
+  );
+
+  const suffixIcon = showActive ? (
+    <span
+      role="button"
+      onClick={(e) => { e.stopPropagation(); onClear?.(); }}
+      className="flex items-center justify-center w-4 h-4 rounded-sm hover:opacity-70"
+    >
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    </span>
+  ) : (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+
   return (
-    <button
-      ref={triggerRef}
+    <Button
+      ref={mergedRef}
+      variant={showActive ? "default" : "secondary"}
+      size="small"
       onClick={toggle}
       aria-expanded={isOpen}
       aria-haspopup="listbox"
-      className={`group inline-flex items-center gap-1.5 px-2 h-8 rounded-md text-sm font-medium border transition-all duration-300 ${
+      suffix={suffixIcon}
+      className={
         showActive
-          ? "bg-gray-950 text-white border-gray-950 dark:bg-white dark:text-gray-950 dark:border-white"
-          : "bg-white text-gray-950 border-gray-300 hover:bg-[--ds-gray-100] hover:border-gray-500 dark:border-gray-600 dark:bg-gray-100 dark:text-white dark:hover:border-gray-400"
-      }`}
+          ? "border border-gray-950 dark:border-white transition-all duration-300"
+          : "transition-all duration-300"
+      }
     >
-      <span>{label}</span>
+      {label}
       {active && activeValue && (
         <>
           <span className="opacity-40">|</span>
           <span className="font-normal">{activeValue}</span>
         </>
       )}
-      {showActive ? (
-        <span
-          role="button"
-          onClick={(e) => { e.stopPropagation(); onClear?.(); }}
-          className="shrink-0 flex items-center justify-center w-6 h-6 rounded-sm hover:opacity-70 -mr-1"
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </span>
-      ) : (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
-          <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )}
-    </button>
+    </Button>
   );
 }
 

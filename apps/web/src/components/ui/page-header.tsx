@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { PageMenu } from "./page-menu";
 
 /**
  * Shared page header bar styles.
@@ -15,5 +16,11 @@ export const PAGE_HEADER_BAR_CLASSES =
  * Use for breadcrumb-style titles, e.g. "Members > [Member Name]"
  */
 export function PageHeader({ children }: { children: React.ReactNode }) {
-  return <div className={PAGE_HEADER_BAR_CLASSES}>{children}</div>;
+  return (
+    <div className={PAGE_HEADER_BAR_CLASSES}>
+      {children}
+      <div className="flex-1" />
+      <PageMenu />
+    </div>
+  );
 }

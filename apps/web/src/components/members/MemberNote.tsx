@@ -101,7 +101,7 @@ export function MemberNote({ consumerId, noteContent, noteId }: MemberNoteProps)
           onChange={(e) => handleChange(e.target.value)}
           onBlur={handleBlur}
           placeholder="Add a note about this member..."
-          className="w-full text-14 leading-relaxed resize-none border-0 bg-transparent p-0 focus:outline-none focus:ring-0 placeholder:text-gray-600"
+          className="w-full text-14 leading-relaxed resize-none border-0 bg-transparent p-0 focus:outline-none focus:ring-0 placeholder:text-gray-700"
           rows={3}
         />
       ) : (

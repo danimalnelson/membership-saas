@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Check } from "geist-icons";
+import { Input } from "@wine-club/ui";
 import { FilterPill } from "./filter-pill";
 import type { FilterConfig, TextFilterConfig, SelectFilterConfig } from "./use-data-table";
 
@@ -9,7 +10,7 @@ import type { FilterConfig, TextFilterConfig, SelectFilterConfig } from "./use-d
 // Delayed-focus input — focuses after a brief delay so the ring animates in
 // ---------------------------------------------------------------------------
 
-function DelayedFocusInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+function DelayedFocusInput(props: Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -20,11 +21,11 @@ function DelayedFocusInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   }, []);
 
   return (
-    <input
+    <Input
       ref={inputRef}
       type="text"
+      size="medium"
       {...props}
-      className="w-full px-3 py-2 text-sm border rounded-md outline-none ring-0 ring-gray-950/0 focus:ring-2 focus:ring-gray-950/20 focus:border-gray-800 transition-all duration-1000"
     />
   );
 }
@@ -157,7 +158,7 @@ function MultiSelectFilterPill({
               <button
                 key={opt.value}
                 onClick={() => toggleOption(opt.value)}
-                className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-medium text-gray-900 hover:text-gray-950 hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-normal text-gray-950 hover:bg-gray-100 transition-colors"
               >
                 <span
                   className={`flex items-center justify-center h-4 w-4 rounded border transition-colors shrink-0 ${

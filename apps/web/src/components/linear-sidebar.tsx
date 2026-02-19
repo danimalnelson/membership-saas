@@ -71,7 +71,7 @@ function WorkspaceTrigger({ business }: { business: Business }) {
           <span className="text-white font-semibold text-[10px]">{business.name.charAt(0).toUpperCase()}</span>
         </div>
       )}
-      <span className="text-sm font-semibold text-gray-950 truncate flex-1 text-left">{business.name}</span>
+      <span className="text-sm font-medium text-gray-950 truncate flex-1 text-left">{business.name}</span>
       <ChevronUpDown size={14} className="text-gray-800 group-hover:text-gray-950 shrink-0" />
     </button>
   );
@@ -89,7 +89,7 @@ function UserMenuTrigger({ label }: { label: string }) {
       onClick={toggle}
       className="group w-full flex items-center gap-2 px-2 h-9 rounded-md hover:bg-gray-100 transition-colors"
     >
-      <span className="text-sm font-semibold text-gray-950 truncate flex-1 text-left">{label}</span>
+      <span className="text-sm font-medium text-gray-950 truncate flex-1 text-left">{label}</span>
       <ChevronUpDown size={14} className="text-gray-800 group-hover:text-gray-950 shrink-0" />
     </button>
   );
