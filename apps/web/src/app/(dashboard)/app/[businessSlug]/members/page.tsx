@@ -27,27 +27,24 @@ async function MembersContent({
     notFound();
   }
 
-  // Fetch members with a reasonable limit to avoid long page loads
-  const planSubscriptions = await prisma.planSubscription.findMany({
-    where: {
-      plan: {
-        businessId: business.id,
-      },
-    },
-    include: {
-      consumer: true,
-      plan: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: MEMBERS_PAGE_SIZE,
-  });
+  const [planSubscriptions, manualMembers] = await Promise.all([
+    prisma.planSubscription.findMany({
+      where: { plan: { businessId: business.id } },
+      include: { consumer: true, plan: true },
+      orderBy: { createdAt: "desc" },
+      take: MEMBERS_PAGE_SIZE,
+    }),
+    prisma.member.findMany({
+      where: { businessId: business.id },
+      include: { consumer: true },
+    }),
+  ]);
 
   // Group subscriptions by consumer email
   const consumersMap = new Map<string, {
     consumer: (typeof planSubscriptions)[0]["consumer"];
     subscriptions: typeof planSubscriptions;
+    memberSince: Date;
   }>();
 
   planSubscriptions.forEach((sub) => {
@@ -57,6 +54,7 @@ async function MembersContent({
       consumersMap.set(email, {
         consumer: sub.consumer,
         subscriptions: [],
+        memberSince: sub.consumer.createdAt,
       });
     } else {
       const existing = consumersMap.get(email)!;
@@ -67,6 +65,18 @@ async function MembersContent({
 
     consumersMap.get(email)!.subscriptions.push(sub);
   });
+
+  // Merge manually-added members who have no subscriptions
+  for (const m of manualMembers) {
+    const email = m.consumer.email.toLowerCase();
+    if (!consumersMap.has(email)) {
+      consumersMap.set(email, {
+        consumer: m.consumer,
+        subscriptions: [],
+        memberSince: m.createdAt,
+      });
+    }
+  }
 
   // Shape into flat member objects
   const members = Array.from(consumersMap.values()).map((entry) => {
@@ -83,17 +93,14 @@ async function MembersContent({
       status: (activeSubs.length > 0 ? "ACTIVE" : "INACTIVE") as
         | "ACTIVE"
         | "INACTIVE",
-      joinedAt: entry.consumer.createdAt,
+      joinedAt: entry.memberSince,
       activePlans,
     };
   });
 
-  const allPlanNames = [...new Set(planSubscriptions.map((s) => s.plan.name))].sort();
-
   return (
     <MembersTable
       members={members}
-      allPlanNames={allPlanNames}
       businessId={business.id}
       businessSlug={business.slug}
       timeZone={business.timeZone}

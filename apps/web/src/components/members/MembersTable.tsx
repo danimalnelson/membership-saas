@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@wine-club/ui";
+import { Button, Input, SearchIcon } from "@wine-club/ui";
 import { Download, Plus } from "geist-icons";
 import {
   DataTable,
@@ -40,36 +40,17 @@ function formatJoinedDate(date: Date, timeZone?: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Filter config
+// Search
 // ---------------------------------------------------------------------------
 
-function buildFilterConfigs(allPlanNames: string[]): FilterConfig[] {
-  return [
-    { type: "text", key: "name", label: "Name", placeholder: "Name contains..." },
-    { type: "text", key: "email", label: "Email", placeholder: "Email contains..." },
-    {
-      type: "select",
-      key: "status",
-      label: "Status",
-      options: [
-        { value: "ACTIVE", label: "Active" },
-        { value: "INACTIVE", label: "Inactive" },
-      ],
-    },
-    {
-      type: "select",
-      key: "plan",
-      label: "Plan",
-      options: allPlanNames.map((p) => ({ value: p, label: p })),
-    },
-  ];
+const EMPTY_FILTERS: FilterConfig[] = [];
+
+function matchesSearch(m: Member, query: string): boolean {
+  const q = query.toLowerCase();
+  return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
 }
 
-function filterFn(m: Member, filters: Record<string, string>): boolean {
-  if (filters.name && !m.name.toLowerCase().includes(filters.name.toLowerCase())) return false;
-  if (filters.email && !m.email.toLowerCase().includes(filters.email.toLowerCase())) return false;
-  if (filters.status && !filters.status.split(",").includes(m.status)) return false;
-  if (filters.plan && !m.activePlans.some((p) => filters.plan!.split(",").includes(p))) return false;
+function filterFn(_m: Member, _filters: Record<string, string>): boolean {
   return true;
 }
 
@@ -79,24 +60,27 @@ function filterFn(m: Member, filters: Record<string, string>): boolean {
 
 export function MembersTable({
   members,
-  allPlanNames,
   businessId,
   businessSlug,
   timeZone,
 }: {
   members: Member[];
-  allPlanNames: string[];
   businessId: string;
   businessSlug: string;
   timeZone?: string;
 }) {
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const filterConfigs = buildFilterConfigs(allPlanNames);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filtered = React.useMemo(() => {
+    if (!searchQuery.trim()) return members;
+    return members.filter((m) => matchesSearch(m, searchQuery.trim()));
+  }, [members, searchQuery]);
 
   const table = useDataTable({
-    data: members,
-    filters: filterConfigs,
+    data: filtered,
+    filters: EMPTY_FILTERS,
     filterFn,
   });
 
@@ -156,7 +140,7 @@ export function MembersTable({
     <DataTable
       title="Members"
       columns={columns}
-      data={members}
+      data={filtered}
       keyExtractor={(m) => m.id}
       onRowClick={(m) => {
         window.location.href = `/app/${businessSlug}/members/${m.id}`;
@@ -169,6 +153,18 @@ export function MembersTable({
         />
       )}
       table={table}
+      searchInput={
+        <div className="relative">
+          <SearchIcon size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" />
+          <Input
+            size="small"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 w-[240px]"
+          />
+        </div>
+      }
       emptyMessage="No members yet. Members will appear here when they subscribe to your plans."
       filteredEmptyMessage="No members match filters"
       actions={

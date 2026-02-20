@@ -2,7 +2,7 @@
 
 import React, { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Dialog, formatCurrency, MenuContainer, Menu, MenuItem, MenuIconTrigger } from "@wine-club/ui";
+import { Button, Dialog, Input, SearchIcon, formatCurrency, MenuContainer, Menu, MenuItem, MenuIconTrigger } from "@wine-club/ui";
 import { Download, MoreVertical } from "geist-icons";
 import { getTypeConfig, TypeBadge } from "./transaction-utils";
 import {
@@ -62,50 +62,61 @@ function TypeIcon({ type }: { type: string }) {
 // Filter + column config
 // ---------------------------------------------------------------------------
 
-const FILTER_CONFIGS: FilterConfig[] = [
-  {
-    type: "select",
-    key: "type",
-    label: "Type",
-    options: [
-      { value: "SUBSCRIPTION_CREATED", label: "Started", icon: <TypeIcon type="SUBSCRIPTION_CREATED" /> },
-      { value: "CHARGE", label: "Renewed", icon: <TypeIcon type="CHARGE" /> },
-      { value: "SUBSCRIPTION_PAUSED", label: "Paused", icon: <TypeIcon type="SUBSCRIPTION_PAUSED" /> },
-      { value: "SUBSCRIPTION_CANCELLED,CANCELLATION_SCHEDULED", label: "Canceled", icon: <TypeIcon type="SUBSCRIPTION_CANCELLED" /> },
-      { value: "RENEWAL_FAILED", label: "Failed", icon: <TypeIcon type="RENEWAL_FAILED" /> },
-    ],
-  },
-  { type: "text", key: "name", label: "Name", placeholder: "Name contains..." },
-  { type: "text", key: "email", label: "Email", placeholder: "Email contains..." },
-  { type: "text", key: "plan", label: "Plan", placeholder: "Plan contains..." },
-  {
-    type: "text",
-    key: "paymentMethod",
-    label: "Payment method",
-    placeholder: "Payment method contains...",
-  },
-];
+const TYPE_FILTER: FilterConfig = {
+  type: "select",
+  key: "type",
+  label: "Type",
+  options: [
+    { value: "SUBSCRIPTION_CREATED", label: "Started", icon: <TypeIcon type="SUBSCRIPTION_CREATED" /> },
+    { value: "CHARGE", label: "Renewed", icon: <TypeIcon type="CHARGE" /> },
+    { value: "SUBSCRIPTION_PAUSED", label: "Paused", icon: <TypeIcon type="SUBSCRIPTION_PAUSED" /> },
+    { value: "SUBSCRIPTION_CANCELLED,CANCELLATION_SCHEDULED", label: "Canceled", icon: <TypeIcon type="SUBSCRIPTION_CANCELLED" /> },
+    { value: "RENEWAL_FAILED", label: "Failed", icon: <TypeIcon type="RENEWAL_FAILED" /> },
+  ],
+};
+
+function buildFilterConfigs(activePlanNames: string[]): FilterConfig[] {
+  return [
+    TYPE_FILTER,
+    {
+      type: "select",
+      key: "plan",
+      label: "Plan",
+      options: activePlanNames.map((p) => ({ value: p, label: p })),
+    },
+  ];
+}
+
+function matchesSearch(t: Transaction, query: string): boolean {
+  const q = query.toLowerCase();
+  const name = (t.customerName || t.customerEmail.split("@")[0]).toLowerCase();
+  const email = t.customerEmail.toLowerCase();
+  const plan = t.description.toLowerCase();
+  const brand = (t.paymentMethodBrand || "").toLowerCase();
+  const last4 = t.paymentMethodLast4 || "";
+  if (name.includes(q) || email.includes(q) || plan.includes(q) || brand.includes(q) || last4.includes(q)) {
+    return true;
+  }
+  const stripped = query.replace(/^\$/, "");
+  const num = parseFloat(stripped);
+  if (!isNaN(num) && t.amount > 0) {
+    const amountDollars = t.amount / 100;
+    if (stripped.includes(".")) {
+      return amountDollars === num;
+    }
+    return Math.floor(amountDollars) === num;
+  }
+  return false;
+}
 
 function filterFn(t: Transaction, filters: Record<string, string>): boolean {
-  if (filters.name) {
-    const name = t.customerName || t.customerEmail.split("@")[0];
-    if (!name.toLowerCase().includes(filters.name.toLowerCase())) return false;
-  }
-  if (filters.email) {
-    if (!t.customerEmail.toLowerCase().includes(filters.email.toLowerCase())) return false;
-  }
-  if (filters.plan) {
-    if (!t.description.toLowerCase().includes(filters.plan.toLowerCase())) return false;
-  }
   if (filters.type) {
     const types = filters.type.split(",");
     if (!types.includes(t.type)) return false;
   }
-  if (filters.paymentMethod) {
-    const q = filters.paymentMethod.toLowerCase();
-    const brand = (t.paymentMethodBrand || "").toLowerCase();
-    const last4 = t.paymentMethodLast4 || "";
-    if (!brand.includes(q) && !last4.includes(q)) return false;
+  if (filters.plan) {
+    const plans = filters.plan.split(",");
+    if (!plans.includes(t.description)) return false;
   }
   return true;
 }
@@ -211,29 +222,42 @@ function TransactionActions({
 
 export function TransactionTable({
   transactions,
+  activePlanNames,
   businessSlug,
   stripeAccountId,
 }: {
   transactions: Transaction[];
+  activePlanNames: string[];
   businessSlug: string;
   stripeAccountId: string;
 }) {
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null });
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const dateFiltered = React.useMemo(() => {
-    const visible = transactions.filter((t) => t.type !== "START_FAILED");
-    if (!dateRange.from && !dateRange.to) return visible;
-    return visible.filter((t) => {
-      const d = t.date instanceof Date ? t.date.getTime() : new Date(t.date).getTime();
-      if (dateRange.from && d < dateRange.from.getTime()) return false;
-      if (dateRange.to && d > dateRange.to.getTime()) return false;
-      return true;
-    });
-  }, [transactions, dateRange]);
+  const filterConfigs = React.useMemo(
+    () => buildFilterConfigs(activePlanNames),
+    [activePlanNames]
+  );
+
+  const preFiltered = React.useMemo(() => {
+    let items = transactions.filter((t) => t.type !== "START_FAILED");
+    if (dateRange.from || dateRange.to) {
+      items = items.filter((t) => {
+        const d = t.date instanceof Date ? t.date.getTime() : new Date(t.date).getTime();
+        if (dateRange.from && d < dateRange.from.getTime()) return false;
+        if (dateRange.to && d > dateRange.to.getTime()) return false;
+        return true;
+      });
+    }
+    if (searchQuery.trim()) {
+      items = items.filter((t) => matchesSearch(t, searchQuery.trim()));
+    }
+    return items;
+  }, [transactions, dateRange, searchQuery]);
 
   const table = useDataTable({
-    data: dateFiltered,
-    filters: FILTER_CONFIGS,
+    data: preFiltered,
+    filters: filterConfigs,
     filterFn,
   });
 
@@ -305,10 +329,22 @@ export function TransactionTable({
     <DataTable
       title="Activity"
       columns={columns}
-      data={dateFiltered}
+      data={preFiltered}
       keyExtractor={(t) => t.id}
       onRowClick={(t) => router.push(`/app/${businessSlug}/transactions/${t.id}`)}
       table={table}
+      searchInput={
+        <div className="relative">
+          <SearchIcon size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" />
+          <Input
+            size="small"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 w-[240px]"
+          />
+        </div>
+      }
       extraFilters={
         <DateRangePicker value={dateRange} onChange={setDateRange} />
       }

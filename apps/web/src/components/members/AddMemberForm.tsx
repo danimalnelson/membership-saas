@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@wine-club/ui";
+import { Button, useToasts } from "@wine-club/ui";
 
 interface AddMemberFormProps {
   businessId: string;
@@ -15,6 +15,7 @@ export function AddMemberForm({ businessId, onSuccess, onCancel }: AddMemberForm
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const toasts = useToasts();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +38,8 @@ export function AddMemberForm({ businessId, onSuccess, onCancel }: AddMemberForm
         throw new Error(data.error || "Failed to add customer");
       }
 
+      const memberName = name.trim() || email.trim();
+      toasts.message({ text: `${memberName} was added.` });
       onSuccess();
     } catch (err: any) {
       setError(err.message);

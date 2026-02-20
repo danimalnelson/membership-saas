@@ -3,9 +3,11 @@ export * from "./components/card";
 export * from "./components/dialog";
 export * from "./components/drawer";
 export * from "./components/icon-button";
+export * from "./components/icons";
 export * from "./components/input";
 export * from "./components/label";
 export * from "./components/menu";
 export * from "./components/text";
+export * from "./components/toast";
 export * from "./lib/utils";
 

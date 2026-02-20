@@ -55,7 +55,7 @@ async function TransactionsContent({
   }
 
   // Fetch from local DB — no Stripe API calls, no arbitrary limits
-  const [dbTransactions, planSubscriptions] = await Promise.all([
+  const [dbTransactions, planSubscriptions, activePlans] = await Promise.all([
     prisma.transaction.findMany({
       where: { businessId: business.id },
       include: {
@@ -94,7 +94,14 @@ async function TransactionsContent({
       },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.plan.findMany({
+      where: { businessId: business.id, status: "ACTIVE" },
+      select: { name: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
+
+  const activePlanNames = [...new Set(activePlans.map((p) => p.name))];
 
   // Build a lookup: consumerId → plan name (from PlanSubscription, for transactions
   // where the old Subscription relation doesn't provide a plan name)
@@ -233,6 +240,7 @@ async function TransactionsContent({
     <div className="max-w-7xl mx-auto">
       <TransactionTable
         transactions={transactions}
+        activePlanNames={activePlanNames}
         businessSlug={businessSlug}
         stripeAccountId={business.stripeAccountId}
       />

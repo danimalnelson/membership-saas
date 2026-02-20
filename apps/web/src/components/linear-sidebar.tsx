@@ -95,8 +95,8 @@ function UserMenuTrigger({ name, email }: { name?: string | null; email?: string
           <span className="text-[13px] font-normal text-gray-600 truncate">{email}</span>
         )}
       </div>
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-gray-800 group-hover:text-gray-950 shrink-0">
-        <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-800 group-hover:text-gray-950 shrink-0">
+        <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </button>
   );

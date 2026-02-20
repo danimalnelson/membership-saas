@@ -29,6 +29,8 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   /** Action buttons rendered on the right side of the header */
   actions?: React.ReactNode;
+  /** Rendered before the filter pills (e.g. search input) */
+  searchInput?: React.ReactNode;
   /** Extra filter elements rendered after the built-in filter pills (e.g. date picker) */
   extraFilters?: React.ReactNode;
 
@@ -106,6 +108,7 @@ export function DataTable<T>({
   title,
   columns,
   actions,
+  searchInput,
   extraFilters,
   data,
   keyExtractor,
@@ -132,7 +135,7 @@ export function DataTable<T>({
     totalPages,
   } = table;
 
-  const hasToolbar = filterConfigs.length > 0 || extraFilters || actions;
+  const hasToolbar = filterConfigs.length > 0 || searchInput || extraFilters || actions;
 
   return (
     <>
@@ -147,6 +150,7 @@ export function DataTable<T>({
       {hasToolbar && (
         <div className="sticky top-[60px] z-20 -mx-3 px-3 flex items-center gap-2 h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
           <div className="flex items-center gap-1">
+            {searchInput}
             {filterConfigs.map((config) => (
               <FilterPillFromConfig
                 key={config.key}
