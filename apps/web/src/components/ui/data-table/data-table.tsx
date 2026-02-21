@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@wine-club/ui";
-import { FilterPillFromConfig } from "./filter-popover";
+import { FilterPillFromConfig } from "./filter-menu";
 import { PageMenu } from "../page-menu";
 import type { UseDataTableReturn } from "./use-data-table";
 
@@ -177,7 +177,7 @@ export function DataTable<T>({
       {/* Table */}
       {filtered.length === 0 ? (
         <div className="-mx-3 py-12 text-center">
-          <p className="text-gray-600 dark:text-gray-800">
+          <p className="text-sm text-gray-600 dark:text-gray-800">
             {data.length === 0 ? emptyMessage : filteredEmptyMessage}
           </p>
         </div>
@@ -198,7 +198,7 @@ export function DataTable<T>({
                   </th>
                 ))}
                 {rowActions && (
-                  <th scope="col" className="sticky right-0 z-10 w-[42px] min-w-[42px] shrink-0 bg-ds-background-200 dark:bg-gray-100 px-0" style={{ height: 42 }} />
+                  <th scope="col" className="w-[42px] min-w-[42px] px-0" style={{ height: 42 }} />
                 )}
               </tr>
             </thead>
@@ -206,7 +206,7 @@ export function DataTable<T>({
               {paginated.map((item) => (
                 <tr
                   key={keyExtractor(item)}
-                  className={`!h-[42px] ${rowActions ? "group" : ""} ${onRowClick ? "cursor-pointer" : ""}`}
+                  className={`!h-[42px] hover:bg-gray-50 transition-colors ${rowActions ? "group" : ""} ${onRowClick ? "cursor-pointer" : ""}`}
                   style={{ height: 42, minHeight: 42, maxHeight: 42 }}
                   onClick={onRowClick ? () => onRowClick(item) : undefined}
                 >
@@ -224,11 +224,10 @@ export function DataTable<T>({
                   ))}
                   {rowActions && (
                     <td
-                      className="sticky right-0 z-10 w-[42px] min-w-[42px] py-0 px-0 align-middle shrink-0 bg-white dark:bg-gray-100"
+                      className="w-[42px] min-w-[42px] py-0 px-0 align-middle"
                       onClick={(e) => e.stopPropagation()}
-                      style={{ height: 42 }}
                     >
-                      <div className="relative flex h-[42px] w-[42px] items-center justify-center">
+                      <div className="flex h-[42px] w-[42px] items-center justify-center">
                         {rowActions(item)}
                       </div>
                     </td>

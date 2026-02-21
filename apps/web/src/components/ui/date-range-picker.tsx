@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MenuContainer, Menu, useMenuContext, Button } from "@wine-club/ui";
+import { MenuContainer, Menu, useMenuContext, Button, CloseIcon } from "@wine-club/ui";
 import { ChevronLeft } from "@/components/icons/ChevronLeft";
 import { ChevronRight } from "@/components/icons/ChevronRight";
 
@@ -104,44 +104,49 @@ function DateRangeTrigger({ label, active, onClear }: { label: string | null; ac
     [triggerRef],
   );
 
-  const suffixIcon = showActive ? (
-    <span
-      role="button"
-      onClick={(e) => { e.stopPropagation(); onClear(); }}
-      className="flex items-center justify-center w-4 h-4 rounded-sm hover:opacity-70 text-gray-800"
-    >
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    </span>
-  ) : (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-800">
-      <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  if (showActive) {
+    return (
+      <div className="inline-flex h-8 items-stretch rounded-md border border-gray-950 bg-gray-950 text-white dark:border-white dark:bg-white dark:text-gray-950 transition-colors">
+        <button
+          ref={mergedRef}
+          type="button"
+          onClick={toggle}
+          aria-expanded={isOpen}
+          aria-haspopup="dialog"
+          className="flex items-center gap-1.5 px-2.5 text-sm font-normal outline-none focus-visible:shadow-[0_0_0_3px_rgba(0,0,0,0.06)] rounded-l-md"
+        >
+          Date
+          {label && (
+            <>
+              <span className="opacity-40">|</span>
+              <span className="font-normal">{label}</span>
+            </>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onClear(); }}
+          aria-label="Clear date filter"
+          className="flex w-8 items-center justify-center border-l border-white/20 hover:bg-white/10 transition-[color,background-color,border-color,box-shadow] duration-150 outline-none focus-visible:shadow-[0_0_0_3px_rgba(0,0,0,0.06)] rounded-r-md dark:border-gray-950/20 dark:hover:bg-gray-950/10"
+        >
+          <CloseIcon size={16} />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <Button
       ref={mergedRef}
-      variant={showActive ? "default" : "secondary"}
+      variant="secondary"
       size="small"
       onClick={toggle}
       aria-expanded={isOpen}
       aria-haspopup="dialog"
-      suffix={suffixIcon}
-      className={
-        showActive
-          ? "font-normal border border-gray-950 dark:border-white transition-all duration-300"
-          : "font-normal transition-all duration-300"
-      }
+      showChevron
+      className="font-normal transition-colors"
     >
       Date
-      {active && label && (
-        <>
-          <span className="opacity-40">|</span>
-          <span className="font-normal">{label}</span>
-        </>
-      )}
     </Button>
   );
 }
@@ -230,12 +235,14 @@ function CalendarMonth({
 
               const roundL = isInBand && !prevInBand;
               const roundR = isInBand && !nextInBand;
-              const rounding = isSelected
-                ? "rounded-md"
-                : `${roundL ? "rounded-l-md" : ""} ${roundR ? "rounded-r-md" : ""}`;
+              const bandRounding = `${roundL ? "rounded-l-md" : ""} ${roundR ? "rounded-r-md" : ""}`;
 
               return (
-                <td key={`${year}-${month}-${day.getDate()}`} style={{ width: 32, height: 32 }} className="p-0">
+                <td
+                  key={`${year}-${month}-${day.getDate()}`}
+                  style={{ width: 32, height: 32 }}
+                  className={`p-0 ${isInBand ? `bg-gray-200 ${bandRounding}` : ""}`}
+                >
                   <button
                     type="button"
                     disabled={isFuture}
@@ -243,16 +250,16 @@ function CalendarMonth({
                     onMouseEnter={() => onDayHover(day)}
                     onMouseLeave={() => onDayHover(null)}
                     style={{ width: 32, height: 32 }}
-                    className={`text-sm ${
+                    className={`text-sm rounded-md ${
                       isFuture
                         ? "text-gray-500 cursor-not-allowed"
                         : isSelected
-                        ? `bg-gray-950 text-white font-semibold ${rounding}`
+                        ? "bg-gray-950 text-white font-semibold"
                         : inRange
-                        ? `bg-gray-200 text-gray-950 ${rounding}`
+                        ? "text-gray-950"
                         : isToday
                         ? "font-semibold text-gray-950"
-                        : "text-gray-950 hover:bg-gray-100 rounded-md"
+                        : "text-gray-950 hover:bg-gray-100"
                     }`}
                   >
                     {day.getDate()}
@@ -283,7 +290,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
   const [startText, setStartText] = useState("");
   const [endText, setEndText] = useState("");
 
-  // Reset draft state when the popover opens
+  // Reset draft state when the menu opens
   useEffect(() => {
     if (menuOpen) {
       const today = new Date();
@@ -426,7 +433,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
                 onBlur={handleStartBlur}
                 onKeyDown={(e) => { if (e.key === "Enter") { handleStartBlur(); canApply && handleApply(); } }}
                 placeholder="Select date"
-                className="w-full px-3 h-8 text-sm border border-gray-300 rounded-md bg-white text-gray-950 outline-none focus:ring-2 focus:ring-gray-950/20 focus:border-gray-800 transition-all"
+                className="w-full px-3 h-8 text-sm border border-gray-300 rounded-md bg-white text-gray-950 outline-none ring-0 shadow-none focus:ring-0 focus:shadow-none focus:border-gray-600 transition-colors"
               />
             </div>
             <div>
@@ -438,7 +445,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
                 onBlur={handleEndBlur}
                 onKeyDown={(e) => { if (e.key === "Enter") { handleEndBlur(); canApply && handleApply(); } }}
                 placeholder="Select date"
-                className="w-full px-3 h-8 text-sm border border-gray-300 rounded-md bg-white text-gray-950 outline-none focus:ring-2 focus:ring-gray-950/20 focus:border-gray-800 transition-all"
+                className="w-full px-3 h-8 text-sm border border-gray-300 rounded-md bg-white text-gray-950 outline-none ring-0 shadow-none focus:ring-0 focus:shadow-none focus:border-gray-600 transition-colors"
               />
             </div>
           </div>

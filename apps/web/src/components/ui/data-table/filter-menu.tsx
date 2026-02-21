@@ -31,7 +31,7 @@ function DelayedFocusInput(props: Omit<React.InputHTMLAttributes<HTMLInputElemen
 }
 
 // ---------------------------------------------------------------------------
-// Shared filter popover components
+// Shared filter menu components
 // ---------------------------------------------------------------------------
 
 export function FilterPillFromConfig({

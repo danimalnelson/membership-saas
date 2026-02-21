@@ -260,7 +260,7 @@ export const MembershipForm = React.memo(
             <CardContent className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Name <span className="text-red-500">*</span>
+                  Name <span className="text-red-900">*</span>
                 </label>
                 <input
                   type="text"
@@ -273,7 +273,7 @@ export const MembershipForm = React.memo(
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Slug <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium mb-2">Slug <span className="text-red-900">*</span></label>
                 <input
                   type="text"
                   value={slug}
@@ -321,7 +321,7 @@ export const MembershipForm = React.memo(
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Status <span className="text-red-500">*</span>
+                  Status <span className="text-red-900">*</span>
                 </label>
                 <select
                   value={status}
@@ -392,7 +392,7 @@ export const MembershipForm = React.memo(
               {/* Billing Frequency */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Billing Frequency <span className="text-red-500">*</span>
+                  Billing Frequency <span className="text-red-900">*</span>
                 </label>
                 <select
                   value={billingInterval}
@@ -415,7 +415,7 @@ export const MembershipForm = React.memo(
 
               <div>
                 <label className="block text-sm font-medium mb-3">
-                  How should members start and be billed? <span className="text-red-500">*</span>
+                  How should members start and be billed? <span className="text-red-900">*</span>
                 </label>
                 <div className="space-y-4">
                   {/* Option 1: Rolling Membership */}

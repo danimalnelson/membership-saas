@@ -89,7 +89,7 @@ export function useDataTable<T>({
     setOpenFilter(null);
   }, [inputValues]);
 
-  // Apply a select filter (commit value directly, keep popover open for multi-select)
+  // Apply a select filter (commit value directly, keep menu open for multi-select)
   const applySelectFilter = useCallback((key: string, value: string) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }));
     setPage(0);

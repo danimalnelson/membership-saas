@@ -4,7 +4,7 @@ import { memo, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { cn, MenuContainer, Menu, MenuDivider, MenuItem, useMenuContext } from "@wine-club/ui";
+import { cn, ChevronDownIcon, MenuContainer, Menu, MenuDivider, MenuItem, useMenuContext } from "@wine-club/ui";
 import { Dashboard } from "@/components/icons/Dashboard";
 import { Lifebuoy } from "@/components/icons/Lifebuoy";
 import { Users } from "@/components/icons/Users";
@@ -95,9 +95,7 @@ function UserMenuTrigger({ name, email }: { name?: string | null; email?: string
           <span className="text-[13px] font-normal text-gray-600 truncate">{email}</span>
         )}
       </div>
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-800 group-hover:text-gray-950 shrink-0">
-        <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <ChevronDownIcon size={16} className="text-gray-800 group-hover:text-gray-950 shrink-0" />
     </button>
   );
 }

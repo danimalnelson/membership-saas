@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MenuContainer, Menu, MenuItem, MenuIconTrigger } from "@wine-club/ui";
-import { MoreVertical } from "geist-icons";
+import { MoreHorizontal } from "geist-icons";
 
 interface MemberActionsProps {
   memberId: string;
@@ -46,9 +46,9 @@ export function MemberActions({
   };
 
   return (
-    <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-stretch gap-0 overflow-hidden rounded-md border border-transparent bg-transparent transition-[border-color,background-color] group-hover:border-gray-300 group-hover:bg-white group-hover:hover:border-gray-500 dark:group-hover:border-gray-600 dark:group-hover:bg-gray-100 dark:group-hover:hover:border-gray-400">
+    <div>
       <MenuContainer>
-        <MenuIconTrigger><MoreVertical className="h-4 w-4" /></MenuIconTrigger>
+        <MenuIconTrigger><MoreHorizontal className="h-4 w-4" /></MenuIconTrigger>
         <Menu width={192} align="end">
           <MenuItem href={`/app/${businessSlug}/members/${memberId}`}>
             View member details

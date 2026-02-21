@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Button, MenuContainer, Menu, useMenuContext } from "@wine-club/ui";
+import { Button, CloseIcon, MenuContainer, Menu, useMenuContext } from "@wine-club/ui";
 
 interface FilterPillProps {
   /** The base label that always stays visible (e.g., "Name") */
@@ -38,44 +38,49 @@ function FilterPillTrigger({ label, activeValue, active, onClear }: { label: str
     [triggerRef],
   );
 
-  const suffixIcon = showActive ? (
-    <span
-      role="button"
-      onClick={(e) => { e.stopPropagation(); onClear?.(); }}
-      className="flex items-center justify-center w-4 h-4 rounded-sm hover:opacity-70 text-gray-800"
-    >
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    </span>
-  ) : (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-800">
-      <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  if (showActive) {
+    return (
+      <div className="inline-flex h-8 items-stretch rounded-md border border-gray-950 bg-gray-950 text-white dark:border-white dark:bg-white dark:text-gray-950 transition-colors">
+        <button
+          ref={mergedRef}
+          type="button"
+          onClick={toggle}
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          className="flex items-center gap-1.5 px-2.5 text-sm font-normal outline-none focus-visible:shadow-[0_0_0_3px_rgba(0,0,0,0.06)] rounded-l-md"
+        >
+          {label}
+          {activeValue && (
+            <>
+              <span className="opacity-40">|</span>
+              <span className="font-normal">{activeValue}</span>
+            </>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onClear?.(); }}
+          aria-label={`Clear ${label} filter`}
+          className="flex w-8 items-center justify-center border-l border-white/20 hover:bg-white/10 transition-[color,background-color,border-color,box-shadow] duration-150 outline-none focus-visible:shadow-[0_0_0_3px_rgba(0,0,0,0.06)] rounded-r-md dark:border-gray-950/20 dark:hover:bg-gray-950/10"
+        >
+          <CloseIcon size={16} />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <Button
       ref={mergedRef}
-      variant={showActive ? "default" : "secondary"}
+      variant="secondary"
       size="small"
       onClick={toggle}
       aria-expanded={isOpen}
       aria-haspopup="listbox"
-      suffix={suffixIcon}
-      className={
-        showActive
-          ? "font-normal border border-gray-950 dark:border-white transition-all duration-300"
-          : "font-normal transition-all duration-300"
-      }
+      showChevron
+      className="font-normal transition-colors"
     >
       {label}
-      {active && activeValue && (
-        <>
-          <span className="opacity-40">|</span>
-          <span className="font-normal">{activeValue}</span>
-        </>
-      )}
     </Button>
   );
 }

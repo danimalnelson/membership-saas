@@ -27,7 +27,7 @@ interface ActiveSubscriptionsTableProps {
   stripeAccountId: string | null;
   /** Override default empty message (e.g. when member has no subscriptions at all) */
   emptyMessage?: string;
-  /** For View plan / Edit links in action popover */
+  /** For View plan / Edit links in action menu */
   businessSlug?: string;
 }
 

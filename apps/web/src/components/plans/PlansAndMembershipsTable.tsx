@@ -95,7 +95,7 @@ export function PlansAndMembershipsTable({
   return (
     <>
       {/* Row 1: Title */}
-      <div className="sticky top-0 z-10 -mx-3 px-3 flex items-center justify-center h-[60px] border-b border-gray-400 bg-ds-background-200">
+      <div className="sticky top-0 z-10 -mx-3 px-3 flex items-center h-[60px] border-b border-gray-400 bg-ds-background-200">
         <h1 className="text-sm font-medium text-foreground">Plans</h1>
       </div>
 

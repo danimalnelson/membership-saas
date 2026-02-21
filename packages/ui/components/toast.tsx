@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
+import { CloseIcon } from "./icons";
 
 type ToastVariant = "default" | "success" | "warning" | "error";
 
@@ -108,9 +109,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     onClick={() => dismiss(t.id)}
                     className={`shrink-0 transition-colors ${styles.close}`}
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
+                  <CloseIcon size={16} />
                   </button>
                 </div>
               );

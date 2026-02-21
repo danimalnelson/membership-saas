@@ -81,6 +81,7 @@ export function TableView<T>({
                 key={keyExtractor(item)}
                 className={cn(
                   rowClassName,
+                  "transition-colors hover:bg-gray-50",
                   onRowClick && "cursor-pointer"
                 )}
                 onClick={onRowClick ? () => onRowClick(item) : undefined}

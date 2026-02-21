@@ -2,8 +2,8 @@
 
 import React, { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Dialog, Input, SearchIcon, formatCurrency, MenuContainer, Menu, MenuItem, MenuIconTrigger } from "@wine-club/ui";
-import { Download, MoreVertical } from "geist-icons";
+import { Button, Dialog, SearchInput, formatCurrency, MenuContainer, Menu, MenuItem, MenuIconTrigger } from "@wine-club/ui";
+import { Download, MoreHorizontal } from "geist-icons";
 import { getTypeConfig, TypeBadge } from "./transaction-utils";
 import {
   DataTable,
@@ -167,9 +167,9 @@ function TransactionActions({
 
   return (
     <>
-      <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-stretch gap-0 overflow-hidden rounded-md border border-transparent bg-transparent transition-[border-color,background-color] group-hover:border-gray-300 group-hover:bg-white group-hover:hover:border-gray-500 dark:group-hover:border-gray-600 dark:group-hover:bg-gray-100 dark:group-hover:hover:border-gray-400">
+      <div>
         <MenuContainer>
-          <MenuIconTrigger><MoreVertical className="h-4 w-4" /></MenuIconTrigger>
+          <MenuIconTrigger><MoreHorizontal className="h-4 w-4" /></MenuIconTrigger>
           <Menu width={192} align="end">
             {canRefund && (
               <MenuItem onClick={() => setShowRefundDialog(true)}>
@@ -334,16 +334,13 @@ export function TransactionTable({
       onRowClick={(t) => router.push(`/app/${businessSlug}/transactions/${t.id}`)}
       table={table}
       searchInput={
-        <div className="relative">
-          <SearchIcon size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" />
-          <Input
-            size="small"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 w-[240px]"
-          />
-        </div>
+        <SearchInput
+          size="small"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-[240px]"
+        />
       }
       extraFilters={
         <DateRangePicker value={dateRange} onChange={setDateRange} />
@@ -355,8 +352,8 @@ export function TransactionTable({
           stripeAccountId={stripeAccountId}
         />
       )}
-      emptyMessage="No transactions yet"
-      filteredEmptyMessage="No transactions match filters"
+      emptyMessage="No transactions found"
+      filteredEmptyMessage="No transactions found"
       actions={
         <Button
           variant="secondary"

@@ -16,13 +16,15 @@ export function FilterPillSkeletons({ count = 4 }: { count?: number }) {
 
 /**
  * Two-row skeleton matching the DataTable sticky header.
- * Row 1: centered title.  Row 2: filter pills + action button.
+ * Row 1: left-aligned title.  Row 2: search + filter pills + action button.
  */
 export function PageHeaderSkeleton({
-  pillCount = 4,
+  showSearch = false,
+  pillCount = 0,
   showAction = true,
   actionWidth = "w-20",
 }: {
+  showSearch?: boolean;
   pillCount?: number;
   showAction?: boolean;
   actionWidth?: string;
@@ -30,13 +32,16 @@ export function PageHeaderSkeleton({
   return (
     <>
       {/* Row 1: Title */}
-      <div className="sticky top-0 z-20 -mx-3 px-3 flex items-center justify-center h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
+      <div className="sticky top-0 z-20 -mx-3 px-3 flex items-center h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
         <div className={`h-4 w-24 ${SKELETON_CLASS}`} />
       </div>
 
-      {/* Row 2: Filters + Actions */}
+      {/* Row 2: Search + Filters + Actions */}
       <div className="sticky top-[60px] z-20 -mx-3 px-3 flex items-center gap-2 h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
-        <FilterPillSkeletons count={pillCount} />
+        {showSearch && (
+          <div className={`h-8 w-[240px] shrink-0 rounded-md ${SKELETON_CLASS}`} />
+        )}
+        {pillCount > 0 && <FilterPillSkeletons count={pillCount} />}
         <div className="flex-1" />
         {showAction && (
           <div className={`h-8 ${actionWidth} shrink-0 rounded-md ${SKELETON_CLASS}`} />

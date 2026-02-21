@@ -4,7 +4,7 @@ import { ListSkeleton, ListFooterSkeleton } from "@/components/ui/data-table";
 export default function MembersLoading() {
   return (
     <>
-      <PageHeaderSkeleton pillCount={3} />
+      <PageHeaderSkeleton showSearch actionWidth="w-28" />
 
       <ListSkeleton
         rowCount={8}

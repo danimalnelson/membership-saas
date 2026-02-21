@@ -3,6 +3,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { ChevronDownIcon } from "./icons";
 import { cn } from "../lib/utils";
 import { Button, type ButtonProps } from "./button";
 
@@ -104,29 +105,7 @@ function MenuContainer({ children, className, open, onOpenChange }: MenuContaine
   );
 }
 
-// ---------------------------------------------------------------------------
-// ChevronDown icon (inline SVG to avoid external dependency)
-// ---------------------------------------------------------------------------
-
-function ChevronDownIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      className={className}
-    >
-      <path
-        d="M4 6L8 10L12 6"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+// ChevronDown imported from shared icons
 
 // ---------------------------------------------------------------------------
 // MenuButton
@@ -521,7 +500,7 @@ const MenuIconTrigger = React.forwardRef<HTMLButtonElement, MenuIconTriggerProps
         aria-label={label}
         aria-haspopup="menu"
         className={cn(
-          "flex h-[30px] w-[30px] shrink-0 items-center justify-center text-gray-950 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-200",
+          "flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-md text-gray-950 hover:bg-gray-300 transition-colors dark:text-white dark:hover:bg-gray-400",
           className,
         )}
       >

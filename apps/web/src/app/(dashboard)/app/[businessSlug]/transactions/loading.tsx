@@ -4,7 +4,7 @@ import { ListSkeleton, ListFooterSkeleton } from "@/components/ui/data-table";
 export default function TransactionsLoading() {
   return (
     <>
-      <PageHeaderSkeleton pillCount={4} />
+      <PageHeaderSkeleton showSearch pillCount={3} actionWidth="w-24" />
 
       <ListSkeleton
         rowCount={10}

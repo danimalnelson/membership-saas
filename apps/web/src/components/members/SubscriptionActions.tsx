@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Dialog, MenuContainer, Menu, MenuItem, MenuIconTrigger } from "@wine-club/ui";
-import { Play, MoreVertical } from "geist-icons";
+import { Play, MoreHorizontal } from "geist-icons";
 import { PauseCircle } from "@/components/icons/PauseCircle";
 import { Cross } from "@/components/icons/Cross";
 
@@ -35,7 +35,7 @@ function CompactMoreMenu({
   return (
     <MenuContainer>
       <MenuIconTrigger>
-        <MoreVertical className="h-4 w-4" />
+        <MoreHorizontal className="h-4 w-4" />
       </MenuIconTrigger>
       <Menu width={180} align="end">
         {canPause && (
@@ -240,7 +240,7 @@ export function SubscriptionActions({
   if (compact) {
     return (
       <>
-        <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-stretch gap-0 overflow-hidden rounded-md border border-transparent bg-transparent transition-[border-color,background-color] group-hover:border-gray-300 group-hover:bg-white group-hover:hover:border-gray-500 dark:group-hover:border-gray-600 dark:group-hover:bg-gray-100 dark:group-hover:hover:border-gray-400">
+        <div>
           <CompactMoreMenu
             canPause={canPause}
             canResume={canResume}

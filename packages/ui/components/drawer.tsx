@@ -3,29 +3,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { cn } from "../lib/utils";
-
-// ---------------------------------------------------------------------------
-// Inline close icon (avoids external dependency)
-// ---------------------------------------------------------------------------
-
-function CloseIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      className={className}
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M12.4697 13.5303L13 14.0607L14.0607 13L13.5303 12.4697L9.06065 7.99999L13.5303 3.53032L14.0607 2.99999L13 1.93933L12.4697 2.46966L7.99999 6.93933L3.53032 2.46966L2.99999 1.93933L1.93933 2.99999L2.46966 3.53032L6.93933 7.99999L2.46966 12.4697L1.93933 13L2.99999 14.0607L3.53032 13.5303L7.99999 9.06065L12.4697 13.5303Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
+import { CloseIcon } from "./icons";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -157,14 +135,15 @@ export function Drawer({
         tabIndex={-1}
         onKeyDown={handleKeyDown}
         className={cn(
-          "fixed top-0 bottom-0 z-[100] flex flex-col bg-white dark:bg-gray-100 border-gray-400 dark:border-gray-600 shadow-xl transition-transform duration-200 ease-in-out",
-          isRight ? "right-0 border-l" : "left-0 border-r",
-          open ? "translate-x-0" : isRight ? "translate-x-full" : "-translate-x-full",
+          "fixed z-[100] flex flex-col bg-white dark:bg-gray-100 border border-gray-300 dark:border-gray-600 shadow-xl rounded-2xl transition-transform duration-200 ease-in-out",
+          "top-3 bottom-3",
+          isRight ? "right-3" : "left-3",
+          open ? "translate-x-0" : isRight ? "translate-x-[calc(100%+12px)]" : "-translate-x-[calc(100%+12px)]",
         )}
         style={{ width }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-4 px-6 h-[61px] border-b border-gray-400 dark:border-gray-600 shrink-0">
+        <div className="flex items-center justify-between gap-4 px-6 h-[61px] border-b border-gray-300 dark:border-gray-600 shrink-0">
           <div className="min-w-0 flex-1">
             <h2 id={titleId} className="text-sm font-medium text-gray-950 dark:text-white truncate">
               {title}
@@ -191,7 +170,7 @@ export function Drawer({
 
         {/* Footer (optional) */}
         {footer && (
-          <div className="shrink-0 px-6 py-4 border-t border-gray-400 dark:border-gray-600 bg-gray-50 dark:bg-gray-200">
+          <div className="shrink-0 px-6 py-4 border-t border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-200 rounded-b-2xl">
             {footer}
           </div>
         )}

@@ -206,7 +206,7 @@ export function List<T, G = undefined>(
 
     const childRowCn = cn(
       rowHeightRes.className,
-      "transition-colors",
+      "transition-colors hover:bg-gray-50",
       onRowClick && "cursor-pointer",
       childRowClassName ?? rowClassNameProp
     );
@@ -301,7 +301,7 @@ export function List<T, G = undefined>(
 
   const rowClassName = cn(
     rowHeightRes.className,
-    "",
+    "transition-colors hover:bg-gray-50",
     onRowClick && "cursor-pointer",
     rowActions && "group",
     rowClassNameProp

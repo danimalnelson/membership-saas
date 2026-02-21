@@ -10,7 +10,7 @@ interface EmptyStateProps {
 export function EmptyState({ message, description }: EmptyStateProps) {
   return (
     <>
-      <p className="text-gray-600 dark:text-gray-800">{message}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-800">{message}</p>
       {description && (
         <p className="text-sm text-gray-600 dark:text-gray-800 mt-1">{description}</p>
       )}

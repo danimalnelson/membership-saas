@@ -2,13 +2,14 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/utils";
+import { ChevronDownIcon } from "./icons";
 
 // ---------------------------------------------------------------------------
 // Variants (cva)
 // ---------------------------------------------------------------------------
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap font-medium transition-[color,background-color,border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:border-gray-600 focus-visible:shadow-[0_0_0_3px_rgba(0,0,0,0.06)] disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -24,9 +25,9 @@ const buttonVariants = cva(
           "bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700",
       },
       size: {
-        small: "h-8 px-3 text-sm gap-1.5",
-        medium: "h-9 px-4 text-sm gap-2",
-        large: "h-10 px-5 text-sm gap-2",
+        small: "h-8 px-2.5 text-sm gap-1.5",
+        medium: "h-10 px-2.5 text-sm gap-2",
+        large: "h-12 px-2.5 text-sm gap-2",
       },
       shape: {
         square: "rounded-md",
@@ -87,6 +88,8 @@ export interface ButtonProps
   prefix?: React.ReactNode;
   /** Icon or element after children */
   suffix?: React.ReactNode;
+  /** Append a chevron-down icon as suffix */
+  showChevron?: boolean;
   /** Show loading spinner */
   loading?: boolean;
   /** Add subtle box-shadow */
@@ -107,6 +110,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       asChild = false,
       prefix,
       suffix,
+      showChevron = false,
       loading = false,
       shadow = false,
       disabled,
@@ -154,9 +158,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </>
         ) : (
           <>
-            {prefix && <span className="shrink-0">{prefix}</span>}
+            {prefix}
             {children}
-            {suffix && <span className="shrink-0">{suffix}</span>}
+            {suffix}
+            {showChevron && !suffix && <ChevronDownIcon size={16} className="text-gray-800" />}
           </>
         )}
       </Comp>

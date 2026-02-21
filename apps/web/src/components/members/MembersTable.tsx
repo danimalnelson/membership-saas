@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, SearchIcon } from "@wine-club/ui";
+import { Button, SearchInput } from "@wine-club/ui";
 import { Download, Plus } from "geist-icons";
 import {
   DataTable,
@@ -154,18 +154,15 @@ export function MembersTable({
       )}
       table={table}
       searchInput={
-        <div className="relative">
-          <SearchIcon size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" />
-          <Input
-            size="small"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 w-[240px]"
-          />
-        </div>
+        <SearchInput
+          size="small"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-[240px]"
+        />
       }
-      emptyMessage="No members yet. Members will appear here when they subscribe to your plans."
+      emptyMessage="No members found"
       filteredEmptyMessage="No members match filters"
       actions={
         <div className="flex items-center gap-1.5">
@@ -182,13 +179,13 @@ export function MembersTable({
             onClick={() => setDrawerOpen(true)}
             prefix={<Plus className="h-3.5 w-3.5" />}
           >
-            Add customer
+            Add member
           </Button>
         </div>
       }
     />
 
-    <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Add customer">
+    <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Add member">
       <AddMemberForm
         businessId={businessId}
         onSuccess={() => {
