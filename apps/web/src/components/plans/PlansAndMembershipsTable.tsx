@@ -51,7 +51,6 @@ export interface MembershipGroup {
   allowMultiplePlans: boolean;
   maxMembers: number | null;
   giftEnabled: boolean;
-  waitlistEnabled: boolean;
   membersOnlyAccess: boolean;
   pauseEnabled: boolean;
   skipEnabled: boolean;
@@ -331,8 +330,6 @@ function ClubCard({
         return { label: "Sold out", variant: "gray-subtle" };
       case "COMING_SOON":
         return { label: "Coming soon", variant: "gray-subtle" };
-      case "WAITLIST":
-        return { label: "Waitlist only", variant: "gray-subtle" };
       default:
         return { label: "Not available", variant: "gray-subtle" };
     }

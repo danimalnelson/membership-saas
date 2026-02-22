@@ -39,6 +39,7 @@ export default async function PlanDetailsPage({
   }
 
   const business = plan.membership.business;
+  const nonPurchasableStatuses = new Set(["SOLD_OUT", "COMING_SOON", "UNAVAILABLE", "WAITLIST"]);
 
   // Parse images if stored as JSON
   let images: string[] = [];
@@ -183,17 +184,12 @@ export default async function PlanDetailsPage({
                           Sold Out
                         </span>
                       )}
-                      {plan.stockStatus === "WAITLIST" && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          Waitlist
-                        </span>
-                      )}
                       {plan.stockStatus === "COMING_SOON" && (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           Coming Soon
                         </span>
                       )}
-                      {plan.stockStatus === "UNAVAILABLE" && (
+                      {plan.stockStatus !== "SOLD_OUT" && plan.stockStatus !== "COMING_SOON" && (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
                           Unavailable
                         </span>
@@ -246,21 +242,19 @@ export default async function PlanDetailsPage({
                   size="large"
                   className="w-full text-lg h-14"
                   disabled={
-                    plan.stockStatus === "SOLD_OUT" ||
-                    plan.stockStatus === "COMING_SOON" ||
-                    plan.stockStatus === "UNAVAILABLE"
+                    nonPurchasableStatuses.has(plan.stockStatus)
                   }
-                  asChild={plan.stockStatus === "AVAILABLE" || plan.stockStatus === "WAITLIST"}
+                  asChild={plan.stockStatus === "AVAILABLE"}
                 >
-                  {plan.stockStatus === "AVAILABLE" || plan.stockStatus === "WAITLIST" ? (
+                  {plan.stockStatus === "AVAILABLE" ? (
                     <Link href={`/${slug}/plans/${plan.id}/checkout`}>
-                      {plan.stockStatus === "WAITLIST" ? "Join Waitlist" : "Subscribe Now"}
+                      Subscribe Now
                     </Link>
                   ) : (
                     <span>
                       {plan.stockStatus === "SOLD_OUT"
                         ? "Sold Out"
-                        : plan.stockStatus === "UNAVAILABLE"
+                        : nonPurchasableStatuses.has(plan.stockStatus)
                         ? "Unavailable"
                         : "Coming Soon"}
                     </span>

@@ -33,7 +33,7 @@ interface PlanFormData {
   recurringFee: string;
   recurringFeeName: string;
   shippingFee: string;
-  stockStatus: "AVAILABLE" | "UNAVAILABLE" | "SOLD_OUT" | "COMING_SOON" | "WAITLIST" | "";
+  stockStatus: "AVAILABLE" | "UNAVAILABLE" | "SOLD_OUT" | "COMING_SOON" | "";
   maxSubscribers: string;
 }
 
@@ -54,11 +54,12 @@ export function PlanForm({
   onSuccess,
   onCancel,
 }: PlanFormProps) {
+  const rawInitialStockStatus = (initialData as { stockStatus?: string } | undefined)
+    ?.stockStatus;
   const stockStatusOptions: Array<{ value: PlanFormData["stockStatus"]; label: string }> = [
     { value: "AVAILABLE", label: "Available" },
     { value: "UNAVAILABLE", label: "Unavailable" },
     { value: "COMING_SOON", label: "Coming soon" },
-    { value: "WAITLIST", label: "Waitlist only" },
     { value: "SOLD_OUT", label: "Sold out" },
   ];
   const router = useRouter();
@@ -80,7 +81,13 @@ export function PlanForm({
     recurringFee: initialData?.recurringFee || "",
     recurringFeeName: initialData?.recurringFeeName || "",
     shippingFee: initialData?.shippingFee || "",
-    stockStatus: initialData?.stockStatus || "",
+    stockStatus:
+      rawInitialStockStatus &&
+      ["AVAILABLE", "UNAVAILABLE", "SOLD_OUT", "COMING_SOON"].includes(
+        rawInitialStockStatus
+      )
+        ? (rawInitialStockStatus as PlanFormData["stockStatus"])
+        : "",
     maxSubscribers: initialData?.maxSubscribers || "",
   });
   const selectedStockStatusLabel =

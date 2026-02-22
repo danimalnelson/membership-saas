@@ -153,7 +153,7 @@ export const PUT = withMiddleware(async (req: NextRequest) => {
         maxMembers: updateData.maxMembers,
         status: updateData.status,
         giftEnabled: updateData.giftEnabled,
-        waitlistEnabled: updateData.waitlistEnabled,
+        waitlistEnabled: false,
         membersOnlyAccess: updateData.membersOnlyAccess,
         pauseEnabled: updateData.pauseEnabled,
         skipEnabled: updateData.skipEnabled,

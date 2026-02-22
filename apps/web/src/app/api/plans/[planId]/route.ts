@@ -16,7 +16,7 @@ const updatePlanSchema = z.object({
   recurringFee: z.union([z.number().int().min(0), z.null(), z.literal("")]).optional().nullable(),
   recurringFeeName: z.string().max(100).or(z.literal("")).optional().nullable(),
   shippingFee: z.union([z.number().int().min(0), z.null(), z.literal("")]).optional().nullable(),
-  stockStatus: z.enum(["AVAILABLE", "UNAVAILABLE", "SOLD_OUT", "COMING_SOON", "WAITLIST"]).optional(),
+  stockStatus: z.enum(["AVAILABLE", "UNAVAILABLE", "SOLD_OUT", "COMING_SOON"]).optional(),
   maxSubscribers: z.union([z.number().int().positive(), z.null(), z.literal("")]).optional().nullable(),
 });
 
@@ -83,6 +83,9 @@ export async function PUT(
   try {
     const { planId } = await context.params;
     const body = await req.json();
+    if (body?.stockStatus === "WAITLIST") {
+      body.stockStatus = "UNAVAILABLE";
+    }
     
     // Preprocess: Convert empty strings to null
     const cleanedBody = Object.fromEntries(
