@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@wine-club/ui";
-import { Badge, Button, Card, CardContent } from "@wine-club/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  DragHandleIcon,
+  useToasts,
+} from "@wine-club/ui";
 import { Plus, Pencil } from "geist-icons";
 import { Drawer } from "@wine-club/ui";
 import { PlanForm } from "./PlanForm";
@@ -18,6 +25,7 @@ export interface Plan {
   membershipId: string;
   name: string;
   description: string;
+  displayOrder: number;
   status: string;
   price: number | null;
   currency: string;
@@ -75,10 +83,24 @@ export function PlansAndMembershipsTable({
   businessSlug: string;
 }) {
   const router = useRouter();
+  const toasts = useToasts();
   const [createPlanForGroup, setCreatePlanForGroup] = useState<MembershipGroup | null>(null);
   const [membershipDrawerOpen, setMembershipDrawerOpen] = useState(false);
   const [editingMembership, setEditingMembership] = useState<MembershipGroup | null>(null);
   const [editingPlan, setEditingPlan] = useState<{ plan: Plan; group: MembershipGroup } | null>(null);
+  const [plansByGroup, setPlansByGroup] = useState<Record<string, Plan[]>>(() =>
+    Object.fromEntries(
+      groups.map((group) => [group.id, [...group.plans]])
+    )
+  );
+  const [reorderingByGroup, setReorderingByGroup] = useState<Record<string, boolean>>({});
+  const [reorderErrorByGroup, setReorderErrorByGroup] = useState<Record<string, string | null>>({});
+
+  useEffect(() => {
+    setPlansByGroup(
+      Object.fromEntries(groups.map((group) => [group.id, [...group.plans]]))
+    );
+  }, [groups]);
 
   // Memberships for PlanForm drawer
   const membershipOptions: MembershipOption[] = groups.map((g) => ({
@@ -88,6 +110,52 @@ export function PlansAndMembershipsTable({
     cohortBillingDay: g.cohortBillingDay,
     status: g.status,
   }));
+
+  const plansForGroup = useMemo(
+    () =>
+      Object.fromEntries(
+        groups.map((group) => [group.id, plansByGroup[group.id] ?? group.plans])
+      ),
+    [groups, plansByGroup]
+  );
+
+  const persistReorder = async (
+    groupId: string,
+    previousPlans: Plan[],
+    nextPlans: Plan[]
+  ) => {
+    setPlansByGroup((prev) => ({ ...prev, [groupId]: nextPlans }));
+    setReorderingByGroup((prev) => ({ ...prev, [groupId]: true }));
+    setReorderErrorByGroup((prev) => ({ ...prev, [groupId]: null }));
+
+    try {
+      const response = await fetch("/api/plans/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          membershipId: groupId,
+          planIds: nextPlans.map((plan) => plan.id),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Failed to reorder plans");
+      }
+      toasts.success("Plan order updated.");
+    } catch (error) {
+      setPlansByGroup((prev) => ({ ...prev, [groupId]: previousPlans }));
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to reorder plans";
+      setReorderErrorByGroup((prev) => ({
+        ...prev,
+        [groupId]: errorMessage,
+      }));
+      toasts.error(errorMessage);
+    } finally {
+      setReorderingByGroup((prev) => ({ ...prev, [groupId]: false }));
+    }
+  };
 
   return (
     <>
@@ -126,9 +194,15 @@ export function PlansAndMembershipsTable({
             <ClubCard
               key={group.id}
               group={group}
+              plans={plansForGroup[group.id] ?? group.plans}
+              isReordering={!!reorderingByGroup[group.id]}
+              reorderError={reorderErrorByGroup[group.id] ?? null}
               onEditClub={() => setEditingMembership(group)}
               onAddPlan={() => setCreatePlanForGroup(group)}
               onEditPlan={(plan) => setEditingPlan({ plan, group })}
+              onReorderPlans={(previousPlans, nextPlans) =>
+                persistReorder(group.id, previousPlans, nextPlans)
+              }
             />
           ))}
         </div>
@@ -232,15 +306,26 @@ export function PlansAndMembershipsTable({
 
 function ClubCard({
   group,
+  plans,
+  isReordering,
+  reorderError,
   onEditClub,
   onAddPlan,
   onEditPlan,
+  onReorderPlans,
 }: {
   group: MembershipGroup;
+  plans: Plan[];
+  isReordering: boolean;
+  reorderError: string | null;
   onEditClub: () => void;
   onAddPlan: () => void;
   onEditPlan: (plan: Plan) => void;
+  onReorderPlans: (previousPlans: Plan[], nextPlans: Plan[]) => void;
 }) {
+  const [draggingPlanId, setDraggingPlanId] = useState<string | null>(null);
+  const [dragOverPlanId, setDragOverPlanId] = useState<string | null>(null);
+
   const planStatusBadge = (stockStatus: string): { label: string; variant: "green-subtle" | "gray-subtle" } => {
     switch (stockStatus) {
       case "AVAILABLE":
@@ -258,6 +343,25 @@ function ClubCard({
     }
   };
 
+  const handleDropOnPlan = (targetPlanId: string) => {
+    if (!draggingPlanId || draggingPlanId === targetPlanId || isReordering) {
+      return;
+    }
+
+    const fromIndex = plans.findIndex((plan) => plan.id === draggingPlanId);
+    const toIndex = plans.findIndex((plan) => plan.id === targetPlanId);
+    if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) {
+      return;
+    }
+
+    const previousPlans = [...plans];
+    const nextPlans = [...plans];
+    const [moved] = nextPlans.splice(fromIndex, 1);
+    nextPlans.splice(toIndex, 0, moved);
+
+    onReorderPlans(previousPlans, nextPlans);
+  };
+
   return (
     <Card className="shadow-none overflow-hidden">
       <CardContent className="p-6 pb-0">
@@ -265,7 +369,7 @@ function ClubCard({
           <h2 className="text-[18px] font-semibold">{group.name}</h2>
         </div>
 
-        {group.plans.length === 0 ? (
+        {plans.length === 0 ? (
           <div className="mt-4 rounded-md border border-dashed border-gray-300 p-4 text-sm text-muted-foreground">
             No plans yet for this club.
           </div>
@@ -273,14 +377,59 @@ function ClubCard({
           <div className="mt-4 overflow-hidden">
             <table className="w-full text-sm">
               <tbody>
-                {group.plans.map((plan, index) => {
+                {plans.map((plan, index) => {
                   const statusBadge = planStatusBadge(plan.stockStatus);
                   return (
                     <tr
                       key={plan.id}
-                      className={`h-10 cursor-pointer hover:bg-gray-100 transition-colors ${index < group.plans.length - 1 ? "border-b border-gray-300" : ""}`}
+                      className={`h-10 cursor-pointer hover:bg-gray-100 transition-colors ${
+                        dragOverPlanId === plan.id ? "bg-gray-100" : ""
+                      } ${index < plans.length - 1 ? "border-b border-gray-300" : ""}`}
                       onClick={() => onEditPlan(plan)}
+                      onDragOver={(e) => {
+                        if (isReordering) return;
+                        e.preventDefault();
+                        setDragOverPlanId(plan.id);
+                        e.dataTransfer.dropEffect = "move";
+                      }}
+                      onDragLeave={() => {
+                        if (dragOverPlanId === plan.id) {
+                          setDragOverPlanId(null);
+                        }
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        handleDropOnPlan(plan.id);
+                        setDragOverPlanId(null);
+                        setDraggingPlanId(null);
+                      }}
                     >
+                      <td className="w-9 px-2 py-0 align-middle">
+                        <button
+                          type="button"
+                          draggable={!isReordering}
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onDragStart={(e) => {
+                            setDraggingPlanId(plan.id);
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData("text/plain", plan.id);
+                          }}
+                          onDragEnd={() => {
+                            setDraggingPlanId(null);
+                            setDragOverPlanId(null);
+                          }}
+                          className={`inline-flex h-6 w-6 items-center justify-center rounded-md appearance-none border-0 bg-transparent p-0 text-gray-600 transition-colors focus-visible:outline-none dark:text-gray-700 ${
+                            isReordering
+                              ? "cursor-not-allowed opacity-50"
+                              : "cursor-grab active:cursor-grabbing hover:bg-gray-300 active:bg-gray-300 hover:text-gray-950 dark:hover:bg-gray-400 dark:active:bg-gray-400 dark:hover:text-white"
+                          }`}
+                          aria-label={`Reorder ${plan.name}`}
+                          disabled={isReordering}
+                        >
+                          <DragHandleIcon size={16} />
+                        </button>
+                      </td>
                       <td className="px-4 py-0 align-middle text-14 font-medium text-foreground">
                         {plan.name}
                       </td>
@@ -304,6 +453,9 @@ function ClubCard({
               </tbody>
             </table>
           </div>
+        )}
+        {reorderError && (
+          <p className="mt-2 text-13 text-red-600">{reorderError}</p>
         )}
 
         <div className="-mx-6 mt-6 border-t border-gray-300 bg-ds-background-200 px-6 py-3 flex items-center justify-end gap-2">

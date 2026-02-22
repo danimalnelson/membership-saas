@@ -58,6 +58,7 @@ async function PlansContent({
       membershipId: m.id,
       name: plan.name,
       description: plan.description || "",
+      displayOrder: plan.displayOrder,
       status: plan.status,
       price: plan.basePrice,
       currency: plan.currency,

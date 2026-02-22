@@ -60,3 +60,23 @@ export function CloseIcon({ size = 16, className, ...props }: IconProps) {
     </svg>
   );
 }
+
+export function DragHandleIcon({ size = 16, className, ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      className={className}
+      {...props}
+    >
+      <circle cx="5.5" cy="3" r="1.1" fill="currentColor" />
+      <circle cx="5.5" cy="8" r="1.1" fill="currentColor" />
+      <circle cx="5.5" cy="13" r="1.1" fill="currentColor" />
+      <circle cx="10.5" cy="3" r="1.1" fill="currentColor" />
+      <circle cx="10.5" cy="8" r="1.1" fill="currentColor" />
+      <circle cx="10.5" cy="13" r="1.1" fill="currentColor" />
+    </svg>
+  );
+}

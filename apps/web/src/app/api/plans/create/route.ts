@@ -105,6 +105,20 @@ export async function POST(req: NextRequest) {
     );
     const stripePriceId = stripePrice.id;
 
+    // New plans are appended to the end of the club order.
+    const orderAggregate = await prisma.plan.aggregate({
+      where: {
+        membershipId: membership.id,
+        status: {
+          in: ["ACTIVE", "DRAFT"],
+        },
+      },
+      _max: {
+        displayOrder: true,
+      },
+    });
+    const nextDisplayOrder = (orderAggregate._max.displayOrder ?? -1) + 1;
+
     // Create plan in database
     const plan = await prisma.plan.create({
       data: {
@@ -123,6 +137,7 @@ export async function POST(req: NextRequest) {
         stockStatus: data.stockStatus,
         maxSubscribers: data.maxSubscribers,
         status: "ACTIVE",
+        displayOrder: nextDisplayOrder,
         stripeProductId: stripeProduct.id,
         stripePriceId: stripePriceId,
       },
