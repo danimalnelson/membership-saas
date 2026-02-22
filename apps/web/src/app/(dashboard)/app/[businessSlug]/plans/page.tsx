@@ -21,9 +21,14 @@ async function PlansContent({
     include: {
       plans: {
         include: {
-          _count: {
+          planSubscriptions: {
+            where: {
+              status: {
+                in: ["active", "trialing"],
+              },
+            },
             select: {
-              planSubscriptions: true,
+              id: true,
             },
           },
         },
@@ -68,7 +73,7 @@ async function PlansContent({
       shippingFee: plan.shippingFee,
       stockStatus: plan.stockStatus,
       maxSubscribers: plan.maxSubscribers,
-      subscriptionCount: plan._count.planSubscriptions,
+      subscriptionCount: plan.planSubscriptions.length,
     })),
   }));
 
