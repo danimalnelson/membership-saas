@@ -32,7 +32,6 @@ interface MembershipFormProps {
     maxMembers: number | null;
     status: string;
     giftEnabled: boolean;
-    waitlistEnabled: boolean;
     membersOnlyAccess: boolean;
     pauseEnabled: boolean;
     skipEnabled: boolean;
@@ -81,9 +80,6 @@ export const MembershipForm = React.memo(
     const [status, setStatus] = useState(membership?.status || "");
     const [giftEnabled, setGiftEnabled] = useState(
       membership?.giftEnabled ?? true
-    );
-    const [waitlistEnabled, setWaitlistEnabled] = useState(
-      membership?.waitlistEnabled ?? false
     );
     const [membersOnlyAccess, setMembersOnlyAccess] = useState(
       membership?.membersOnlyAccess ?? false
@@ -222,7 +218,6 @@ export const MembershipForm = React.memo(
             maxMembers: maxMembers ? parseInt(maxMembers, 10) : null,
             status,
             giftEnabled,
-            waitlistEnabled,
             membersOnlyAccess,
             pauseEnabled,
             skipEnabled,
@@ -268,7 +263,6 @@ export const MembershipForm = React.memo(
         maxMembers,
         status,
         giftEnabled,
-        waitlistEnabled,
         membersOnlyAccess,
         pauseEnabled,
         skipEnabled,

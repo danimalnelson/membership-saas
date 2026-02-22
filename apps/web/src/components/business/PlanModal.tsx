@@ -70,10 +70,15 @@ export function PlanModal({
     onEmailSubmit(email);
   };
 
-  const isDisabled =
-    plan.stockStatus === "SOLD_OUT" ||
-    plan.stockStatus === "COMING_SOON" ||
-    plan.stockStatus === "UNAVAILABLE";
+  const isDisabledStatuses = ["SOLD_OUT", "COMING_SOON", "UNAVAILABLE", "WAITLIST"];
+  const isDisabled = isDisabledStatuses.includes(plan.stockStatus);
+  const ctaLabel = plan.stockStatus === "SOLD_OUT"
+    ? "Sold Out"
+    : plan.stockStatus === "COMING_SOON"
+      ? "Coming Soon"
+      : isDisabled
+        ? "Unavailable"
+        : "Continue to checkout";
 
   return (
     <div
@@ -182,10 +187,8 @@ export function PlanModal({
             <div className="mb-6 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
                 {plan.stockStatus === "SOLD_OUT" && "This plan is currently sold out."}
-                {plan.stockStatus === "WAITLIST" &&
-                  "This plan is available for waitlist only."}
                 {plan.stockStatus === "COMING_SOON" && "This plan is coming soon."}
-                {plan.stockStatus === "UNAVAILABLE" && "This plan is currently unavailable."}
+                {plan.stockStatus !== "SOLD_OUT" && plan.stockStatus !== "COMING_SOON" && "This plan is currently unavailable."}
               </p>
             </div>
           )}
@@ -210,15 +213,7 @@ export function PlanModal({
               size="large"
               disabled={isDisabled || !email}
             >
-              {plan.stockStatus === "SOLD_OUT"
-                ? "Sold Out"
-                : plan.stockStatus === "COMING_SOON"
-                ? "Coming Soon"
-                : plan.stockStatus === "UNAVAILABLE"
-                ? "Unavailable"
-                : plan.stockStatus === "WAITLIST"
-                ? "Join Waitlist"
-                : "Continue to checkout"}
+              {ctaLabel}
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">

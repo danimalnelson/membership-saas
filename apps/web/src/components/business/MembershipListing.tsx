@@ -39,6 +39,8 @@ export function MembershipListing({
   businessDescription,
   memberships,
 }: MembershipListingProps) {
+  const nonPurchasableStatuses = new Set(["SOLD_OUT", "COMING_SOON", "UNAVAILABLE", "WAITLIST"]);
+
   const [selectedPlan, setSelectedPlan] = useState<{
     plan: Plan;
     membership: Membership;
@@ -90,11 +92,7 @@ export function MembershipListing({
                     key={plan.id}
                     className="relative bg-white border-0 shadow-none rounded-2xl p-5 md:p-6 pb-20 min-h-[320px] hover:scale-[1.01] transition-transform duration-300 ease-out cursor-pointer"
                     onClick={() => {
-                      if (
-                        plan.stockStatus !== "SOLD_OUT" &&
-                        plan.stockStatus !== "COMING_SOON" &&
-                        plan.stockStatus !== "UNAVAILABLE"
-                      ) {
+                      if (!nonPurchasableStatuses.has(plan.stockStatus)) {
                         setSelectedPlan({ plan, membership });
                       }
                     }}
@@ -112,17 +110,12 @@ export function MembershipListing({
                               Sold Out
                             </span>
                           )}
-                          {plan.stockStatus === "WAITLIST" && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                              Waitlist
-                            </span>
-                          )}
                           {plan.stockStatus === "COMING_SOON" && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                               Coming Soon
                             </span>
                           )}
-                          {plan.stockStatus === "UNAVAILABLE" && (
+                          {plan.stockStatus !== "SOLD_OUT" && plan.stockStatus !== "COMING_SOON" && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
                               Unavailable
                             </span>
@@ -181,19 +174,15 @@ export function MembershipListing({
                           setSelectedPlan({ plan, membership });
                         }}
                         disabled={
-                          plan.stockStatus === "SOLD_OUT" ||
-                          plan.stockStatus === "COMING_SOON" ||
-                          plan.stockStatus === "UNAVAILABLE"
+                          nonPurchasableStatuses.has(plan.stockStatus)
                         }
                       >
                         {plan.stockStatus === "SOLD_OUT"
                           ? "Sold Out"
                           : plan.stockStatus === "COMING_SOON"
                           ? "Coming Soon"
-                          : plan.stockStatus === "UNAVAILABLE"
+                          : nonPurchasableStatuses.has(plan.stockStatus)
                           ? "Unavailable"
-                          : plan.stockStatus === "WAITLIST"
-                          ? "Join Waitlist"
                           : "+"}
                       </Button>
                     </div>

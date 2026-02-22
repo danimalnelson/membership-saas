@@ -17,7 +17,7 @@ const createPlanSchema = z.object({
   recurringFee: z.number().int().min(0).optional().nullable(),
   recurringFeeName: z.string().max(100).optional().nullable(),
   shippingFee: z.number().int().min(0).optional().nullable(),
-  stockStatus: z.enum(["AVAILABLE", "UNAVAILABLE", "SOLD_OUT", "COMING_SOON", "WAITLIST"]).default("AVAILABLE"),
+  stockStatus: z.enum(["AVAILABLE", "UNAVAILABLE", "SOLD_OUT", "COMING_SOON"]).default("AVAILABLE"),
   maxSubscribers: z.number().int().positive().optional().nullable(),
 }).refine((data) => {
   // If recurringFee is set, recurringFeeName must be provided
@@ -39,6 +39,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    if (body?.stockStatus === "WAITLIST") {
+      body.stockStatus = "UNAVAILABLE";
+    }
     const data = createPlanSchema.parse(body);
 
     // Get membership and verify user has access

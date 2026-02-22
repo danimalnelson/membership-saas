@@ -46,7 +46,6 @@ export default async function EditMembershipPage({
     maxMembers: membershipData.maxMembers,
     status: membershipData.status,
     giftEnabled: membershipData.giftEnabled,
-    waitlistEnabled: membershipData.waitlistEnabled,
     membersOnlyAccess: membershipData.membersOnlyAccess,
     pauseEnabled: membershipData.pauseEnabled,
     skipEnabled: membershipData.skipEnabled,

@@ -52,7 +52,6 @@ async function PlansContent({
     allowMultiplePlans: m.allowMultiplePlans,
     maxMembers: m.maxMembers,
     giftEnabled: m.giftEnabled,
-    waitlistEnabled: m.waitlistEnabled,
     membersOnlyAccess: m.membersOnlyAccess,
     pauseEnabled: m.pauseEnabled,
     skipEnabled: m.skipEnabled,

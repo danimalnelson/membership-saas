@@ -69,7 +69,7 @@ export const POST = withMiddleware(async (req: NextRequest) => {
         maxMembers: membershipData.maxMembers,
         status: membershipData.status || "DRAFT",
         giftEnabled: membershipData.giftEnabled ?? true,
-        waitlistEnabled: membershipData.waitlistEnabled || false,
+        waitlistEnabled: false,
         membersOnlyAccess: membershipData.membersOnlyAccess || false,
         pauseEnabled: membershipData.pauseEnabled || false,
         skipEnabled: membershipData.skipEnabled || false,
