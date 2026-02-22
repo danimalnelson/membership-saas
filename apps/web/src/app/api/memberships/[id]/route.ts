@@ -139,6 +139,9 @@ export const PUT = withMiddleware(async (req: NextRequest) => {
 
     // Update membership (slug is immutable, so exclude it)
     const { slug, ...updateData } = membershipData;
+    const visible = updateData.visible ?? existingMembership.visible;
+    const available = updateData.available ?? existingMembership.available;
+    const derivedStatus = !visible ? "ARCHIVED" : available ? "ACTIVE" : "PAUSED";
 
     const membership = await prisma.membership.update({
       where: { id },
@@ -151,7 +154,9 @@ export const PUT = withMiddleware(async (req: NextRequest) => {
         chargeImmediately: updateData.chargeImmediately,
         allowMultiplePlans: updateData.allowMultiplePlans,
         maxMembers: updateData.maxMembers,
-        status: updateData.status,
+        status: derivedStatus,
+        visible,
+        available,
         giftEnabled: updateData.giftEnabled,
         waitlistEnabled: false,
         membersOnlyAccess: updateData.membersOnlyAccess,

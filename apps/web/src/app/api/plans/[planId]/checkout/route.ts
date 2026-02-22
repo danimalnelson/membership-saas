@@ -44,14 +44,14 @@ export const POST = withMiddleware(async (req: NextRequest, context): Promise<Ne
       return ApiErrors.notFound("Plan not found") as NextResponse;
     }
 
-    // Verify plan is active
-    if (plan.status !== "ACTIVE") {
-      return ApiErrors.badRequest(`Plan is not available (status: ${plan.status})`) as NextResponse;
+    // Verify plan is visible
+    if (!plan.visible) {
+      return ApiErrors.badRequest("Plan is not visible") as NextResponse;
     }
 
-    // Verify membership is active
-    if (plan.membership.status !== "ACTIVE") {
-      return ApiErrors.badRequest("Membership is not available") as NextResponse;
+    // Verify membership is visible
+    if (!plan.membership.visible) {
+      return ApiErrors.badRequest("Membership is not visible") as NextResponse;
     }
 
     // Verify business has Stripe connected
@@ -64,13 +64,8 @@ export const POST = withMiddleware(async (req: NextRequest, context): Promise<Ne
       return ApiErrors.badRequest("Plan does not have a Stripe price configured") as NextResponse;
     }
 
-    // Check inventory
-    if (
-      plan.stockStatus === "SOLD_OUT" ||
-      plan.stockStatus === "COMING_SOON" ||
-      plan.stockStatus === "UNAVAILABLE"
-    ) {
-      return ApiErrors.badRequest(`Plan is ${plan.stockStatus.toLowerCase()}`) as NextResponse;
+    if (!plan.available || !plan.membership.available) {
+      return ApiErrors.badRequest("Plan is unavailable") as NextResponse;
     }
 
     // Check max subscribers

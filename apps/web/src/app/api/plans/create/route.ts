@@ -17,7 +17,9 @@ const createPlanSchema = z.object({
   recurringFee: z.number().int().min(0).optional().nullable(),
   recurringFeeName: z.string().max(100).optional().nullable(),
   shippingFee: z.number().int().min(0).optional().nullable(),
-  stockStatus: z.enum(["AVAILABLE", "UNAVAILABLE", "SOLD_OUT", "COMING_SOON"]).default("AVAILABLE"),
+  stockStatus: z.enum(["AVAILABLE", "UNAVAILABLE", "SOLD_OUT", "COMING_SOON"]).optional(),
+  visible: z.boolean().optional(),
+  available: z.boolean().optional(),
   maxSubscribers: z.number().int().positive().optional().nullable(),
 }).refine((data) => {
   // If recurringFee is set, recurringFeeName must be provided
@@ -43,6 +45,12 @@ export async function POST(req: NextRequest) {
       body.stockStatus = "UNAVAILABLE";
     }
     const data = createPlanSchema.parse(body);
+    const visible = typeof body.visible === "boolean" ? body.visible : true;
+    const available =
+      typeof body.available === "boolean"
+        ? body.available
+        : true;
+    const derivedStatus = !visible ? "ARCHIVED" : available ? "ACTIVE" : "DRAFT";
 
     // Get membership and verify user has access
     const membership = await prisma.membership.findFirst({
@@ -137,9 +145,11 @@ export async function POST(req: NextRequest) {
         recurringFee: data.recurringFee,
         recurringFeeName: data.recurringFeeName,
         shippingFee: data.shippingFee,
-        stockStatus: data.stockStatus,
+        stockStatus: available ? "AVAILABLE" : "UNAVAILABLE",
+        visible,
+        available,
         maxSubscribers: data.maxSubscribers,
-        status: "ACTIVE",
+        status: derivedStatus,
         displayOrder: nextDisplayOrder,
         stripeProductId: stripeProduct.id,
         stripePriceId: stripePriceId,

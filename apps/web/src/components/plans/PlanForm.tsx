@@ -6,10 +6,7 @@ import {
   Button,
   Input,
   LongFormInput,
-  MenuContainer,
-  Menu,
-  MenuButton,
-  MenuItem,
+  Toggle,
 } from "@wine-club/ui";
 import { useBusinessContext } from "@/contexts/business-context";
 
@@ -18,7 +15,6 @@ interface Membership {
   name: string;
   billingAnchor: string;
   cohortBillingDay?: number | null;
-  status: string;
 }
 
 interface PlanFormData {
@@ -33,7 +29,8 @@ interface PlanFormData {
   recurringFee: string;
   recurringFeeName: string;
   shippingFee: string;
-  stockStatus: "AVAILABLE" | "UNAVAILABLE" | "SOLD_OUT" | "COMING_SOON" | "";
+  visible: boolean;
+  available: boolean;
   maxSubscribers: string;
 }
 
@@ -54,21 +51,18 @@ export function PlanForm({
   onSuccess,
   onCancel,
 }: PlanFormProps) {
-  const rawInitialStockStatus = (initialData as { stockStatus?: string } | undefined)
-    ?.stockStatus;
-  const stockStatusOptions: Array<{ value: PlanFormData["stockStatus"]; label: string }> = [
-    { value: "AVAILABLE", label: "Available" },
-    { value: "UNAVAILABLE", label: "Unavailable" },
-    { value: "COMING_SOON", label: "Coming soon" },
-    { value: "SOLD_OUT", label: "Sold out" },
-  ];
+  const initialVisible =
+    (initialData as { visible?: boolean } | undefined)?.visible ??
+    true;
+  const initialAvailable =
+    (initialData as { available?: boolean } | undefined)?.available ??
+    true;
   const router = useRouter();
   const { businessSlug } = useBusinessContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
-  const [statusError, setStatusError] = useState<string | null>(null);
   const [formData, setFormData] = useState<PlanFormData>({
     membershipId: initialData?.membershipId || memberships[0]?.id || "",
     name: initialData?.name || "",
@@ -81,19 +75,10 @@ export function PlanForm({
     recurringFee: initialData?.recurringFee || "",
     recurringFeeName: initialData?.recurringFeeName || "",
     shippingFee: initialData?.shippingFee || "",
-    stockStatus:
-      rawInitialStockStatus &&
-      ["AVAILABLE", "UNAVAILABLE", "SOLD_OUT", "COMING_SOON"].includes(
-        rawInitialStockStatus
-      )
-        ? (rawInitialStockStatus as PlanFormData["stockStatus"])
-        : "",
+    visible: initialVisible,
+    available: initialAvailable,
     maxSubscribers: initialData?.maxSubscribers || "",
   });
-  const selectedStockStatusLabel =
-    stockStatusOptions.find((option) => option.value === formData.stockStatus)
-      ?.label ?? "Select status";
-  const isStatusPlaceholder = !formData.stockStatus;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,11 +95,6 @@ export function PlanForm({
       setPriceError("Please enter a valid price.");
       hasValidationError = true;
     }
-    if (!formData.stockStatus) {
-      setStatusError("Please select a status.");
-      hasValidationError = true;
-    }
-
     if (hasValidationError) {
       return;
     }
@@ -141,9 +121,7 @@ export function PlanForm({
         shippingFee: formData.shippingFee
           ? Math.round(parseFloat(formData.shippingFee) * 100)
           : null,
-        maxSubscribers: formData.maxSubscribers
-          ? parseInt(formData.maxSubscribers)
-          : null,
+        maxSubscribers: formData.maxSubscribers ? parseInt(formData.maxSubscribers) : null,
       };
 
       const url = planId
@@ -216,41 +194,33 @@ export function PlanForm({
           rows={3}
         />
 
-        <div>
-          <p className="block text-sm font-medium mb-1">
-            Status <span className="text-red-900">*</span>
-          </p>
-          <MenuContainer className="w-full">
-            <MenuButton
-              type="button"
-              variant="secondary"
-              className={`w-full justify-between ${isStatusPlaceholder ? "text-gray-700 dark:text-gray-500" : ""}`}
-              showChevron
-            >
-              {selectedStockStatusLabel}
-            </MenuButton>
-            <Menu width={220}>
-              {stockStatusOptions.map((option) => (
-                <MenuItem
-                  key={option.value}
-                  onClick={() =>
-                    {
-                      setFormData({
-                        ...formData,
-                        stockStatus: option.value,
-                      });
-                      if (statusError) setStatusError(null);
-                    }
-                  }
-                >
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Menu>
-          </MenuContainer>
-          {statusError && (
-            <p className="mt-1.5 text-sm text-red-900">{statusError}</p>
-          )}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-md border border-gray-300 px-3 py-2">
+            <div>
+              <p className="text-sm font-medium text-gray-950">Visible</p>
+              <p className="text-12 text-gray-600">Show this plan in the consumer experience</p>
+            </div>
+            <Toggle
+              aria-label="Toggle plan visibility"
+              checked={formData.visible}
+              onChange={() =>
+                setFormData((prev) => ({ ...prev, visible: !prev.visible }))
+              }
+            />
+          </div>
+          <div className="flex items-center justify-between rounded-md border border-gray-300 px-3 py-2">
+            <div>
+              <p className="text-sm font-medium text-gray-950">Available</p>
+              <p className="text-12 text-gray-600">Allow customers to purchase this plan</p>
+            </div>
+            <Toggle
+              aria-label="Toggle plan availability"
+              checked={formData.available}
+              onChange={() =>
+                setFormData((prev) => ({ ...prev, available: !prev.available }))
+              }
+            />
+          </div>
         </div>
       </section>
 
@@ -326,7 +296,7 @@ export function PlanForm({
         </Button>
         <Button
           type="submit"
-          disabled={loading || !formData.name.trim() || !formData.basePrice.trim() || !formData.stockStatus}
+          disabled={loading || !formData.name.trim() || !formData.basePrice.trim()}
         >
           {loading ? "Saving..." : planId ? "Update Plan" : "Create plan"}
         </Button>

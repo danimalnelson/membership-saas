@@ -11,6 +11,9 @@ export const POST = withMiddleware(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const { businessId, ...membershipData } = body;
+    const visible = membershipData.visible ?? true;
+    const available = membershipData.available ?? true;
+    const derivedStatus = !visible ? "ARCHIVED" : available ? "ACTIVE" : "PAUSED";
 
     // Validate required fields
     if (!businessId || !membershipData.name || !membershipData.slug) {
@@ -67,7 +70,9 @@ export const POST = withMiddleware(async (req: NextRequest) => {
         chargeImmediately: membershipData.chargeImmediately ?? true,
         allowMultiplePlans: membershipData.allowMultiplePlans || false,
         maxMembers: membershipData.maxMembers,
-        status: membershipData.status || "DRAFT",
+        status: derivedStatus,
+        visible,
+        available,
         giftEnabled: membershipData.giftEnabled ?? true,
         waitlistEnabled: false,
         membersOnlyAccess: membershipData.membersOnlyAccess || false,

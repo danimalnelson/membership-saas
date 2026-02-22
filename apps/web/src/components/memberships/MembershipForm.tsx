@@ -7,6 +7,7 @@ import {
   Checkbox,
   Input,
   LongFormInput,
+  Toggle,
   MenuContainer,
   Menu,
   MenuButton,
@@ -30,7 +31,8 @@ interface MembershipFormProps {
     chargeImmediately: boolean;
     allowMultiplePlans: boolean;
     maxMembers: number | null;
-    status: string;
+    visible: boolean;
+    available: boolean;
     giftEnabled: boolean;
     membersOnlyAccess: boolean;
     pauseEnabled: boolean;
@@ -77,7 +79,8 @@ export const MembershipForm = React.memo(
     const [maxMembers, setMaxMembers] = useState(
       membership?.maxMembers?.toString() || ""
     );
-    const [status, setStatus] = useState(membership?.status || "");
+    const [visible, setVisible] = useState(membership?.visible ?? true);
+    const [available, setAvailable] = useState(membership?.available ?? true);
     const [giftEnabled, setGiftEnabled] = useState(
       membership?.giftEnabled ?? true
     );
@@ -106,7 +109,6 @@ export const MembershipForm = React.memo(
     const [error, setError] = useState("");
     const [nameError, setNameError] = useState<string | null>(null);
     const [slugError, setSlugError] = useState<string | null>(null);
-    const [statusError, setStatusError] = useState<string | null>(null);
     const [billingStartError, setBillingStartError] = useState<string | null>(null);
 
     // Fetch subscription count for edit mode
@@ -125,20 +127,9 @@ export const MembershipForm = React.memo(
       { value: "COHORT_IMMEDIATE", label: "Cohort billing, immediate start" },
       { value: "COHORT_DEFERRED", label: "Cohort billing, deferred start" },
     ] as const;
-    const selectedStatusLabel =
-      status === "DRAFT"
-        ? "Draft"
-        : status === "ACTIVE"
-          ? "Active"
-          : status === "PAUSED"
-            ? "Paused"
-            : status === "ARCHIVED"
-              ? "Archived"
-              : "Select status";
     const selectedBillingStartLabel =
       billingStartOptions.find((option) => option.value === billingStartSelection)
         ?.label ?? "Select billing and start timing";
-    const isStatusPlaceholder = !status;
     const isBillingStartPlaceholder = !billingStartSelection;
 
     const handleBillingStartSelection = (value: (typeof billingStartOptions)[number]["value"]) => {
@@ -185,10 +176,6 @@ export const MembershipForm = React.memo(
           setSlugError("Please enter a slug.");
           hasValidationError = true;
         }
-        if (!status) {
-          setStatusError("Please select a status.");
-          hasValidationError = true;
-        }
         if (!isEdit && !billingStartSelection) {
           setBillingStartError("Please select billing and start timing.");
           hasValidationError = true;
@@ -216,7 +203,8 @@ export const MembershipForm = React.memo(
             chargeImmediately: billingAnchor === "NEXT_INTERVAL" ? chargeImmediately : true,
             allowMultiplePlans,
             maxMembers: maxMembers ? parseInt(maxMembers, 10) : null,
-            status,
+            visible,
+            available,
             giftEnabled,
             membersOnlyAccess,
             pauseEnabled,
@@ -261,7 +249,8 @@ export const MembershipForm = React.memo(
         chargeImmediately,
         allowMultiplePlans,
         maxMembers,
-        status,
+        visible,
+        available,
         giftEnabled,
         membersOnlyAccess,
         pauseEnabled,
@@ -363,57 +352,29 @@ export const MembershipForm = React.memo(
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Status <span className="text-red-900">*</span>
-                </label>
-                <MenuContainer className="w-full">
-                  <MenuButton
-                    type="button"
-                    variant="secondary"
-                    className={`w-full justify-between ${isStatusPlaceholder ? "text-gray-700 dark:text-gray-500" : ""}`}
-                    showChevron
-                  >
-                    {selectedStatusLabel}
-                  </MenuButton>
-                  <Menu width={220}>
-                    <MenuItem
-                      onClick={() => {
-                        setStatus("DRAFT");
-                        if (statusError) setStatusError(null);
-                      }}
-                    >
-                      Draft
-                    </MenuItem>
-                    <MenuItem
-                      onClick={() => {
-                        setStatus("ACTIVE");
-                        if (statusError) setStatusError(null);
-                      }}
-                    >
-                      Active
-                    </MenuItem>
-                    <MenuItem
-                      onClick={() => {
-                        setStatus("PAUSED");
-                        if (statusError) setStatusError(null);
-                      }}
-                    >
-                      Paused
-                    </MenuItem>
-                    <MenuItem
-                      onClick={() => {
-                        setStatus("ARCHIVED");
-                        if (statusError) setStatusError(null);
-                      }}
-                    >
-                      Archived
-                    </MenuItem>
-                  </Menu>
-                </MenuContainer>
-                {statusError && (
-                  <p className="mt-1.5 text-sm text-red-900">{statusError}</p>
-                )}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-md border border-gray-300 px-3 py-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-950">Visible</p>
+                    <p className="text-12 text-gray-600">Show this club in the consumer experience</p>
+                  </div>
+                  <Toggle
+                    aria-label="Toggle club visibility"
+                    checked={visible}
+                    onChange={() => setVisible((prev) => !prev)}
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-md border border-gray-300 px-3 py-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-950">Available</p>
+                    <p className="text-12 text-gray-600">Allow customers to purchase plans in this club</p>
+                  </div>
+                  <Toggle
+                    aria-label="Toggle club availability"
+                    checked={available}
+                    onChange={() => setAvailable((prev) => !prev)}
+                  />
+                </div>
               </div>
         </section>
 
@@ -548,7 +509,7 @@ export const MembershipForm = React.memo(
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting || !name.trim() || !slug.trim() || !status || (!isEdit && !billingStartSelection)}
+            disabled={isSubmitting || !name.trim() || !slug.trim() || (!isEdit && !billingStartSelection)}
           >
             {isSubmitting
               ? "Saving..."

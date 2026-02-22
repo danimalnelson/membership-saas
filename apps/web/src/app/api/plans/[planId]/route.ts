@@ -17,6 +17,8 @@ const updatePlanSchema = z.object({
   recurringFeeName: z.string().max(100).or(z.literal("")).optional().nullable(),
   shippingFee: z.union([z.number().int().min(0), z.null(), z.literal("")]).optional().nullable(),
   stockStatus: z.enum(["AVAILABLE", "UNAVAILABLE", "SOLD_OUT", "COMING_SOON"]).optional(),
+  visible: z.boolean().optional(),
+  available: z.boolean().optional(),
   maxSubscribers: z.union([z.number().int().positive(), z.null(), z.literal("")]).optional().nullable(),
 });
 
@@ -184,9 +186,19 @@ export async function PUT(
 
     const finalStripePriceId = newStripePriceId || existingPlan.stripePriceId;
 
+    const resolvedVisible = data.visible ?? existingPlan.visible;
+    const resolvedAvailable =
+      data.available ??
+      existingPlan.available;
+    const derivedStatus = !resolvedVisible
+      ? "ARCHIVED"
+      : resolvedAvailable
+        ? "ACTIVE"
+        : "DRAFT";
+
     // Update plan in database
     // Exclude interval/intervalCount (moved to Membership model)
-    const { interval, intervalCount, ...planUpdateData } = data;
+    const { interval, intervalCount, visible, available, stockStatus, ...planUpdateData } = data;
     
     // Convert any remaining empty strings to null for Prisma
     const cleanedUpdateData = Object.fromEntries(
@@ -200,6 +212,10 @@ export async function PUT(
       where: { id: planId },
       data: {
         ...cleanedUpdateData,
+        status: derivedStatus,
+        visible: resolvedVisible,
+        available: resolvedAvailable,
+        stockStatus: resolvedAvailable ? "AVAILABLE" : "UNAVAILABLE",
         stripePriceId: finalStripePriceId,
       },
     });
@@ -302,6 +318,9 @@ export async function DELETE(
       where: { id: planId },
       data: {
         status: "ARCHIVED",
+        visible: false,
+        available: false,
+        stockStatus: "UNAVAILABLE",
       },
     });
 

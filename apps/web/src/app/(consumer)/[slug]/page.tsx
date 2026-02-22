@@ -17,10 +17,10 @@ export default async function BusinessLandingPage({
     where: { slug },
     include: {
       memberships: {
-        where: { status: "ACTIVE" },
+        where: { visible: true },
         include: {
           plans: {
-            where: { status: "ACTIVE" },
+            where: { visible: true },
             orderBy: [
               { displayOrder: "asc" },
               { basePrice: "asc" },

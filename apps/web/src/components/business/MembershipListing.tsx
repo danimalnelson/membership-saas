@@ -15,7 +15,8 @@ interface Plan {
   currency: string;
   shippingFee: number | null;
   setupFee: number | null;
-  stockStatus: string;
+  visible: boolean;
+  available: boolean;
 }
 
 interface Membership {
@@ -23,6 +24,7 @@ interface Membership {
   name: string;
   description: string | null;
   billingInterval: string;
+  available: boolean;
   plans: Plan[];
 }
 
@@ -39,8 +41,6 @@ export function MembershipListing({
   businessDescription,
   memberships,
 }: MembershipListingProps) {
-  const nonPurchasableStatuses = new Set(["SOLD_OUT", "COMING_SOON", "UNAVAILABLE", "WAITLIST"]);
-
   const [selectedPlan, setSelectedPlan] = useState<{
     plan: Plan;
     membership: Membership;
@@ -87,12 +87,14 @@ export function MembershipListing({
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                {membership.plans.map((plan) => (
+                {membership.plans.map((plan) => {
+                  const isPurchasable = membership.available && plan.available;
+                  return (
                   <Card
                     key={plan.id}
                     className="relative bg-white border-0 shadow-none rounded-2xl p-5 md:p-6 pb-20 min-h-[320px] hover:scale-[1.01] transition-transform duration-300 ease-out cursor-pointer"
                     onClick={() => {
-                      if (!nonPurchasableStatuses.has(plan.stockStatus)) {
+                      if (isPurchasable) {
                         setSelectedPlan({ plan, membership });
                       }
                     }}
@@ -103,23 +105,11 @@ export function MembershipListing({
                       </div>
                       
                       {/* Stock Status Badge */}
-                      {plan.stockStatus !== "AVAILABLE" && (
+                      {!isPurchasable && (
                         <div className="shrink-0 ml-2">
-                          {plan.stockStatus === "SOLD_OUT" && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                              Sold Out
-                            </span>
-                          )}
-                          {plan.stockStatus === "COMING_SOON" && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                              Coming Soon
-                            </span>
-                          )}
-                          {plan.stockStatus !== "SOLD_OUT" && plan.stockStatus !== "COMING_SOON" && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
-                              Unavailable
-                            </span>
-                          )}
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+                            Unavailable
+                          </span>
                         </div>
                       )}
                     </div>
@@ -165,7 +155,7 @@ export function MembershipListing({
                       <Button
                         shape="rounded"
                         className={
-                          plan.stockStatus === "AVAILABLE"
+                          isPurchasable
                             ? "w-[36px] h-[36px] p-0 text-[1.5rem] leading-none"
                             : "h-10 px-6"
                         }
@@ -174,20 +164,15 @@ export function MembershipListing({
                           setSelectedPlan({ plan, membership });
                         }}
                         disabled={
-                          nonPurchasableStatuses.has(plan.stockStatus)
+                          !isPurchasable
                         }
                       >
-                        {plan.stockStatus === "SOLD_OUT"
-                          ? "Sold Out"
-                          : plan.stockStatus === "COMING_SOON"
-                          ? "Coming Soon"
-                          : nonPurchasableStatuses.has(plan.stockStatus)
-                          ? "Unavailable"
-                          : "+"}
+                        {isPurchasable ? "+" : "Unavailable"}
                       </Button>
                     </div>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             )}
             </div>
