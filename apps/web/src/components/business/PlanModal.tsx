@@ -14,13 +14,14 @@ interface Plan {
   currency: string;
   shippingFee: number | null;
   setupFee: number | null;
-  stockStatus: string;
+  available: boolean;
 }
 
 interface Membership {
   name: string;
   description: string | null;
   billingInterval: string;
+  available: boolean;
 }
 
 interface PlanModalProps {
@@ -70,15 +71,8 @@ export function PlanModal({
     onEmailSubmit(email);
   };
 
-  const isDisabledStatuses = ["SOLD_OUT", "COMING_SOON", "UNAVAILABLE", "WAITLIST"];
-  const isDisabled = isDisabledStatuses.includes(plan.stockStatus);
-  const ctaLabel = plan.stockStatus === "SOLD_OUT"
-    ? "Sold Out"
-    : plan.stockStatus === "COMING_SOON"
-      ? "Coming Soon"
-      : isDisabled
-        ? "Unavailable"
-        : "Continue to checkout";
+  const isDisabled = !plan.available || !membership.available;
+  const ctaLabel = isDisabled ? "Unavailable" : "Continue to checkout";
 
   return (
     <div
@@ -182,13 +176,11 @@ export function PlanModal({
             </ul>
           </div>
 
-          {/* Stock Status Warning */}
-          {plan.stockStatus !== "AVAILABLE" && (
+          {/* Availability Warning */}
+          {isDisabled && (
             <div className="mb-6 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                {plan.stockStatus === "SOLD_OUT" && "This plan is currently sold out."}
-                {plan.stockStatus === "COMING_SOON" && "This plan is coming soon."}
-                {plan.stockStatus !== "SOLD_OUT" && plan.stockStatus !== "COMING_SOON" && "This plan is currently unavailable."}
+                This plan is currently unavailable.
               </p>
             </div>
           )}

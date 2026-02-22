@@ -17,9 +17,9 @@ export default async function PlanDetailsPage({
   const plan = await prisma.plan.findFirst({
     where: { 
       id: planId,
-      status: "ACTIVE",
+      visible: true,
       membership: {
-        status: "ACTIVE",
+        visible: true,
         business: {
           slug,
         },
@@ -39,7 +39,7 @@ export default async function PlanDetailsPage({
   }
 
   const business = plan.membership.business;
-  const nonPurchasableStatuses = new Set(["SOLD_OUT", "COMING_SOON", "UNAVAILABLE", "WAITLIST"]);
+  const isPurchasable = plan.available && plan.membership.available;
 
   // Parse images if stored as JSON
   let images: string[] = [];
@@ -177,23 +177,11 @@ export default async function PlanDetailsPage({
                       {plan.membership.name} Club
                     </CardDescription>
                   </div>
-                  {plan.stockStatus !== "AVAILABLE" && (
+                  {!isPurchasable && (
                     <div>
-                      {plan.stockStatus === "SOLD_OUT" && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          Sold Out
-                        </span>
-                      )}
-                      {plan.stockStatus === "COMING_SOON" && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          Coming Soon
-                        </span>
-                      )}
-                      {plan.stockStatus !== "SOLD_OUT" && plan.stockStatus !== "COMING_SOON" && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
-                          Unavailable
-                        </span>
-                      )}
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
+                        Unavailable
+                      </span>
                     </div>
                   )}
                 </div>
@@ -241,23 +229,15 @@ export default async function PlanDetailsPage({
                 <Button 
                   size="large"
                   className="w-full text-lg h-14"
-                  disabled={
-                    nonPurchasableStatuses.has(plan.stockStatus)
-                  }
-                  asChild={plan.stockStatus === "AVAILABLE"}
+                  disabled={!isPurchasable}
+                  asChild={isPurchasable}
                 >
-                  {plan.stockStatus === "AVAILABLE" ? (
+                  {isPurchasable ? (
                     <Link href={`/${slug}/plans/${plan.id}/checkout`}>
                       Subscribe Now
                     </Link>
                   ) : (
-                    <span>
-                      {plan.stockStatus === "SOLD_OUT"
-                        ? "Sold Out"
-                        : nonPurchasableStatuses.has(plan.stockStatus)
-                        ? "Unavailable"
-                        : "Coming Soon"}
-                    </span>
+                    <span>Unavailable</span>
                   )}
                 </Button>
               </CardContent>

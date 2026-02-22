@@ -26,14 +26,14 @@ export interface Plan {
   name: string;
   description: string;
   displayOrder: number;
-  status: string;
+  visible: boolean;
+  available: boolean;
   price: number | null;
   currency: string;
   setupFee: number | null;
   recurringFee: number | null;
   recurringFeeName: string | null;
   shippingFee: number | null;
-  stockStatus: string;
   maxSubscribers: number | null;
   subscriptionCount: number;
 }
@@ -43,7 +43,8 @@ export interface MembershipGroup {
   name: string;
   description: string | null;
   slug: string;
-  status: string;
+  visible: boolean;
+  available: boolean;
   billingInterval: string;
   billingAnchor: string;
   cohortBillingDay: number | null;
@@ -65,7 +66,6 @@ interface MembershipOption {
   name: string;
   billingAnchor: string;
   cohortBillingDay?: number | null;
-  status: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -107,7 +107,6 @@ export function PlansAndMembershipsTable({
     name: g.name,
     billingAnchor: g.billingAnchor,
     cohortBillingDay: g.cohortBillingDay,
-    status: g.status,
   }));
 
   const plansForGroup = useMemo(
@@ -212,7 +211,6 @@ export function PlansAndMembershipsTable({
               name: createPlanForGroup.name,
               billingAnchor: createPlanForGroup.billingAnchor,
               cohortBillingDay: createPlanForGroup.cohortBillingDay,
-              status: createPlanForGroup.status,
             }]}
             initialData={{ membershipId: createPlanForGroup.id }}
             onSuccess={() => {
@@ -279,7 +277,8 @@ export function PlansAndMembershipsTable({
               recurringFee: editingPlan.plan.recurringFee ? (editingPlan.plan.recurringFee / 100).toString() : "",
               recurringFeeName: editingPlan.plan.recurringFeeName || "",
               shippingFee: editingPlan.plan.shippingFee ? (editingPlan.plan.shippingFee / 100).toString() : "",
-              stockStatus: editingPlan.plan.stockStatus as any,
+              visible: editingPlan.plan.visible,
+              available: editingPlan.plan.available,
               maxSubscribers: editingPlan.plan.maxSubscribers?.toString() || "",
             }}
             onSuccess={() => {
@@ -320,20 +319,14 @@ function ClubCard({
   const [draggingPlanId, setDraggingPlanId] = useState<string | null>(null);
   const [dragOverPlanId, setDragOverPlanId] = useState<string | null>(null);
 
-  const planStatusBadge = (stockStatus: string): { label: string; variant: "green-subtle" | "gray-subtle" } => {
-    switch (stockStatus) {
-      case "AVAILABLE":
-        return { label: "Available", variant: "green-subtle" };
-      case "UNAVAILABLE":
-        return { label: "Not available", variant: "gray-subtle" };
-      case "SOLD_OUT":
-        return { label: "Sold out", variant: "gray-subtle" };
-      case "COMING_SOON":
-        return { label: "Coming soon", variant: "gray-subtle" };
-      default:
-        return { label: "Not available", variant: "gray-subtle" };
-    }
-  };
+  const planStatusBadge = (available: boolean): { label: string; variant: "green-subtle" | "gray-subtle" } =>
+    available
+      ? { label: "Available", variant: "green-subtle" }
+      : { label: "Not available", variant: "gray-subtle" };
+  const visibilityBadge = (visible: boolean): { label: string; variant: "green-subtle" | "gray-subtle" } =>
+    visible
+      ? { label: "Visible", variant: "green-subtle" }
+      : { label: "Hidden", variant: "gray-subtle" };
 
   const handleDropOnPlan = (targetPlanId: string) => {
     if (!draggingPlanId || draggingPlanId === targetPlanId || isReordering) {
@@ -370,7 +363,8 @@ function ClubCard({
             <table className="w-full text-sm">
               <tbody>
                 {plans.map((plan, index) => {
-                  const statusBadge = planStatusBadge(plan.stockStatus);
+                  const statusBadge = planStatusBadge(plan.available);
+                  const visibleBadge = visibilityBadge(plan.visible);
                   return (
                     <tr
                       key={plan.id}
@@ -424,6 +418,11 @@ function ClubCard({
                       </td>
                       <td className="px-4 py-0 align-middle text-14 font-medium text-foreground">
                         {plan.name}
+                      </td>
+                      <td className="px-4 py-0 align-middle text-right">
+                        <Badge size="sm" variant={visibleBadge.variant}>
+                          {visibleBadge.label}
+                        </Badge>
                       </td>
                       <td className="px-4 py-0 align-middle text-right">
                         <Badge size="sm" variant={statusBadge.variant}>

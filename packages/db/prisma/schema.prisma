@@ -482,6 +482,8 @@ model Membership {
   
   // Status
   status              MembershipStatus    @default(DRAFT)
+  visible             Boolean             @default(true)
+  available           Boolean             @default(true)
   displayOrder        Int                 @default(0)
   
   // Features
@@ -549,6 +551,8 @@ model Plan {
   
   // Status
   status              PlanStatus          @default(DRAFT)
+  visible             Boolean             @default(true)
+  available           Boolean             @default(true)
   displayOrder        Int                 @default(0)
   
   // Stripe

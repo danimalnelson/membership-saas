@@ -13,5 +13,6 @@ export * from "./components/search-input";
 export * from "./components/menu";
 export * from "./components/text";
 export * from "./components/toast";
+export * from "./components/toggle";
 export * from "./lib/utils";
 

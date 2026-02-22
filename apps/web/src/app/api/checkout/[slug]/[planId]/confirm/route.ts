@@ -18,13 +18,13 @@ export async function POST(
       );
     }
 
-    // Find plan and verify it's active
+    // Find plan and verify it's visible
     const plan = await prisma.plan.findFirst({
       where: {
         id: planId,
-        status: "ACTIVE",
+        visible: true,
         membership: {
-          status: "ACTIVE",
+          visible: true,
           business: {
             slug,
           },
@@ -46,13 +46,9 @@ export async function POST(
       );
     }
 
-    if (
-      plan.stockStatus === "SOLD_OUT" ||
-      plan.stockStatus === "COMING_SOON" ||
-      plan.stockStatus === "UNAVAILABLE"
-    ) {
+    if (!plan.available || !plan.membership.available) {
       return NextResponse.json(
-        { error: `This plan is ${plan.stockStatus.toLowerCase().replace("_", " ")}` },
+        { error: "This plan is unavailable" },
         { status: 400 }
       );
     }

@@ -34,7 +34,6 @@ export default async function EditPlanPage({
     prisma.membership.findMany({
       where: {
         businessId: business.id,
-        status: { in: ["DRAFT", "ACTIVE"] },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -57,7 +56,8 @@ export default async function EditPlanPage({
     recurringFee: plan.recurringFee ? (plan.recurringFee / 100).toString() : "",
     recurringFeeName: plan.recurringFeeName || "",
     shippingFee: plan.shippingFee ? (plan.shippingFee / 100).toString() : "",
-    stockStatus: plan.stockStatus,
+    visible: plan.visible,
+    available: plan.available,
     maxSubscribers: plan.maxSubscribers?.toString() || "",
   };
 
