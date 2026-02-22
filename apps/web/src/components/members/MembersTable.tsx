@@ -162,6 +162,7 @@ export function MembersTable({
           businessSlug={businessSlug}
         />
       )}
+      tableInset={24}
       table={table}
       searchInput={
         <SearchInput

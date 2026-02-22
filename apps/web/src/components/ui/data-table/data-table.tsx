@@ -54,6 +54,8 @@ interface DataTableProps<T> {
   filteredEmptyMessage: string;
   /** Row height for body rows */
   rowHeight?: 32 | 40 | 48;
+  /** Optional inset padding around table area */
+  tableInset?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -126,6 +128,7 @@ export function DataTable<T>({
   emptyMessage,
   filteredEmptyMessage,
   rowHeight = 40,
+  tableInset = 0,
 }: DataTableProps<T>) {
   const {
     filterConfigs,
@@ -194,60 +197,66 @@ export function DataTable<T>({
           </p>
         </div>
       ) : (
-        <div className="-mx-6 overflow-x-auto bg-white dark:bg-gray-100">
-          <table className="w-full table-fixed border-collapse">
-            <thead className="border-b border-gray-200 dark:border-gray-700 bg-ds-background-200 dark:bg-gray-100">
-              <tr className="text-left">
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    scope="col"
-                    className={`px-3 h-[42px] align-middle font-medium text-sm text-gray-800 dark:text-gray-800 ${
-                      col.align === "right" ? "text-right" : ""
-                    } ${col.headerClassName || ""}`}
-                  >
-                    {col.label}
-                  </th>
-                ))}
-                {rowActions && (
-                  <th scope="col" className="w-[42px] min-w-[42px] px-0" style={{ height: 42 }} />
-                )}
-              </tr>
-            </thead>
-            <tbody className="[&>tr]:border-b [&>tr]:border-gray-200 dark:[&>tr]:border-gray-700 [&>tr:last-child]:border-b-0">
-              {paginated.map((item) => (
-                <tr
-                  key={keyExtractor(item)}
-                  className={`${rowHeightClass} hover:bg-gray-50 transition-colors ${rowActions ? "group" : ""} ${onRowClick ? "cursor-pointer" : ""}`}
-                  style={{ height: rowHeight, minHeight: rowHeight, maxHeight: rowHeight }}
-                  onClick={onRowClick ? () => onRowClick(item) : undefined}
-                >
+        <div
+          className={`-mx-6 ${tableInset > 0 ? "bg-ds-background-200 px-6 py-6 dark:bg-gray-100" : "bg-white dark:bg-gray-100"}`}
+        >
+          <div className={tableInset > 0 ? "overflow-hidden rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-100" : ""}>
+            <div className="overflow-x-auto">
+              <table className="w-full table-fixed border-collapse">
+              <thead className="border-b border-gray-200 dark:border-gray-700 bg-ds-background-200 dark:bg-gray-100">
+                <tr className="text-left">
                   {columns.map((col) => (
-                    <td
+                    <th
                       key={col.key}
-                      className={`min-w-0 py-0 px-3 text-sm leading-none align-middle overflow-hidden ${
+                      scope="col"
+                      className={`px-3 h-[42px] align-middle font-medium text-sm text-gray-800 dark:text-gray-800 ${
                         col.align === "right" ? "text-right" : ""
-                      } ${col.cellClassName || ""}`}
+                      } ${col.headerClassName || ""}`}
                     >
-                      <div className="min-w-0 leading-none truncate overflow-hidden" style={{ maxHeight: rowHeight }}>
-                        {col.render(item)}
-                      </div>
-                    </td>
+                      {col.label}
+                    </th>
                   ))}
                   {rowActions && (
-                    <td
-                      className="w-[42px] min-w-[42px] py-0 px-0 align-middle"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex w-[42px] items-center justify-center" style={{ height: rowHeight }}>
-                        {rowActions(item)}
-                      </div>
-                    </td>
+                    <th scope="col" className="w-[42px] min-w-[42px] px-0" style={{ height: 42 }} />
                   )}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="[&>tr]:border-b [&>tr]:border-gray-200 dark:[&>tr]:border-gray-700 [&>tr:last-child]:border-b-0">
+                {paginated.map((item) => (
+                  <tr
+                    key={keyExtractor(item)}
+                    className={`${rowHeightClass} hover:bg-gray-50 transition-colors ${rowActions ? "group" : ""} ${onRowClick ? "cursor-pointer" : ""}`}
+                    style={{ height: rowHeight, minHeight: rowHeight, maxHeight: rowHeight }}
+                    onClick={onRowClick ? () => onRowClick(item) : undefined}
+                  >
+                    {columns.map((col) => (
+                      <td
+                        key={col.key}
+                        className={`min-w-0 py-0 px-3 text-sm leading-none align-middle overflow-hidden ${
+                          col.align === "right" ? "text-right" : ""
+                        } ${col.cellClassName || ""}`}
+                      >
+                        <div className="min-w-0 leading-none truncate overflow-hidden" style={{ maxHeight: rowHeight }}>
+                          {col.render(item)}
+                        </div>
+                      </td>
+                    ))}
+                    {rowActions && (
+                      <td
+                        className="w-[42px] min-w-[42px] py-0 px-0 align-middle"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex w-[42px] items-center justify-center" style={{ height: rowHeight }}>
+                          {rowActions(item)}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 

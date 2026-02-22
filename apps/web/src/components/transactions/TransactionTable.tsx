@@ -338,6 +338,7 @@ export function TransactionTable({
       data={preFiltered}
       keyExtractor={(t) => t.id}
       onRowClick={(t) => router.push(`/app/${businessSlug}/transactions/${t.id}`)}
+      tableInset={24}
       table={table}
       searchInput={
         <SearchInput
