@@ -25,6 +25,10 @@ export interface Column<T> {
 interface DataTableProps<T> {
   /** Page title shown in the sticky header */
   title: string;
+  /** Action buttons rendered in the primary header row */
+  primaryActions?: React.ReactNode;
+  /** Show three-dot page menu in the primary header */
+  showPageMenu?: boolean;
   /** Column definitions */
   columns: Column<T>[];
   /** Action buttons rendered on the right side of the header */
@@ -108,6 +112,8 @@ function DataTableFooter({
 
 export function DataTable<T>({
   title,
+  primaryActions,
+  showPageMenu = true,
   columns,
   actions,
   searchInput,
@@ -148,7 +154,8 @@ export function DataTable<T>({
       <div className="sticky top-0 z-20 -mx-6 px-6 flex items-center h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
         <h1 className="text-sm font-medium text-gray-950 dark:text-white">{title}</h1>
         <div className="flex-1" />
-        <PageMenu />
+        {primaryActions}
+        {showPageMenu ? <PageMenu /> : null}
       </div>
 
       {/* Row 2: Filters + Actions */}

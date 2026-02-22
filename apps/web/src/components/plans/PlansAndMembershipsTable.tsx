@@ -162,14 +162,9 @@ export function PlansAndMembershipsTable({
       {/* Row 1: Title */}
       <div className="sticky top-0 z-10 -mx-6 px-6 flex items-center h-[60px] border-b border-gray-300 bg-ds-background-200">
         <h1 className="text-sm font-medium text-foreground">Plans</h1>
-      </div>
-
-      {/* Row 2: Actions */}
-      <div className="sticky top-[60px] z-10 -mx-6 px-6 flex items-center gap-2 h-[60px] border-b border-gray-300 bg-ds-background-200">
         <div className="flex-1" />
         <div className="flex items-center gap-1.5">
           <Button
-            variant="secondary"
             size="small"
             onClick={() => setMembershipDrawerOpen(true)}
             prefix={<Plus className="h-3.5 w-3.5" />}
@@ -465,7 +460,7 @@ function ClubCard({
             onClick={onAddPlan}
             prefix={<Plus className="h-3.5 w-3.5" />}
           >
-            Add plan
+            Create plan
           </Button>
           <Button
             type="button"

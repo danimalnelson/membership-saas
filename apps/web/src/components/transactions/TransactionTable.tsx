@@ -333,6 +333,7 @@ export function TransactionTable({
   return (
     <DataTable
       title="Activity"
+      showPageMenu={false}
       columns={columns}
       data={preFiltered}
       keyExtractor={(t) => t.id}

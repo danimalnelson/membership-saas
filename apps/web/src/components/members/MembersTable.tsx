@@ -139,6 +139,16 @@ export function MembersTable({
   <>
     <DataTable
       title="Members"
+      showPageMenu={false}
+      primaryActions={
+        <Button
+          size="small"
+          onClick={() => setDrawerOpen(true)}
+          prefix={<Plus className="h-3.5 w-3.5" />}
+        >
+          Add member
+        </Button>
+      }
       columns={columns}
       data={filtered}
       keyExtractor={(m) => m.id}
@@ -165,23 +175,14 @@ export function MembersTable({
       emptyMessage="No members found"
       filteredEmptyMessage="No members match filters"
       actions={
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant="secondary"
-            size="small"
-            onClick={exportCsv}
-            prefix={<Download className="h-3.5 w-3.5" />}
-          >
-            Export
-          </Button>
-          <Button
-            size="small"
-            onClick={() => setDrawerOpen(true)}
-            prefix={<Plus className="h-3.5 w-3.5" />}
-          >
-            Add member
-          </Button>
-        </div>
+        <Button
+          variant="secondary"
+          size="small"
+          onClick={exportCsv}
+          prefix={<Download className="h-3.5 w-3.5" />}
+        >
+          Export
+        </Button>
       }
     />
 
