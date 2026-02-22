@@ -60,9 +60,11 @@ export function Badge({
   children,
   ...props
 }: BadgeProps) {
+  const resolvedSize = size ?? "md";
+
   return (
-    <span className={cn(badgeVariants({ variant, size }), className)} {...props}>
-      {icon ? <span className={cn("shrink-0", iconSizeClasses[size])}>{icon}</span> : null}
+    <span className={cn(badgeVariants({ variant, size: resolvedSize }), className)} {...props}>
+      {icon ? <span className={cn("shrink-0", iconSizeClasses[resolvedSize])}>{icon}</span> : null}
       <span>{children}</span>
     </span>
   );

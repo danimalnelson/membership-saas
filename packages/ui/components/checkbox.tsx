@@ -52,7 +52,7 @@ const checkIconSizeClasses = {
 
 export interface CheckboxProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "size" | "onChange">,
-    VariantProps<typeof checkboxContainerVariants> {
+    Omit<VariantProps<typeof checkboxContainerVariants>, "disabled"> {
   onChange?: (checked: boolean) => void;
 }
 
@@ -69,10 +69,12 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     },
     ref
   ) => {
+    const resolvedSize = size ?? "md";
+
     return (
       <label
         className={cn(
-          checkboxContainerVariants({ size, disabled }),
+          checkboxContainerVariants({ size: resolvedSize, disabled }),
           className
         )}
       >
@@ -85,12 +87,12 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           className="sr-only"
           {...props}
         />
-        <span className={cn(checkboxBoxVariants({ size, checked }))}>
+        <span className={cn(checkboxBoxVariants({ size: resolvedSize, checked }))}>
           {checked ? (
             <svg
               fill="none"
               viewBox="0 0 20 20"
-              className={cn(checkIconSizeClasses[size], "text-white")}
+              className={cn(checkIconSizeClasses[resolvedSize], "text-white")}
               aria-hidden="true"
             >
               <path
