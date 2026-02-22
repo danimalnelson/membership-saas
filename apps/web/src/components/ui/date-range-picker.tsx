@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MenuContainer, Menu, useMenuContext, Button, CloseIcon } from "@wine-club/ui";
+import { MenuContainer, Menu, useMenuContext, Button, CloseIcon, Input } from "@wine-club/ui";
 import { ChevronLeft } from "@/components/icons/ChevronLeft";
 import { ChevronRight } from "@/components/icons/ChevronRight";
 
@@ -426,26 +426,28 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
           <div className="flex flex-col gap-3">
             <div>
               <label className="block text-gray-900" style={{ fontSize: 13 }}>Start</label>
-              <input
+              <Input
                 type="text"
+                size="small"
                 value={startText}
                 onChange={(e) => setStartText(e.target.value)}
                 onBlur={handleStartBlur}
                 onKeyDown={(e) => { if (e.key === "Enter") { handleStartBlur(); canApply && handleApply(); } }}
                 placeholder="Select date"
-                className="w-full px-3 h-8 text-sm border border-gray-300 rounded-md bg-white text-gray-950 outline-none ring-0 shadow-none focus:ring-0 focus:shadow-none focus:border-gray-600 transition-colors"
+                className="w-full"
               />
             </div>
             <div>
               <label className="block text-gray-900" style={{ fontSize: 13 }}>End</label>
-              <input
+              <Input
                 type="text"
+                size="small"
                 value={endText}
                 onChange={(e) => setEndText(e.target.value)}
                 onBlur={handleEndBlur}
                 onKeyDown={(e) => { if (e.key === "Enter") { handleEndBlur(); canApply && handleApply(); } }}
                 placeholder="Select date"
-                className="w-full px-3 h-8 text-sm border border-gray-300 rounded-md bg-white text-gray-950 outline-none ring-0 shadow-none focus:ring-0 focus:shadow-none focus:border-gray-600 transition-colors"
+                className="w-full"
               />
             </div>
           </div>

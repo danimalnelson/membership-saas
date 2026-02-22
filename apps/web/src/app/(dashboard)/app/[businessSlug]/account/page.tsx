@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@wine-club/ui";
+import { Button, Input } from "@wine-club/ui";
 
 const PASSWORD_REQUIREMENTS = [
   { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
@@ -130,18 +130,16 @@ export default function AccountProfilePage() {
         <div className="rounded-lg border border-gray-300 bg-white overflow-hidden">
           {/* Name */}
           <div className="px-4 py-4">
-            <label className="block text-13 font-medium text-gray-950 mb-1">
-              Name
-            </label>
-            <input
+            <Input
               type="text"
+              label="Name"
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
                 setSuccess(false);
               }}
               placeholder="Your name"
-              className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
+              className="max-w-sm"
             />
           </div>
 
@@ -182,15 +180,10 @@ export default function AccountProfilePage() {
           <div className="rounded-lg border border-gray-300 bg-white overflow-hidden">
             {/* Current Password */}
             <div className="px-4 py-4">
-              <label
-                htmlFor="currentPassword"
-                className="block text-13 font-medium text-gray-950 mb-1"
-              >
-                Current Password
-              </label>
-              <input
+              <Input
                 id="currentPassword"
                 type="password"
+                label="Current Password"
                 value={currentPassword}
                 onChange={(e) => {
                   setCurrentPassword(e.target.value);
@@ -198,22 +191,17 @@ export default function AccountProfilePage() {
                   setPwSuccess(false);
                 }}
                 autoComplete="current-password"
-                className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
                 placeholder="Enter current password"
+                className="max-w-sm"
               />
             </div>
 
             {/* New Password */}
             <div className="px-4 py-4 border-t border-gray-300">
-              <label
-                htmlFor="newPassword"
-                className="block text-13 font-medium text-gray-950 mb-1"
-              >
-                New Password
-              </label>
-              <input
+              <Input
                 id="newPassword"
                 type="password"
+                label="New Password"
                 value={newPassword}
                 onChange={(e) => {
                   setNewPassword(e.target.value);
@@ -221,8 +209,8 @@ export default function AccountProfilePage() {
                   setPwSuccess(false);
                 }}
                 autoComplete="new-password"
-                className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
                 placeholder="Enter new password"
+                className="max-w-sm"
               />
               {newPassword.length > 0 && (
                 <div className="mt-2 space-y-1">
@@ -246,15 +234,10 @@ export default function AccountProfilePage() {
 
             {/* Confirm New Password */}
             <div className="px-4 py-4 border-t border-gray-300">
-              <label
-                htmlFor="confirmNewPassword"
-                className="block text-13 font-medium text-gray-950 mb-1"
-              >
-                Confirm New Password
-              </label>
-              <input
+              <Input
                 id="confirmNewPassword"
                 type="password"
+                label="Confirm New Password"
                 value={confirmNewPassword}
                 onChange={(e) => {
                   setConfirmNewPassword(e.target.value);
@@ -262,8 +245,8 @@ export default function AccountProfilePage() {
                   setPwSuccess(false);
                 }}
                 autoComplete="new-password"
-                className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
                 placeholder="Confirm new password"
+                className="max-w-sm"
               />
               {confirmNewPassword && !pwMatch && (
                 <p className="mt-1 text-12 text-red-600">

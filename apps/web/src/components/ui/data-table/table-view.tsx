@@ -19,8 +19,10 @@ interface TableViewProps<T> {
   emptyMessage?: string;
   emptyDescription?: React.ReactNode;
   onRowClick?: (item: T) => void;
-  /** Use variable row height for rows with multi-line content (default: false for compact 42px rows) */
+  /** Use variable row height for rows with multi-line content */
   variableRowHeight?: boolean;
+  /** Row height for fixed-height rows */
+  rowHeight?: 32 | 40 | 48;
   className?: string;
 }
 
@@ -36,6 +38,7 @@ export function TableView<T>({
   emptyDescription,
   onRowClick,
   variableRowHeight = false,
+  rowHeight = 40,
   className,
 }: TableViewProps<T>) {
   if (items.length === 0 && emptyMessage) {
@@ -51,14 +54,18 @@ export function TableView<T>({
   }
 
   const rowClassName = variableRowHeight
-    ? "min-h-[42px] py-3"
-    : "h-[42px]";
+    ? "py-2"
+    : rowHeight === 32
+      ? "h-8"
+      : rowHeight === 48
+        ? "h-12"
+        : "h-10";
 
   return (
     <div className={cn("overflow-hidden rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-100", className)}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
-          <thead className="border-b border-gray-400 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
+          <thead className="border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
             <tr className="text-left">
               {columns.map((col) => (
                 <th
@@ -84,6 +91,7 @@ export function TableView<T>({
                   "transition-colors hover:bg-gray-50",
                   onRowClick && "cursor-pointer"
                 )}
+                style={variableRowHeight ? { minHeight: rowHeight } : { height: rowHeight }}
                 onClick={onRowClick ? () => onRowClick(item) : undefined}
               >
                 {columns.map((col) => (

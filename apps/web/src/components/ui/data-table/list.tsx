@@ -5,12 +5,30 @@ import { cn } from "@wine-club/ui";
 import { ChevronDown, ChevronUp } from "geist-icons";
 import { EmptyState } from "../empty-state";
 
-export type RowHeightPreset = "compact" | "comfortable" | "spacious";
+export type RowHeightPreset =
+  | "sm"
+  | "md"
+  | "lg"
+  | "compact"
+  | "comfortable"
+  | "spacious";
 
 const ROW_HEIGHT_MAP: Record<RowHeightPreset, string> = {
-  compact: "h-[42px]",
-  comfortable: "h-[56px]",
-  spacious: "h-[72px]",
+  sm: "h-8",
+  md: "h-10",
+  lg: "h-12",
+  compact: "h-8",
+  comfortable: "h-10",
+  spacious: "h-12",
+};
+
+const ROW_HEIGHT_PX_MAP: Record<RowHeightPreset, number> = {
+  sm: 32,
+  md: 40,
+  lg: 48,
+  compact: 32,
+  comfortable: 40,
+  spacious: 48,
 };
 
 export interface ListColumn<T> {
@@ -79,11 +97,21 @@ function resolveHeight(
   return { className: ROW_HEIGHT_MAP[value] };
 }
 
+function resolveHeightPx(
+  value: RowHeightPreset | number | undefined,
+  preset: RowHeightPreset
+): number {
+  if (value === undefined) return ROW_HEIGHT_PX_MAP[preset];
+  if (typeof value === "number") return value;
+  return ROW_HEIGHT_PX_MAP[value];
+}
+
 function renderTableHeader<T>({
   columns,
   sortState,
   onSort,
   headerHeightRes,
+  headerHeightPx,
   headerClassNameProp,
   hasRowActions,
 }: {
@@ -91,11 +119,12 @@ function renderTableHeader<T>({
   sortState?: SortState;
   onSort?: (key: string) => void;
   headerHeightRes: { className?: string; style?: React.CSSProperties };
+  headerHeightPx: number;
   headerClassNameProp?: string;
   hasRowActions?: boolean;
 }) {
   return (
-    <thead className={cn("border-b border-gray-400 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100", headerClassNameProp)}>
+    <thead className={cn("border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100", headerClassNameProp)}>
       <tr className="text-left">
         {columns.map((col) => {
           const isSorted = sortState?.key === col.key;
@@ -140,7 +169,7 @@ function renderTableHeader<T>({
           <th
             scope="col"
             className="sticky right-0 z-10 w-[42px] min-w-[42px] shrink-0 bg-ds-background-200 dark:bg-gray-100 px-0"
-            style={{ height: 42 }}
+            style={{ height: headerHeightPx }}
           />
         )}
       </tr>
@@ -161,8 +190,8 @@ export function List<T, G = undefined>(
     emptyMessage,
     emptyDescription,
     variableRowHeight = false,
-    rowHeight = "compact",
-    headerHeight = "compact",
+    rowHeight = "comfortable",
+    headerHeight = "comfortable",
     sortState,
     onSort,
     footer,
@@ -173,9 +202,10 @@ export function List<T, G = undefined>(
     rowActions,
   } = props;
 
-  const headerHeightRes = resolveHeight(headerHeight, "compact");
-  // All rows 42px tall (borders excluded)
-  const rowHeightRes = { className: "!h-[42px]", style: { height: 42, minHeight: 42, maxHeight: 42 } as React.CSSProperties };
+  const headerHeightRes = resolveHeight(headerHeight, "comfortable");
+  const headerHeightPx = resolveHeightPx(headerHeight, "comfortable");
+  const rowHeightRes = resolveHeight(rowHeight, "comfortable");
+  const rowHeightPx = resolveHeightPx(rowHeight, "comfortable");
 
   const isGrouped = "groups" in props && props.groups;
 
@@ -205,14 +235,15 @@ export function List<T, G = undefined>(
     }
 
     const childRowCn = cn(
-      rowHeightRes.className,
+      variableRowHeight ? undefined : rowHeightRes.className,
       "transition-colors hover:bg-gray-50",
       onRowClick && "cursor-pointer",
       childRowClassName ?? rowClassNameProp
     );
 
     const groupRowCn = cn(
-      "!h-[42px] bg-white dark:bg-gray-100 border-b cursor-pointer active:bg-gray-200 dark:active:bg-gray-300 transition-colors",
+      "bg-white dark:bg-gray-100 border-b cursor-pointer active:bg-gray-200 dark:active:bg-gray-300 transition-colors",
+      rowHeightRes.className,
       groupRowClassName
     );
 
@@ -225,6 +256,7 @@ export function List<T, G = undefined>(
               sortState,
               onSort,
               headerHeightRes,
+              headerHeightPx,
               headerClassNameProp,
               hasRowActions: !!rowActions,
             })}
@@ -233,6 +265,7 @@ export function List<T, G = undefined>(
                 <React.Fragment key={key}>
                   <tr
                     className={groupRowCn}
+                    style={rowHeightRes.style}
                     onClick={onGroupClick ? () => onGroupClick(group) : undefined}
                   >
                     <td colSpan={columns.length + (rowActions ? 1 : 0)} className="px-3">
@@ -243,20 +276,31 @@ export function List<T, G = undefined>(
                     <tr
                       key={keyExtractor(item)}
                       className={cn(childRowCn, rowActions && "group")}
-                      style={rowHeightRes.style}
+                      style={
+                        variableRowHeight
+                          ? { minHeight: rowHeightPx }
+                          : rowHeightRes.style
+                      }
                       onClick={onRowClick ? () => onRowClick(item) : undefined}
                     >
                       {columns.map((col) => (
                         <td
                           key={col.key}
                           className={cn(
-                            "min-w-0 py-0 px-3 text-sm leading-none align-middle overflow-hidden",
+                            "min-w-0 px-3 text-sm align-middle overflow-hidden",
+                            variableRowHeight ? "py-2" : "py-0 leading-none",
                             col.align === "right" && "text-right",
                             col.cellClassName,
                             cellClassNameProp
                           )}
                         >
-                          <div className="min-w-0 max-h-[42px] leading-none truncate overflow-hidden">
+                          <div
+                            className={cn(
+                              "min-w-0 truncate overflow-hidden",
+                              variableRowHeight ? undefined : "leading-none"
+                            )}
+                            style={{ maxHeight: rowHeightPx }}
+                          >
                             {col.render(item)}
                           </div>
                         </td>
@@ -265,9 +309,9 @@ export function List<T, G = undefined>(
                         <td
                           className="sticky right-0 z-10 w-[42px] min-w-[42px] py-0 px-0 align-middle shrink-0 bg-white dark:bg-gray-100"
                           onClick={(e) => e.stopPropagation()}
-                          style={{ height: 42 }}
+                          style={{ height: rowHeightPx }}
                         >
-                          <div className="relative flex h-[42px] w-[42px] items-center justify-center">
+                          <div className="relative flex w-[42px] items-center justify-center" style={{ height: rowHeightPx }}>
                             {rowActions(item)}
                           </div>
                         </td>
@@ -300,7 +344,7 @@ export function List<T, G = undefined>(
   }
 
   const rowClassName = cn(
-    rowHeightRes.className,
+    variableRowHeight ? undefined : rowHeightRes.className,
     "transition-colors hover:bg-gray-50",
     onRowClick && "cursor-pointer",
     rowActions && "group",
@@ -316,6 +360,7 @@ export function List<T, G = undefined>(
             sortState,
             onSort,
             headerHeightRes,
+            headerHeightPx,
             headerClassNameProp,
             hasRowActions: !!rowActions,
           })}
@@ -324,20 +369,31 @@ export function List<T, G = undefined>(
               <tr
                 key={keyExtractor(item)}
                 className={rowClassName}
-                style={rowHeightRes.style}
+                style={
+                  variableRowHeight
+                    ? { minHeight: rowHeightPx }
+                    : rowHeightRes.style
+                }
                 onClick={onRowClick ? () => onRowClick(item) : undefined}
               >
                 {columns.map((col) => (
                   <td
                     key={col.key}
                     className={cn(
-                      "min-w-0 py-0 px-3 text-sm leading-none align-middle overflow-hidden",
+                      "min-w-0 px-3 text-sm align-middle overflow-hidden",
+                      variableRowHeight ? "py-2" : "py-0 leading-none",
                       col.align === "right" && "text-right",
                       col.cellClassName,
                       cellClassNameProp
                     )}
                   >
-                    <div className="min-w-0 max-h-[42px] truncate overflow-hidden">
+                    <div
+                      className={cn(
+                        "min-w-0 truncate overflow-hidden",
+                        variableRowHeight ? undefined : "leading-none"
+                      )}
+                      style={{ maxHeight: rowHeightPx }}
+                    >
                       {col.render(item)}
                     </div>
                   </td>
@@ -346,9 +402,9 @@ export function List<T, G = undefined>(
                   <td
                     className="sticky right-0 z-10 w-[42px] min-w-[42px] py-0 px-0 align-middle shrink-0 bg-white dark:bg-gray-100"
                     onClick={(e) => e.stopPropagation()}
-                    style={{ height: 42 }}
+                  style={{ height: rowHeightPx }}
                   >
-                    <div className="relative flex h-[42px] w-[42px] items-center justify-center">
+                  <div className="relative flex w-[42px] items-center justify-center" style={{ height: rowHeightPx }}>
                       {rowActions(item)}
                     </div>
                   </td>

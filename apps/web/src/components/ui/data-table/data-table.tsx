@@ -48,6 +48,8 @@ interface DataTableProps<T> {
   // --- Empty states ---
   emptyMessage: string;
   filteredEmptyMessage: string;
+  /** Row height for body rows */
+  rowHeight?: 32 | 40 | 48;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,7 +70,7 @@ function DataTableFooter({
   return (
     <div
       key={count}
-      className="sticky bottom-0 z-20 -mx-3 px-3 flex items-center justify-between h-10 border-t border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100 text-[13px] text-gray-600 dark:text-gray-800"
+      className="sticky bottom-0 z-20 -mx-6 px-6 flex items-center justify-between h-10 border-t border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100 text-[13px] text-gray-600 dark:text-gray-800"
     >
       <span>
         {`${count} ${count === 1 ? "result" : "results"}`}
@@ -117,6 +119,7 @@ export function DataTable<T>({
   table,
   emptyMessage,
   filteredEmptyMessage,
+  rowHeight = 40,
 }: DataTableProps<T>) {
   const {
     filterConfigs,
@@ -136,11 +139,13 @@ export function DataTable<T>({
   } = table;
 
   const hasToolbar = filterConfigs.length > 0 || searchInput || extraFilters || actions;
+  const rowHeightClass =
+    rowHeight === 32 ? "h-8" : rowHeight === 48 ? "h-12" : "h-10";
 
   return (
     <>
       {/* Row 1: Title */}
-      <div className="sticky top-0 z-20 -mx-3 px-3 flex items-center h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
+      <div className="sticky top-0 z-20 -mx-6 px-6 flex items-center h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
         <h1 className="text-sm font-medium text-gray-950 dark:text-white">{title}</h1>
         <div className="flex-1" />
         <PageMenu />
@@ -148,7 +153,7 @@ export function DataTable<T>({
 
       {/* Row 2: Filters + Actions */}
       {hasToolbar && (
-        <div className="sticky top-[60px] z-20 -mx-3 px-3 flex items-center gap-2 h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
+        <div className="sticky top-[60px] z-20 -mx-6 px-6 flex items-center gap-2 h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
           <div className="flex items-center gap-1">
             {searchInput}
             {filterConfigs.map((config) => (
@@ -176,13 +181,13 @@ export function DataTable<T>({
 
       {/* Table */}
       {filtered.length === 0 ? (
-        <div className="-mx-3 py-12 text-center">
+        <div className="-mx-6 py-12 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-800">
             {data.length === 0 ? emptyMessage : filteredEmptyMessage}
           </p>
         </div>
       ) : (
-        <div className="-mx-3 overflow-x-auto bg-white dark:bg-gray-100">
+        <div className="-mx-6 overflow-x-auto bg-white dark:bg-gray-100">
           <table className="w-full table-fixed border-collapse">
             <thead className="border-b border-gray-200 dark:border-gray-700 bg-ds-background-200 dark:bg-gray-100">
               <tr className="text-left">
@@ -206,8 +211,8 @@ export function DataTable<T>({
               {paginated.map((item) => (
                 <tr
                   key={keyExtractor(item)}
-                  className={`!h-[42px] hover:bg-gray-50 transition-colors ${rowActions ? "group" : ""} ${onRowClick ? "cursor-pointer" : ""}`}
-                  style={{ height: 42, minHeight: 42, maxHeight: 42 }}
+                  className={`${rowHeightClass} hover:bg-gray-50 transition-colors ${rowActions ? "group" : ""} ${onRowClick ? "cursor-pointer" : ""}`}
+                  style={{ height: rowHeight, minHeight: rowHeight, maxHeight: rowHeight }}
                   onClick={onRowClick ? () => onRowClick(item) : undefined}
                 >
                   {columns.map((col) => (
@@ -217,7 +222,7 @@ export function DataTable<T>({
                         col.align === "right" ? "text-right" : ""
                       } ${col.cellClassName || ""}`}
                     >
-                      <div className="min-w-0 max-h-[42px] leading-none truncate overflow-hidden">
+                      <div className="min-w-0 leading-none truncate overflow-hidden" style={{ maxHeight: rowHeight }}>
                         {col.render(item)}
                       </div>
                     </td>
@@ -227,7 +232,7 @@ export function DataTable<T>({
                       className="w-[42px] min-w-[42px] py-0 px-0 align-middle"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="flex h-[42px] w-[42px] items-center justify-center">
+                      <div className="flex w-[42px] items-center justify-center" style={{ height: rowHeight }}>
                         {rowActions(item)}
                       </div>
                     </td>

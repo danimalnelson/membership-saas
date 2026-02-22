@@ -65,7 +65,11 @@ export const POST = withMiddleware(async (req: NextRequest, context): Promise<Ne
     }
 
     // Check inventory
-    if (plan.stockStatus !== "AVAILABLE") {
+    if (
+      plan.stockStatus === "SOLD_OUT" ||
+      plan.stockStatus === "COMING_SOON" ||
+      plan.stockStatus === "UNAVAILABLE"
+    ) {
       return ApiErrors.badRequest(`Plan is ${plan.stockStatus.toLowerCase()}`) as NextResponse;
     }
 

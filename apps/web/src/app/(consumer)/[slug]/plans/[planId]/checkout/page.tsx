@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@wine-club/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Input } from "@wine-club/ui";
 import { ArrowLeft, LoaderCircle } from "geist-icons";
 
 export default function CheckoutPage() {
@@ -77,23 +77,18 @@ export default function CheckoutPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium mb-2">
-                    Email Address
-                  </label>
-                  <input
+                  <Input
                     id="email"
                     type="email"
+                    label="Email Address"
+                    helperText="We'll use this to find or create your account"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
                     autoFocus
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     disabled={loading}
                   />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    We'll use this to find or create your account
-                  </p>
                 </div>
 
                 {error && (

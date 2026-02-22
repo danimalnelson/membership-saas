@@ -13,7 +13,6 @@ interface Plan {
   description: string | null;
   basePrice: number | null;
   currency: string;
-  pricingType: string;
   shippingFee: number | null;
   setupFee: number | null;
   stockStatus: string;
@@ -91,7 +90,11 @@ export function MembershipListing({
                     key={plan.id}
                     className="relative bg-white border-0 shadow-none rounded-2xl p-5 md:p-6 pb-20 min-h-[320px] hover:scale-[1.01] transition-transform duration-300 ease-out cursor-pointer"
                     onClick={() => {
-                      if (plan.stockStatus !== "SOLD_OUT" && plan.stockStatus !== "COMING_SOON") {
+                      if (
+                        plan.stockStatus !== "SOLD_OUT" &&
+                        plan.stockStatus !== "COMING_SOON" &&
+                        plan.stockStatus !== "UNAVAILABLE"
+                      ) {
                         setSelectedPlan({ plan, membership });
                       }
                     }}
@@ -117,6 +120,11 @@ export function MembershipListing({
                           {plan.stockStatus === "COMING_SOON" && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                               Coming Soon
+                            </span>
+                          )}
+                          {plan.stockStatus === "UNAVAILABLE" && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+                              Unavailable
                             </span>
                           )}
                         </div>
@@ -151,20 +159,14 @@ export function MembershipListing({
 
                     <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between">
                       {/* Price on the left */}
-                      {plan.pricingType === "FIXED" && plan.basePrice ? (
-                        <div className="flex items-baseline gap-1">
-                          <span className="font-semibold">
-                            {formatCurrency(plan.basePrice, plan.currency)}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            /{membership.billingInterval.toLowerCase()}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="font-semibold text-muted-foreground">
-                          Dynamic Pricing
-                        </div>
-                      )}
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-semibold">
+                          {formatCurrency(plan.basePrice ?? 0, plan.currency)}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          /{membership.billingInterval.toLowerCase()}
+                        </span>
+                      </div>
                       
                       {/* Button on the right */}
                       <Button
@@ -180,13 +182,16 @@ export function MembershipListing({
                         }}
                         disabled={
                           plan.stockStatus === "SOLD_OUT" ||
-                          plan.stockStatus === "COMING_SOON"
+                          plan.stockStatus === "COMING_SOON" ||
+                          plan.stockStatus === "UNAVAILABLE"
                         }
                       >
                         {plan.stockStatus === "SOLD_OUT"
                           ? "Sold Out"
                           : plan.stockStatus === "COMING_SOON"
                           ? "Coming Soon"
+                          : plan.stockStatus === "UNAVAILABLE"
+                          ? "Unavailable"
                           : plan.stockStatus === "WAITLIST"
                           ? "Join Waitlist"
                           : "+"}

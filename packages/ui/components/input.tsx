@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/utils";
 
 const baseStyles =
-  "w-full rounded-md border border-gray-300 bg-white text-sm text-gray-950 placeholder:text-gray-700 outline-none ring-0 shadow-none transition-[border-color,box-shadow] duration-150 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-100 dark:text-white dark:placeholder:text-gray-500 dark:focus-visible:border-gray-400";
+  "w-full rounded-md border border-gray-300 bg-white text-sm text-gray-950 placeholder:text-gray-700 outline-none ring-0 shadow-none transition-[border-color,box-shadow] duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:border-gray-300 disabled:text-gray-600 disabled:placeholder:text-gray-600 disabled:opacity-100 dark:border-gray-600 dark:bg-gray-100 dark:text-white dark:placeholder:text-gray-500 dark:focus-visible:border-gray-400";
 
 const focusDefault =
   "focus:border-gray-600 focus:shadow-[0_0_0_3px_rgba(0,0,0,0.06)] focus-visible:border-gray-600 focus-visible:shadow-[0_0_0_3px_rgba(0,0,0,0.06)]";
@@ -47,14 +47,31 @@ const wrapperVariants = cva(
 export interface InputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size" | "prefix">,
     VariantProps<typeof inputVariants> {
+  label?: React.ReactNode;
   prefix?: React.ReactNode;
   suffix?: React.ReactNode;
+  helperText?: React.ReactNode;
   error?: string;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, size, prefix, suffix, error, ...props }, ref) => {
+  ({ className, type, size, label, prefix, suffix, helperText, error, id, required, ...props }, ref) => {
     const hasWrapper = prefix || suffix;
+    const inputId = id ?? React.useId();
+
+    const labelNode = label ? (
+      <label
+        htmlFor={inputId}
+        className="mb-1 block text-sm font-medium text-gray-950 dark:text-white"
+      >
+        {label}
+        {required && <span className="text-red-900"> *</span>}
+      </label>
+    ) : null;
+
+    const helperMessage = helperText ? (
+      <p className="mt-1 text-12 text-gray-600 dark:text-gray-500">{helperText}</p>
+    ) : null;
 
     const errorMessage = error ? (
       <p className="mt-1.5 text-sm text-red-900">{error}</p>
@@ -75,7 +92,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             type={type}
             ref={ref}
-            className="flex-1 min-w-0 bg-transparent border-none outline-none ring-0 shadow-none text-sm text-gray-950 placeholder:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-white dark:placeholder:text-gray-500 p-0"
+            id={inputId}
+            required={required}
+            className="flex-1 min-w-0 bg-transparent border-none outline-none ring-0 shadow-none text-sm text-gray-950 placeholder:text-gray-700 disabled:cursor-not-allowed disabled:text-gray-600 disabled:placeholder:text-gray-600 disabled:opacity-100 dark:text-white dark:placeholder:text-gray-500 p-0"
             {...props}
           />
           {suffix && (
@@ -84,25 +103,23 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         </div>
       );
 
-      if (error) {
-        return <div>{wrapper}{errorMessage}</div>;
-      }
-      return wrapper;
+      if (!labelNode && !helperMessage && !errorMessage) return wrapper;
+      return <div>{labelNode}{wrapper}{helperMessage}{errorMessage}</div>;
     }
 
     const input = (
       <input
         type={type}
+        id={inputId}
+        required={required}
         className={cn(inputVariants({ size }), error ? focusError : focusDefault, className)}
         ref={ref}
         {...props}
       />
     );
 
-    if (error) {
-      return <div>{input}{errorMessage}</div>;
-    }
-    return input;
+    if (!labelNode && !helperMessage && !errorMessage) return input;
+    return <div>{labelNode}{input}{helperMessage}{errorMessage}</div>;
   }
 );
 Input.displayName = "Input";

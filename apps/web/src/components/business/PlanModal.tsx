@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, formatCurrency } from "@wine-club/ui";
+import { Button, Input, formatCurrency } from "@wine-club/ui";
 import { Check } from "geist-icons";
 import { Cross } from "@/components/icons/Cross";
 import { useEffect, useState } from "react";
@@ -12,7 +12,6 @@ interface Plan {
   description: string | null;
   basePrice: number | null;
   currency: string;
-  pricingType: string;
   shippingFee: number | null;
   setupFee: number | null;
   stockStatus: string;
@@ -72,7 +71,9 @@ export function PlanModal({
   };
 
   const isDisabled =
-    plan.stockStatus === "SOLD_OUT" || plan.stockStatus === "COMING_SOON";
+    plan.stockStatus === "SOLD_OUT" ||
+    plan.stockStatus === "COMING_SOON" ||
+    plan.stockStatus === "UNAVAILABLE";
 
   return (
     <div
@@ -113,25 +114,16 @@ export function PlanModal({
           </div>
 
           {/* Pricing */}
-          {plan.pricingType === "FIXED" && plan.basePrice ? (
-            <div className="bg-accent/50 rounded-lg p-6 mb-8">
-              <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-4xl font-semibold">
-                  {formatCurrency(plan.basePrice, plan.currency)}
-                </span>
-                <span className="text-lg text-muted-foreground">
-                  /{membership.billingInterval.toLowerCase()}
-                </span>
-              </div>
+          <div className="bg-accent/50 rounded-lg p-6 mb-8">
+            <div className="flex items-baseline gap-2 mb-2">
+              <span className="text-4xl font-semibold">
+                {formatCurrency(plan.basePrice ?? 0, plan.currency)}
+              </span>
+              <span className="text-lg text-muted-foreground">
+                /{membership.billingInterval.toLowerCase()}
+              </span>
             </div>
-          ) : (
-            <div className="bg-accent/50 rounded-lg p-6 mb-8">
-              <div className="text-2xl font-semibold mb-2">Dynamic Pricing</div>
-              <p className="text-sm text-muted-foreground">
-                Price varies by selection
-              </p>
-            </div>
-          )}
+          </div>
 
           {/* Plan Description */}
           {plan.description && (
@@ -193,30 +185,23 @@ export function PlanModal({
                 {plan.stockStatus === "WAITLIST" &&
                   "This plan is available for waitlist only."}
                 {plan.stockStatus === "COMING_SOON" && "This plan is coming soon."}
+                {plan.stockStatus === "UNAVAILABLE" && "This plan is currently unavailable."}
               </p>
             </div>
           )}
 
           {/* Email Input Form */}
           <form onSubmit={handleCheckout} className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium mb-2"
-              >
-                Email address
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
-                disabled={isDisabled || isSubmitting}
-              />
-            </div>
+            <Input
+              type="email"
+              id="email"
+              label="Email address"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              disabled={isDisabled || isSubmitting}
+            />
 
             {/* CTA */}
             <Button
@@ -229,6 +214,8 @@ export function PlanModal({
                 ? "Sold Out"
                 : plan.stockStatus === "COMING_SOON"
                 ? "Coming Soon"
+                : plan.stockStatus === "UNAVAILABLE"
+                ? "Unavailable"
                 : plan.stockStatus === "WAITLIST"
                 ? "Join Waitlist"
                 : "Continue to checkout"}

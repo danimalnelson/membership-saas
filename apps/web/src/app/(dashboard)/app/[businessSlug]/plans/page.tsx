@@ -61,7 +61,6 @@ async function PlansContent({
       status: plan.status,
       price: plan.basePrice,
       currency: plan.currency,
-      pricingType: plan.pricingType,
       setupFee: plan.setupFee,
       recurringFee: plan.recurringFee,
       recurringFeeName: plan.recurringFeeName,

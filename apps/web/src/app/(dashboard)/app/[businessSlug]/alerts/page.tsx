@@ -31,7 +31,6 @@ interface AlertsResponse {
 }
 
 const ALERT_ICONS = {
-  MISSING_DYNAMIC_PRICE: "💰",
   FAILED_PAYMENT: "💳",
   SUBSCRIPTION_PAUSED: "⏸️",
   SUBSCRIPTION_CANCELLED: "❌",
@@ -107,7 +106,7 @@ export default function AlertsPage() {
   };
 
   const handleNavigate = (alert: Alert) => {
-    if (alert.type === "MISSING_DYNAMIC_PRICE" && alert.metadata?.planId) {
+    if (alert.metadata?.planId) {
       router.push(`/app/${businessSlug}/plans/${alert.metadata.planId}/edit`);
     }
   };
@@ -116,20 +115,12 @@ export default function AlertsPage() {
     <div className="space-y-6">
       {/* Summary Cards */}
       {data && data.total > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="cursor-pointer hover:bg-accent/50 transition-colors"
             onClick={() => setTypeFilter(null)}>
             <CardHeader className="pb-3">
               <CardDescription>Total Alerts</CardDescription>
               <CardTitle className="text-3xl">{data.total}</CardTitle>
-            </CardHeader>
-          </Card>
-          
-          <Card className="cursor-pointer hover:bg-accent/50 transition-colors"
-            onClick={() => setTypeFilter(typeFilter === "MISSING_DYNAMIC_PRICE" ? null : "MISSING_DYNAMIC_PRICE")}>
-            <CardHeader className="pb-3">
-              <CardDescription>💰 Missing Prices</CardDescription>
-              <CardTitle className="text-3xl">{data.counts.MISSING_DYNAMIC_PRICE || 0}</CardTitle>
             </CardHeader>
           </Card>
           
@@ -233,27 +224,18 @@ export default function AlertsPage() {
                   {alert.message}
                 </p>
                 
-                {alert.metadata && alert.type === "MISSING_DYNAMIC_PRICE" && (
-                  <div className={`text-xs mt-2 ${SEVERITY_TEXT_COLORS[alert.severity as keyof typeof SEVERITY_TEXT_COLORS]} opacity-75`}>
-                    Plan: {alert.metadata.planName} • 
-                    Membership: {alert.metadata.membershipName} • 
-                    {alert.metadata.activeSubscribers} subscriber(s) • 
-                    {alert.metadata.daysRemaining} day(s) remaining
-                  </div>
-                )}
-                
                 <div className={`text-xs mt-2 ${SEVERITY_TEXT_COLORS[alert.severity as keyof typeof SEVERITY_TEXT_COLORS]} opacity-50`}>
                   {new Date(alert.createdAt).toLocaleString()}
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
-                {alert.type === "MISSING_DYNAMIC_PRICE" && !alert.resolved && (
+                {alert.metadata?.planId && !alert.resolved && (
                   <Button
                     onClick={() => handleNavigate(alert)}
                     size="small"
                   >
-                    Set Price
+                    Open Plan
                   </Button>
                 )}
                 

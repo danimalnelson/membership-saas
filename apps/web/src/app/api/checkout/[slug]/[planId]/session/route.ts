@@ -50,7 +50,11 @@ export async function POST(
     }
 
     // Check stock status
-    if (plan.stockStatus === "SOLD_OUT" || plan.stockStatus === "COMING_SOON") {
+    if (
+      plan.stockStatus === "SOLD_OUT" ||
+      plan.stockStatus === "COMING_SOON" ||
+      plan.stockStatus === "UNAVAILABLE"
+    ) {
       return NextResponse.json(
         { error: `This plan is ${plan.stockStatus.toLowerCase().replace("_", " ")}` },
         { status: 400 }

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { IconButton } from "@wine-club/ui";
+import { IconButton, LongFormInput } from "@wine-club/ui";
 import { Pencil } from "geist-icons";
 import { SectionCard } from "@/components/ui/section-card";
 
@@ -95,13 +95,13 @@ export function MemberNote({ consumerId, noteContent, noteId }: MemberNoteProps)
       }
     >
       {editing ? (
-        <textarea
+        <LongFormInput
           ref={textareaRef}
           value={content}
           onChange={(e) => handleChange(e.target.value)}
           onBlur={handleBlur}
           placeholder="Add a note about this member..."
-          className="w-full text-14 leading-relaxed resize-none border-0 bg-transparent p-0 focus:outline-none focus:ring-0 placeholder:text-gray-700"
+          className="w-full text-14 leading-relaxed resize-none border-0 bg-transparent p-0 focus:border-transparent focus:shadow-none focus-visible:border-transparent focus-visible:shadow-none placeholder:text-gray-700"
           rows={3}
         />
       ) : (

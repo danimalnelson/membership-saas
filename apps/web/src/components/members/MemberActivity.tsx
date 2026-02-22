@@ -97,7 +97,6 @@ export function MemberActivity({
         columns={columns}
         items={paginated}
         keyExtractor={(e) => e.id}
-        rowHeight="compact"
         emptyMessage="No activity yet"
       />
       {events.length > 0 && (

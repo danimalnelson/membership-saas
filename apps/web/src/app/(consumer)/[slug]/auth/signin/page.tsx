@@ -2,7 +2,15 @@
 
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@wine-club/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Input,
+} from "@wine-club/ui";
 
 export default function ConsumerSignInPage() {
   const params = useParams();
@@ -97,20 +105,15 @@ export default function ConsumerSignInPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-2">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
+            <Input
+              id="email"
+              type="email"
+              label="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@example.com"
+            />
 
             {error && (
               <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm">

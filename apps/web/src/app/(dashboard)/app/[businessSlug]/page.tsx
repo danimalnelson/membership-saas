@@ -11,6 +11,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Input,
 } from "@wine-club/ui";
 import { CopyButton } from "@/components/copy-button";
 import { DashboardContent } from "./_components/DashboardContent";
@@ -166,11 +167,11 @@ export default async function BusinessDashboardPage({
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex gap-2">
-            <input
+            <Input
               type="text"
               value={`${publicAppUrl}/${business.slug}`}
               readOnly
-              className="flex-1 px-3 py-2 border rounded-md bg-muted text-sm font-mono"
+              className="flex-1 font-mono"
             />
             <CopyButton
               text={`${publicAppUrl}/${business.slug}`}

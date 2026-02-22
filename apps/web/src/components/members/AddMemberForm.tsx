@@ -76,44 +76,33 @@ export function AddMemberForm({ businessId, onSuccess, onCancel }: AddMemberForm
         </div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-950 mb-1.5">
-          Email <span className="text-red-900">*</span>
-        </label>
-        <Input
-          type="email"
-          value={email}
-          onChange={handleEmailChange}
-          onBlur={handleEmailBlur}
-          placeholder="customer@example.com"
-          error={emailError || undefined}
-        />
-      </div>
+      <Input
+        type="email"
+        label="Email"
+        required
+        value={email}
+        onChange={handleEmailChange}
+        onBlur={handleEmailBlur}
+        placeholder="customer@example.com"
+        error={emailError || undefined}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-950 mb-1.5">
-          Name <span className="text-red-900">*</span>
-        </label>
-        <Input
-          type="text"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Jane Doe"
-        />
-      </div>
+      <Input
+        type="text"
+        label="Name"
+        required
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Jane Doe"
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-950 mb-1.5">
-          Phone
-        </label>
-        <Input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="(555) 123-4567"
-        />
-      </div>
+      <Input
+        type="tel"
+        label="Phone"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        placeholder="(555) 123-4567"
+      />
 
       <div className="flex items-center justify-end gap-2 pt-2">
         <Button

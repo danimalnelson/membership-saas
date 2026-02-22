@@ -70,7 +70,7 @@ const TYPE_FILTER: FilterConfig = {
     { value: "SUBSCRIPTION_CREATED", label: "Started", icon: <TypeIcon type="SUBSCRIPTION_CREATED" /> },
     { value: "CHARGE", label: "Renewed", icon: <TypeIcon type="CHARGE" /> },
     { value: "SUBSCRIPTION_PAUSED", label: "Paused", icon: <TypeIcon type="SUBSCRIPTION_PAUSED" /> },
-    { value: "SUBSCRIPTION_CANCELLED,CANCELLATION_SCHEDULED", label: "Canceled", icon: <TypeIcon type="SUBSCRIPTION_CANCELLED" /> },
+    { value: "CANCELED", label: "Canceled", icon: <TypeIcon type="SUBSCRIPTION_CANCELLED" /> },
     { value: "RENEWAL_FAILED", label: "Failed", icon: <TypeIcon type="RENEWAL_FAILED" /> },
   ],
 };
@@ -111,8 +111,13 @@ function matchesSearch(t: Transaction, query: string): boolean {
 
 function filterFn(t: Transaction, filters: Record<string, string>): boolean {
   if (filters.type) {
-    const types = filters.type.split(",");
-    if (!types.includes(t.type)) return false;
+    const selected = new Set(filters.type.split(","));
+    if (selected.has("CANCELED")) {
+      selected.delete("CANCELED");
+      selected.add("SUBSCRIPTION_CANCELLED");
+      selected.add("CANCELLATION_SCHEDULED");
+    }
+    if (!selected.has(t.type)) return false;
   }
   if (filters.plan) {
     const plans = filters.plan.split(",");

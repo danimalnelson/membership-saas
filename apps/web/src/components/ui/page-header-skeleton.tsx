@@ -32,12 +32,12 @@ export function PageHeaderSkeleton({
   return (
     <>
       {/* Row 1: Title */}
-      <div className="sticky top-0 z-20 -mx-3 px-3 flex items-center h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
+      <div className="sticky top-0 z-20 -mx-6 px-6 flex items-center h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
         <div className={`h-4 w-24 ${SKELETON_CLASS}`} />
       </div>
 
       {/* Row 2: Search + Filters + Actions */}
-      <div className="sticky top-[60px] z-20 -mx-3 px-3 flex items-center gap-2 h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
+      <div className="sticky top-[60px] z-20 -mx-6 px-6 flex items-center gap-2 h-[60px] border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
         {showSearch && (
           <div className={`h-8 w-[240px] shrink-0 rounded-md ${SKELETON_CLASS}`} />
         )}

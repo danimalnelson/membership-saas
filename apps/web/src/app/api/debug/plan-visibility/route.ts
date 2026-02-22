@@ -32,7 +32,12 @@ export async function GET(req: NextRequest) {
         stockStatus: plan.stockStatus,
         basePrice: plan.basePrice,
         createdAt: plan.createdAt,
-        visibleOnPublicPage: plan.status === "ACTIVE",
+        listedOnPublicPage: plan.status === "ACTIVE",
+        purchasable:
+          plan.status === "ACTIVE" &&
+          plan.stockStatus !== "SOLD_OUT" &&
+          plan.stockStatus !== "COMING_SOON" &&
+          plan.stockStatus !== "UNAVAILABLE",
       }))
     );
 
@@ -43,10 +48,11 @@ export async function GET(req: NextRequest) {
         slug: business.slug,
       },
       allPlans: plansSummary,
-      visiblePlans: plansSummary.filter((p) => p.visibleOnPublicPage),
+      listedPlans: plansSummary.filter((p) => p.listedOnPublicPage),
+      purchasablePlans: plansSummary.filter((p) => p.purchasable),
       help: {
         message:
-          "Plans must have status='ACTIVE' to show on the public page. Check the 'visibleOnPublicPage' field.",
+          "Plans are listed when status='ACTIVE'. Plans are purchasable when listed and stockStatus is not SOLD_OUT, COMING_SOON, or UNAVAILABLE.",
         publicPageUrl: `${process.env.PUBLIC_APP_URL || "https://membership-saas-web.vercel.app"}/${slug}`,
       },
     });

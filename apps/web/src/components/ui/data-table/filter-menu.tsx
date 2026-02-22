@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Check } from "geist-icons";
-import { Input } from "@wine-club/ui";
+import { Checkbox, Input } from "@wine-club/ui";
 import { FilterPill } from "./filter-pill";
 import type { FilterConfig, TextFilterConfig, SelectFilterConfig } from "./use-data-table";
 
@@ -155,20 +154,12 @@ function MultiSelectFilterPill({
           {config.options.map((opt) => {
             const checked = selectedValues.includes(opt.value);
             return (
-              <button
+              <Checkbox
                 key={opt.value}
-                onClick={() => toggleOption(opt.value)}
-                className="flex items-center gap-2.5 px-2 h-9 rounded-md text-sm font-normal text-gray-950 hover:bg-gray-100 transition-colors"
+                checked={checked}
+                onChange={() => toggleOption(opt.value)}
+                className="w-full h-9 px-2 rounded-md text-sm font-normal hover:bg-gray-100"
               >
-                <span
-                  className={`flex items-center justify-center h-4 w-4 rounded border transition-colors shrink-0 ${
-                    checked
-                      ? "bg-gray-950 border-gray-950"
-                      : "border-gray-600 bg-white dark:bg-gray-100"
-                  }`}
-                >
-                  {checked && <Check className="h-3 w-3" style={{ color: "white" }} />}
-                </span>
                 {opt.icon ? (
                   <span className="flex items-center gap-1.5">
                     <span className="shrink-0">{opt.icon}</span>
@@ -177,7 +168,7 @@ function MultiSelectFilterPill({
                 ) : (
                   opt.label
                 )}
-              </button>
+              </Checkbox>
             );
           })}
         </div>

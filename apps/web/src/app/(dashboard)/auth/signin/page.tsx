@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { Button } from "@wine-club/ui";
+import { Button, Input } from "@wine-club/ui";
 
 function SignInForm() {
   const searchParams = useSearchParams();
@@ -58,49 +58,33 @@ function SignInForm() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-13 font-medium text-gray-950 mb-1"
-              >
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError("");
-                }}
-                required
-                autoComplete="email"
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
-                placeholder="you@example.com"
-              />
-            </div>
+            <Input
+              id="email"
+              type="email"
+              label="Email Address"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
+              required
+              autoComplete="email"
+              placeholder="you@example.com"
+            />
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-13 font-medium text-gray-950 mb-1"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError("");
-                }}
-                required
-                autoComplete="current-password"
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
-                placeholder="Enter your password"
-              />
-            </div>
+            <Input
+              id="password"
+              type="password"
+              label="Password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
+              required
+              autoComplete="current-password"
+              placeholder="Enter your password"
+            />
 
             {error && (
               <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-14 text-red-800">

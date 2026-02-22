@@ -10,6 +10,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Input,
+  LongFormInput,
+  MenuContainer,
+  Menu,
+  MenuButton,
+  MenuItem,
 } from "@wine-club/ui";
 import { CloudUpload, MagnifyingGlassPlus, MagnifyingGlassMinus } from "geist-icons";
 import { Cross } from "@/components/icons/Cross";
@@ -44,6 +50,23 @@ export default function SettingsPage() {
     contactPhone: "",
     timeZone: "America/New_York",
   });
+  const timezoneOptions = [
+    { value: "America/New_York", label: "Eastern (New York)" },
+    { value: "America/Chicago", label: "Central (Chicago)" },
+    { value: "America/Denver", label: "Mountain (Denver)" },
+    { value: "America/Los_Angeles", label: "Pacific (Los Angeles)" },
+    { value: "America/Anchorage", label: "Alaska (Anchorage)" },
+    { value: "Pacific/Honolulu", label: "Hawaii (Honolulu)" },
+    { value: "Europe/London", label: "London (GMT)" },
+    { value: "Europe/Paris", label: "Paris (CET)" },
+    { value: "Europe/Berlin", label: "Berlin (CET)" },
+    { value: "Asia/Tokyo", label: "Tokyo (JST)" },
+    { value: "Asia/Shanghai", label: "Shanghai (CST)" },
+    { value: "Australia/Sydney", label: "Sydney (AEST)" },
+  ] as const;
+  const selectedTimezoneLabel =
+    timezoneOptions.find((option) => option.value === formData.timeZone)?.label ??
+    "Select timezone";
 
   // Step 1: File selected -> open crop modal
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,24 +222,16 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Business Name */}
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium mb-2"
-              >
-                Business Name *
-              </label>
-              <input
-                id="name"
-                type="text"
-                required
-                className="w-full px-3 py-2 border rounded-md"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-              />
-            </div>
+            <Input
+              id="name"
+              type="text"
+              label="Business Name"
+              required
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+            />
 
             {/* Logo Upload */}
             <div>
@@ -235,7 +250,7 @@ export default function SettingsPage() {
                     <img
                       src={formData.logoUrl}
                       alt="Logo preview"
-                      className="h-20 w-20 rounded-lg object-cover border border-gray-400"
+                      className="h-20 w-20 rounded-lg object-cover border border-gray-300"
                     />
                     <button
                       type="button"
@@ -310,7 +325,7 @@ export default function SettingsPage() {
                     />
                     <MagnifyingGlassPlus className="h-3.5 w-3.5 text-gray-800 shrink-0" />
                   </div>
-                  <div className="px-4 py-3 border-t border-gray-400 flex items-center justify-between">
+                  <div className="px-4 py-3 border-t border-gray-300 flex items-center justify-between">
                     <Button
                       variant="tertiary"
                       onClick={cancelCrop}
@@ -328,121 +343,81 @@ export default function SettingsPage() {
             )}
 
             {/* Description */}
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium mb-2"
-              >
-                Description
-              </label>
-              <textarea
-                id="description"
-                rows={4}
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder="Tell customers about your wine club..."
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-              />
-            </div>
+            <LongFormInput
+              id="description"
+              label="Description"
+              rows={4}
+              placeholder="Tell customers about your wine club..."
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+            />
 
             {/* Website */}
-            <div>
-              <label
-                htmlFor="website"
-                className="block text-sm font-medium mb-2"
-              >
-                Website
-              </label>
-              <input
-                id="website"
-                type="url"
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder="https://yourwebsite.com"
-                value={formData.website}
-                onChange={(e) =>
-                  setFormData({ ...formData, website: e.target.value })
-                }
-              />
-            </div>
+            <Input
+              id="website"
+              type="url"
+              label="Website"
+              placeholder="https://yourwebsite.com"
+              value={formData.website}
+              onChange={(e) =>
+                setFormData({ ...formData, website: e.target.value })
+              }
+            />
 
             {/* Contact Email */}
-            <div>
-              <label
-                htmlFor="contactEmail"
-                className="block text-sm font-medium mb-2"
-              >
-                Contact Email
-              </label>
-              <input
-                id="contactEmail"
-                type="email"
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder="support@yourwineclub.com"
-                value={formData.contactEmail}
-                onChange={(e) =>
-                  setFormData({ ...formData, contactEmail: e.target.value })
-                }
-              />
-            </div>
+            <Input
+              id="contactEmail"
+              type="email"
+              label="Contact Email"
+              placeholder="support@yourwineclub.com"
+              value={formData.contactEmail}
+              onChange={(e) =>
+                setFormData({ ...formData, contactEmail: e.target.value })
+              }
+            />
 
             {/* Contact Phone */}
-            <div>
-              <label
-                htmlFor="contactPhone"
-                className="block text-sm font-medium mb-2"
-              >
-                Contact Phone
-              </label>
-              <input
-                id="contactPhone"
-                type="tel"
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder="+1234567890"
-                value={formData.contactPhone}
-                onChange={(e) =>
-                  setFormData({ ...formData, contactPhone: e.target.value })
-                }
-              />
-            </div>
+            <Input
+              id="contactPhone"
+              type="tel"
+              label="Contact Phone"
+              placeholder="+1234567890"
+              value={formData.contactPhone}
+              onChange={(e) =>
+                setFormData({ ...formData, contactPhone: e.target.value })
+              }
+            />
 
             {/* Timezone */}
             <div>
-              <label
-                htmlFor="timeZone"
-                className="block text-sm font-medium mb-2"
-              >
+              <label className="block text-sm font-medium mb-1">
                 Timezone
               </label>
-              <select
-                id="timeZone"
-                className="w-full px-3 py-2 border rounded-md bg-white"
-                value={formData.timeZone}
-                onChange={(e) =>
-                  setFormData({ ...formData, timeZone: e.target.value })
-                }
-              >
-                <optgroup label="US">
-                  <option value="America/New_York">Eastern (New York)</option>
-                  <option value="America/Chicago">Central (Chicago)</option>
-                  <option value="America/Denver">Mountain (Denver)</option>
-                  <option value="America/Los_Angeles">Pacific (Los Angeles)</option>
-                  <option value="America/Anchorage">Alaska (Anchorage)</option>
-                  <option value="Pacific/Honolulu">Hawaii (Honolulu)</option>
-                </optgroup>
-                <optgroup label="Europe">
-                  <option value="Europe/London">London (GMT)</option>
-                  <option value="Europe/Paris">Paris (CET)</option>
-                  <option value="Europe/Berlin">Berlin (CET)</option>
-                </optgroup>
-                <optgroup label="Asia/Pacific">
-                  <option value="Asia/Tokyo">Tokyo (JST)</option>
-                  <option value="Asia/Shanghai">Shanghai (CST)</option>
-                  <option value="Australia/Sydney">Sydney (AEST)</option>
-                </optgroup>
-              </select>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <MenuContainer className="w-full">
+                <MenuButton
+                  type="button"
+                  variant="secondary"
+                  className="w-full justify-between"
+                  showChevron
+                >
+                  {selectedTimezoneLabel}
+                </MenuButton>
+                <Menu width={280}>
+                  {timezoneOptions.map((option) => (
+                    <MenuItem
+                      key={option.value}
+                      onClick={() =>
+                        setFormData({ ...formData, timeZone: option.value })
+                      }
+                    >
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </MenuContainer>
+              <p className="mt-1 text-12 text-muted-foreground">
                 Used for displaying dates and times across the dashboard
               </p>
             </div>

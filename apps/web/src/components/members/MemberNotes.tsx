@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@wine-club/ui";
+import { Button, LongFormInput } from "@wine-club/ui";
 import { formatDate } from "@wine-club/ui";
 import { Plus, Trash } from "geist-icons";
 import { SectionCard } from "@/components/ui/section-card";
@@ -91,12 +91,11 @@ export function MemberNotes({ consumerId, notes: initialNotes }: MemberNotesProp
       <div className="space-y-4">
         {showAddNote && (
           <form onSubmit={handleAddNote} className="space-y-3">
-            <textarea
+            <LongFormInput
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
               placeholder="Add a note about this member..."
               rows={3}
-              className="w-full px-3 py-2 border rounded-md"
               disabled={loading}
               autoFocus
             />

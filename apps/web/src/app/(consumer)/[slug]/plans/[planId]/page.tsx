@@ -173,7 +173,7 @@ export default async function PlanDetailsPage({
                   <div>
                     <CardTitle className="text-3xl mb-2">{plan.name}</CardTitle>
                     <CardDescription className="text-base">
-                      {plan.membership.name} Membership
+                      {plan.membership.name} Club
                     </CardDescription>
                   </div>
                   {plan.stockStatus !== "AVAILABLE" && (
@@ -193,6 +193,11 @@ export default async function PlanDetailsPage({
                           Coming Soon
                         </span>
                       )}
+                      {plan.stockStatus === "UNAVAILABLE" && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
+                          Unavailable
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -201,29 +206,16 @@ export default async function PlanDetailsPage({
               <CardContent className="space-y-6">
                 {/* Pricing */}
                 <div className="border rounded-lg p-6 bg-muted/50">
-                  {plan.pricingType === "FIXED" && plan.basePrice ? (
-                    <>
-                      <div className="text-5xl font-bold mb-2">
-                        {formatCurrency(plan.basePrice, plan.currency)}
-                      </div>
-                      <div className="text-muted-foreground">
-                        per {plan.membership.billingInterval.toLowerCase()}
-                      </div>
-                      {plan.setupFee && plan.setupFee > 0 && (
-                        <div className="text-sm text-muted-foreground mt-2 pt-2 border-t">
-                          + {formatCurrency(plan.setupFee, plan.currency)} one-time setup fee
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-3xl font-bold mb-2 text-muted-foreground">
-                        Dynamic Pricing
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Final price determined at checkout based on your selections
-                      </div>
-                    </>
+                  <div className="text-5xl font-bold mb-2">
+                    {formatCurrency(plan.basePrice ?? 0, plan.currency)}
+                  </div>
+                  <div className="text-muted-foreground">
+                    per {plan.membership.billingInterval.toLowerCase()}
+                  </div>
+                  {plan.setupFee && plan.setupFee > 0 && (
+                    <div className="text-sm text-muted-foreground mt-2 pt-2 border-t">
+                      + {formatCurrency(plan.setupFee, plan.currency)} one-time setup fee
+                    </div>
                   )}
                 </div>
 
@@ -253,7 +245,11 @@ export default async function PlanDetailsPage({
                 <Button 
                   size="large"
                   className="w-full text-lg h-14"
-                  disabled={plan.stockStatus === "SOLD_OUT" || plan.stockStatus === "COMING_SOON"}
+                  disabled={
+                    plan.stockStatus === "SOLD_OUT" ||
+                    plan.stockStatus === "COMING_SOON" ||
+                    plan.stockStatus === "UNAVAILABLE"
+                  }
                   asChild={plan.stockStatus === "AVAILABLE" || plan.stockStatus === "WAITLIST"}
                 >
                   {plan.stockStatus === "AVAILABLE" || plan.stockStatus === "WAITLIST" ? (
@@ -262,7 +258,11 @@ export default async function PlanDetailsPage({
                     </Link>
                   ) : (
                     <span>
-                      {plan.stockStatus === "SOLD_OUT" ? "Sold Out" : "Coming Soon"}
+                      {plan.stockStatus === "SOLD_OUT"
+                        ? "Sold Out"
+                        : plan.stockStatus === "UNAVAILABLE"
+                        ? "Unavailable"
+                        : "Coming Soon"}
                     </span>
                   )}
                 </Button>

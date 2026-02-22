@@ -49,7 +49,6 @@ export default async function EditPlanPage({
     membershipId: plan.membershipId,
     name: plan.name,
     description: plan.description || "",
-    pricingType: plan.pricingType,
     basePrice: plan.basePrice ? (plan.basePrice / 100).toString() : "",
     currency: plan.currency,
     interval: "MONTH" as const,  // All plans are monthly now
@@ -60,7 +59,6 @@ export default async function EditPlanPage({
     shippingFee: plan.shippingFee ? (plan.shippingFee / 100).toString() : "",
     stockStatus: plan.stockStatus,
     maxSubscribers: plan.maxSubscribers?.toString() || "",
-    status: plan.status,
   };
 
   return (

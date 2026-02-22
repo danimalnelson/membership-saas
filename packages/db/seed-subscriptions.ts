@@ -5,7 +5,6 @@
  * - Membership (Wine Club, Beer Club)
  * - Plans (Monthly, Quarterly, Annual)
  * - PlanSubscriptions (Sample subscriptions)
- * - PriceQueueItems (Dynamic pricing examples)
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -183,32 +182,7 @@ async function seedSubscriptions() {
   });
   console.log("   ✅ Annual Wine Plan:", annualWinePlan.name);
 
-  // 3. Create Dynamic Pricing Plan
-  const dynamicWinePlan = await prisma.plan.upsert({
-    where: { id: "wine-dynamic-001" },
-    create: {
-      id: "wine-dynamic-001",
-      businessId: business.id,
-      membershipId: wineClubMembership.id,
-      name: "Vintage Selection (Dynamic Pricing)",
-      description: "Rare and vintage wines - price varies based on selection",
-      pricingType: "DYNAMIC",
-      currency: "usd",
-      interval: "MONTH",
-      intervalCount: 1,
-      quantityPerShipment: 2,
-      productType: "wine",
-      setupFee: 0,
-      shippingType: "INCLUDED",
-      stockStatus: "AVAILABLE",
-      status: "ACTIVE",
-      displayOrder: 4,
-    },
-    update: {},
-  });
-  console.log("   ✅ Dynamic Wine Plan:", dynamicWinePlan.name);
-
-  // 4. Create Beer Plans
+  // 3. Create Beer Plans
   const monthlyBeerPlan = await prisma.plan.upsert({
     where: { id: "beer-monthly-001" },
     create: {
@@ -236,35 +210,10 @@ async function seedSubscriptions() {
   console.log("   ✅ Monthly Beer Plan:", monthlyBeerPlan.name);
   console.log("");
 
-  // 5. Create Price Queue Items (for dynamic pricing)
-  console.log("3️⃣  Creating Price Queue Items...");
-  
   const now = new Date();
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const twoMonths = new Date(now.getFullYear(), now.getMonth() + 2, 1);
 
-  await prisma.priceQueueItem.createMany({
-    data: [
-      {
-        planId: dynamicWinePlan.id,
-        effectiveAt: nextMonth,
-        price: 12999,  // $129.99 next month
-        applied: false,
-      },
-      {
-        planId: dynamicWinePlan.id,
-        effectiveAt: twoMonths,
-        price: 14999,  // $149.99 in two months
-        applied: false,
-      },
-    ],
-    skipDuplicates: true,
-  });
-  console.log("   ✅ Created 2 price queue items for dynamic plan");
-  console.log("");
-
-  // 6. Create sample Consumer (if needed)
-  console.log("4️⃣  Creating sample Consumer...");
+  // 4. Create sample Consumer (if needed)
+  console.log("3️⃣  Creating sample Consumer...");
   
   const consumer = await prisma.consumer.upsert({
     where: { email: "member@example.com" },
@@ -278,8 +227,8 @@ async function seedSubscriptions() {
   console.log("   ✅ Consumer:", consumer.email);
   console.log("");
 
-  // 7. Create sample PlanSubscriptions
-  console.log("5️⃣  Creating sample PlanSubscriptions...");
+  // 5. Create sample PlanSubscriptions
+  console.log("4️⃣  Creating sample PlanSubscriptions...");
   
   const subscriptionStart = new Date();
   const subscriptionEnd = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
@@ -330,8 +279,7 @@ async function seedSubscriptions() {
   console.log("✨ Seeding complete!\n");
   console.log("📊 Summary:");
   console.log("   • 2 Memberships (Wine Club, Beer Club)");
-  console.log("   • 5 Plans (3 wine, 1 dynamic, 1 beer)");
-  console.log("   • 2 Price Queue Items");
+  console.log("   • 4 Plans (3 wine, 1 beer)");
   console.log("   • 1 Consumer");
   console.log("   • 2 PlanSubscriptions");
   console.log("");

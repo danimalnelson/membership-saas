@@ -117,7 +117,7 @@ interface MenuButtonProps extends Omit<ButtonProps, "onClick"> {
 }
 
 const MenuButton = React.forwardRef<HTMLButtonElement, MenuButtonProps>(
-  ({ showChevron, suffix, children, ...props }, forwardedRef) => {
+  ({ showChevron, suffix, children, className, ...props }, forwardedRef) => {
     const { isOpen, toggle, triggerRef } = useMenuContext();
 
     // Merge forwarded ref with context triggerRef
@@ -157,6 +157,10 @@ const MenuButton = React.forwardRef<HTMLButtonElement, MenuButtonProps>(
         suffix={resolvedSuffix}
         aria-expanded={isOpen}
         aria-haspopup="menu"
+        className={cn(
+          "font-normal disabled:bg-gray-100 disabled:text-gray-600 disabled:border-gray-300 disabled:opacity-100",
+          className
+        )}
         {...props}
       >
         {children}
@@ -185,6 +189,7 @@ interface MenuProps {
 function MenuPanel({ children, width, align = "start", footer, className }: MenuProps) {
   const { isOpen, triggerRef, close, menuRef } = useMenuContext();
   const [pos, setPos] = React.useState<{ top: number; left: number; placement: "below" | "above" } | null>(null);
+  const lastPosRef = React.useRef<{ top: number; left: number; placement: "below" | "above" } | null>(null);
 
   // Calculate position
   const updatePosition = React.useCallback(() => {
@@ -218,12 +223,31 @@ function MenuPanel({ children, width, align = "start", footer, className }: Menu
     left = Math.max(margin, Math.min(left, window.innerWidth - menuRect.width - margin));
     top = Math.max(margin, Math.min(top, window.innerHeight - menuRect.height - margin));
 
-    setPos({ top, left, placement });
+    // Snap to device pixels to avoid sub-pixel drift/jitter while scrolling.
+    const nextPos = {
+      top: Math.round(top),
+      left: Math.round(left),
+      placement,
+    } as const;
+
+    const prevPos = lastPosRef.current;
+    if (
+      !prevPos ||
+      prevPos.top !== nextPos.top ||
+      prevPos.left !== nextPos.left ||
+      prevPos.placement !== nextPos.placement
+    ) {
+      lastPosRef.current = nextPos;
+      setPos(nextPos);
+    }
   }, [align, triggerRef]);
 
   // Position on open and on scroll/resize
+  // Use capture-phase scroll listener so nested scroll containers
+  // (drawers, sheets, table panes) also trigger repositioning.
   React.useEffect(() => {
     if (!isOpen) {
+      lastPosRef.current = null;
       setPos(null);
       return;
     }
@@ -233,10 +257,12 @@ function MenuPanel({ children, width, align = "start", footer, className }: Menu
 
     const onScrollOrResize = () => updatePosition();
     window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    document.addEventListener("scroll", onScrollOrResize, { passive: true, capture: true });
     window.addEventListener("resize", onScrollOrResize, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("scroll", onScrollOrResize);
+      document.removeEventListener("scroll", onScrollOrResize, true);
       window.removeEventListener("resize", onScrollOrResize);
     };
   }, [isOpen, updatePosition]);
@@ -362,7 +388,7 @@ function MenuItem({
   const { close } = useMenuContext();
 
   const baseClasses = cn(
-    "group w-full flex items-center gap-2 px-2 h-9 text-left text-sm rounded-md transition-colors outline-none",
+    "group w-full flex items-center gap-2 px-2 h-9 text-left text-sm font-normal rounded-md transition-colors outline-none",
     "focus-visible:bg-gray-100",
     type === "error"
       ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"

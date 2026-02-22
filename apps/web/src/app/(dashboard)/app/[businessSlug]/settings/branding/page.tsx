@@ -9,6 +9,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Input,
 } from "@wine-club/ui";
 import { useBusinessContext } from "@/contexts/business-context";
 import { useRequirePermission } from "@/hooks/use-require-permission";
@@ -120,9 +121,9 @@ export default function BrandingPage() {
                     })
                   }
                 />
-                <input
+                <Input
                   type="text"
-                  className="flex-1 px-3 py-2 border rounded-md font-mono text-sm"
+                  className="flex-1 font-mono text-sm"
                   value={formData.brandColorPrimary}
                   onChange={(e) =>
                     setFormData({
@@ -155,9 +156,9 @@ export default function BrandingPage() {
                     })
                   }
                 />
-                <input
+                <Input
                   type="text"
-                  className="flex-1 px-3 py-2 border rounded-md font-mono text-sm"
+                  className="flex-1 font-mono text-sm"
                   placeholder="#000000"
                   value={formData.brandColorSecondary}
                   onChange={(e) =>

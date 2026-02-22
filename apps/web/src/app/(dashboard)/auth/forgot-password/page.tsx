@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { Button } from "@wine-club/ui";
+import { Button, Input } from "@wine-club/ui";
 
 function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -81,27 +81,19 @@ function ForgotPasswordForm() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-13 font-medium text-gray-950 mb-1"
-              >
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError("");
-                }}
-                required
-                autoComplete="email"
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
-                placeholder="you@example.com"
-              />
-            </div>
+            <Input
+              id="email"
+              type="email"
+              label="Email Address"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
+              required
+              autoComplete="email"
+              placeholder="you@example.com"
+            />
 
             {error && (
               <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-14 text-red-800">

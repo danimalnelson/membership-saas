@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@wine-club/ui";
+import {
+  Button,
+  Input,
+  MenuContainer,
+  Menu,
+  MenuButton,
+  MenuItem,
+} from "@wine-club/ui";
 import { useBusinessContext } from "@/contexts/business-context";
 import { useRequirePermission } from "@/hooks/use-require-permission";
 import { hasPermission, getRoleLabel, ASSIGNABLE_ROLES, type Role } from "@/lib/permissions";
@@ -156,33 +163,36 @@ export default function TeamSettingsPage() {
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex-1">
-              <label className="block text-13 font-medium text-gray-950 mb-1">
-                Email address
-              </label>
-              <input
+              <Input
                 type="email"
+                label="Email address"
                 required
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="colleague@example.com"
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
               />
             </div>
             <div className="w-full sm:w-40">
               <label className="block text-13 font-medium text-gray-950 mb-1">
                 Role
               </label>
-              <select
-                value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value)}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
-              >
-                {ASSIGNABLE_ROLES.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
+              <MenuContainer className="w-full">
+                <MenuButton
+                  type="button"
+                  variant="secondary"
+                  className="w-full justify-between"
+                  showChevron
+                >
+                  {ASSIGNABLE_ROLES.find((r) => r.value === inviteRole)?.label ?? "Select role"}
+                </MenuButton>
+                <Menu width={180}>
+                  {ASSIGNABLE_ROLES.map((r) => (
+                    <MenuItem key={r.value} onClick={() => setInviteRole(r.value)}>
+                      {r.label}
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </MenuContainer>
             </div>
             <Button type="submit" disabled={inviting} className="shrink-0">
               {inviting ? "Sending..." : "Send Invite"}
@@ -253,19 +263,27 @@ export default function TeamSettingsPage() {
                   Owner
                 </span>
               ) : canChangeRole ? (
-                <select
-                  value={member.role}
-                  onChange={(e) =>
-                    handleRoleChange(member.id, e.target.value)
-                  }
-                  className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-13 text-gray-950 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
-                >
-                  {ASSIGNABLE_ROLES.map((r) => (
-                    <option key={r.value} value={r.value}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
+                <MenuContainer className="min-w-[132px]">
+                  <MenuButton
+                    type="button"
+                    size="small"
+                    variant="secondary"
+                    className="justify-between text-13"
+                    showChevron
+                  >
+                    {getRoleLabel(member.role)}
+                  </MenuButton>
+                  <Menu width={170} align="end">
+                    {ASSIGNABLE_ROLES.map((r) => (
+                      <MenuItem
+                        key={r.value}
+                        onClick={() => handleRoleChange(member.id, r.value)}
+                      >
+                        {r.label}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </MenuContainer>
               ) : (
                 <span className="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-13 font-medium text-gray-700">
                   {getRoleLabel(member.role)}

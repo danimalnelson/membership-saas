@@ -48,7 +48,6 @@ export async function DashboardContent({
     pastDueCount,
     totalMembersResult,
     totalPlans,
-    dynamicPricingPlans,
     unresolvedAlerts,
     stripeInvoices,
     cachedActivities,
@@ -125,25 +124,20 @@ export async function DashboardContent({
       where: { businessId },
     }),
 
-    // 7. Dynamic pricing plans count
-    prisma.plan.count({
-      where: { businessId, pricingType: "DYNAMIC" },
-    }),
-
-    // 8. Unresolved alerts
+    // 7. Unresolved alerts
     prisma.businessAlert.findMany({
       where: { businessId, resolved: false },
       orderBy: [{ severity: "desc" }, { createdAt: "desc" }],
       take: 5,
     }),
 
-    // 9. Cached Stripe invoices (5-min TTL) — for "Revenue This Month"
+    // 8. Cached Stripe invoices (5-min TTL) — for "Revenue This Month"
     getCachedStripeInvoices(
       stripeAccountId,
       Math.floor(twelveMonthsAgo.getTime() / 1000)
     ),
 
-    // 10. Cached activity feed (60s TTL)
+    // 9. Cached activity feed (60s TTL)
     getCachedActivityFeed(businessId),
   ]);
 
@@ -185,10 +179,6 @@ export async function DashboardContent({
   }
 
   // Alert counts
-  const missingPriceAlerts = unresolvedAlerts.filter(
-    (a) => a.type === "MISSING_DYNAMIC_PRICE"
-  ).length;
-
   // Convert cached activities to ActivityItem[] (restore Date objects)
   const activities: ActivityItem[] = cachedActivities.map((item) => ({
     ...item,
@@ -280,8 +270,6 @@ export async function DashboardContent({
           totalMembers={totalMembers}
           failedPayments={pastDueCount}
           unresolvedAlerts={unresolvedAlerts.length}
-          hasDynamicPricing={dynamicPricingPlans > 0}
-          missingPriceCount={missingPriceAlerts}
         />
       </div>
     </>

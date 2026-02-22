@@ -126,7 +126,7 @@ export function MembershipsTable({
   return (
   <>
     <DataTable
-      title="Memberships"
+      title="Clubs"
       columns={columns}
       data={memberships}
       keyExtractor={(m) => m.id}
@@ -134,8 +134,8 @@ export function MembershipsTable({
         window.location.href = `/app/${businessSlug}/memberships/${m.id}/edit`;
       }}
       table={table}
-      emptyMessage="No memberships yet. Create your first membership to start offering subscription plans."
-      filteredEmptyMessage="No memberships match filters"
+      emptyMessage="No clubs yet. Create your first club to start offering subscription plans."
+      filteredEmptyMessage="No clubs match filters"
       actions={
         <Button
           variant="secondary"
@@ -143,12 +143,12 @@ export function MembershipsTable({
           onClick={() => setDrawerOpen(true)}
           prefix={<Plus className="h-3.5 w-3.5" />}
         >
-          Create membership
+          Create club
         </Button>
       }
     />
 
-    <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Create membership">
+    <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Create club">
       <MembershipForm
         businessId={businessId}
         onSuccess={() => {

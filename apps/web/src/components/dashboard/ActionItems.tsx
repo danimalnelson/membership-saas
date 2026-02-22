@@ -6,7 +6,6 @@ import {
   Plus,
   Share,
   CheckCircle,
-  Dollar,
   ArrowRight,
 } from "geist-icons";
 
@@ -26,8 +25,6 @@ interface ActionItemsProps {
   totalMembers: number;
   failedPayments: number;
   unresolvedAlerts: number;
-  hasDynamicPricing: boolean;
-  missingPriceCount: number;
 }
 
 export function ActionItems({
@@ -37,8 +34,6 @@ export function ActionItems({
   totalMembers,
   failedPayments,
   unresolvedAlerts,
-  hasDynamicPricing,
-  missingPriceCount,
 }: ActionItemsProps) {
   const actions = getContextualActions({
     businessId,
@@ -47,8 +42,6 @@ export function ActionItems({
     totalMembers,
     failedPayments,
     unresolvedAlerts,
-    hasDynamicPricing,
-    missingPriceCount,
   });
 
   return (
@@ -111,8 +104,6 @@ function getContextualActions(params: {
   totalMembers: number;
   failedPayments: number;
   unresolvedAlerts: number;
-  hasDynamicPricing: boolean;
-  missingPriceCount: number;
 }): ActionItem[] {
   const actions: ActionItem[] = [];
 
@@ -128,24 +119,11 @@ function getContextualActions(params: {
     });
   }
 
-  // High priority: Missing dynamic prices
-  if (params.hasDynamicPricing && params.missingPriceCount > 0) {
-    actions.push({
-      id: "missing-prices",
-      title: `Set ${params.missingPriceCount} upcoming price${params.missingPriceCount > 1 ? "s" : ""}`,
-      description: "Dynamic pricing plans need next month's price",
-      href: `/app/${params.businessSlug}/alerts`,
-      priority: "high",
-      icon: <Dollar className="h-4 w-4" />,
-    });
-  }
-
   // High priority: Other unresolved alerts
-  const otherAlerts = params.unresolvedAlerts - params.missingPriceCount;
-  if (otherAlerts > 0) {
+  if (params.unresolvedAlerts > 0) {
     actions.push({
       id: "unresolved-alerts",
-      title: `${otherAlerts} alert${otherAlerts > 1 ? "s" : ""} need attention`,
+      title: `${params.unresolvedAlerts} alert${params.unresolvedAlerts > 1 ? "s" : ""} need attention`,
       description: "Review and resolve pending alerts",
       href: `/app/${params.businessSlug}/alerts`,
       priority: "high",

@@ -145,7 +145,7 @@ export function Drawer({
         {/* Header */}
         <div className="flex items-center justify-between gap-4 px-6 h-[61px] border-b border-gray-300 dark:border-gray-600 shrink-0">
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="text-sm font-medium text-gray-950 dark:text-white truncate">
+            <h2 id={titleId} className="text-[18px] font-semibold text-gray-950 dark:text-white truncate">
               {title}
             </h2>
             {description && (

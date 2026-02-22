@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge } from "@wine-club/ui";
 
 type PlanStatus = "DRAFT" | "ACTIVE" | "ARCHIVED";
 
@@ -9,15 +10,15 @@ interface PlanStatusBadgeProps {
 const statusConfig = {
   DRAFT: {
     label: "Draft",
-    className: "bg-gray-100 text-gray-800",
+    variant: "gray-subtle" as const,
   },
   ACTIVE: {
     label: "Active",
-    className: "bg-green-100 text-green-800",
+    variant: "green-subtle" as const,
   },
   ARCHIVED: {
     label: "Archived",
-    className: "bg-red-100 text-red-800",
+    variant: "red-subtle" as const,
   },
 };
 
@@ -26,11 +27,9 @@ export const PlanStatusBadge = React.memo(
     const config = statusConfig[status] || statusConfig.DRAFT;
 
     return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.className}`}
-      >
+      <Badge variant={config.variant} size="sm">
         {config.label}
-      </span>
+      </Badge>
     );
   }
 );

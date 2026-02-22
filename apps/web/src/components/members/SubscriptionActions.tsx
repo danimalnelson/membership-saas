@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Dialog, MenuContainer, Menu, MenuItem, MenuIconTrigger } from "@wine-club/ui";
+import {
+  Button,
+  Dialog,
+  MenuContainer,
+  Menu,
+  MenuItem,
+  MenuIconTrigger,
+  LongFormInput,
+} from "@wine-club/ui";
 import { Play, MoreHorizontal } from "geist-icons";
 import { PauseCircle } from "@/components/icons/PauseCircle";
 import { Cross } from "@/components/icons/Cross";
@@ -110,20 +118,15 @@ function CancelDialog({
           The member will retain access until then.
         </p>
 
-        <div>
-          <label htmlFor="cancelReason" className="block text-sm font-medium mb-2">
-            Reason for Cancellation (Optional)
-          </label>
-          <textarea
-            id="cancelReason"
-            value={cancelReason}
-            onChange={(e) => setCancelReason(e.target.value)}
-            placeholder="e.g., Customer requested, payment issues, etc."
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-100"
-            disabled={loading}
-          />
-        </div>
+        <LongFormInput
+          id="cancelReason"
+          label="Reason for Cancellation (Optional)"
+          value={cancelReason}
+          onChange={(e) => setCancelReason(e.target.value)}
+          placeholder="e.g., Customer requested, payment issues, etc."
+          rows={3}
+          disabled={loading}
+        />
       </div>
     </Dialog>
   );

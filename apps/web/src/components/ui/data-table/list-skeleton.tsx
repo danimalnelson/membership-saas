@@ -19,7 +19,7 @@ function SkeletonBox({ className = "" }: { className?: string }) {
 
 /**
  * Full-width loading skeleton for list/table views.
- * Matches the DataTable layout: -mx-3, white bg, no card wrapper.
+ * Matches the DataTable layout: -mx-6, white bg, no card wrapper.
  */
 export function ListSkeleton({
   columnCount = 5,
@@ -29,7 +29,7 @@ export function ListSkeleton({
   const widths = columnWidths ?? Array(columnCount).fill("w-24");
 
   return (
-    <div className="-mx-3 overflow-x-auto bg-white dark:bg-gray-100">
+    <div className="-mx-6 overflow-x-auto bg-white dark:bg-gray-100">
       <table className="w-full border-collapse border-0">
         <thead className="border-b border-gray-200 dark:border-gray-700 bg-ds-background-200 dark:bg-gray-100">
           <tr>
@@ -61,7 +61,7 @@ export function ListSkeleton({
  */
 export function ListFooterSkeleton() {
   return (
-    <div className="sticky bottom-0 z-20 -mx-3 px-3 flex items-center h-10 border-t border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
+    <div className="sticky bottom-0 z-20 -mx-6 px-6 flex items-center h-10 border-t border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100">
       <div className="animate-pulse rounded bg-gray-200 dark:bg-gray-700 h-3 w-16" />
     </div>
   );

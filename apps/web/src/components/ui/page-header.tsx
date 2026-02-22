@@ -9,7 +9,7 @@ import { PageMenu } from "./page-menu";
  * - Full width (spans parent padding)
  */
 export const PAGE_HEADER_BAR_CLASSES =
-  "sticky top-0 z-20 -mx-3 px-3 h-[61px] flex items-center border-b border-gray-400 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100 shrink-0 mb-3";
+  "sticky top-0 z-20 -mx-6 px-6 h-[61px] flex items-center border-b border-gray-300 dark:border-gray-600 bg-ds-background-200 dark:bg-gray-100 shrink-0 mb-3";
 
 /**
  * Sticky page header for detail pages.

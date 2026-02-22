@@ -1,8 +1,17 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@wine-club/ui";
+import {
+  Button,
+  Checkbox,
+  Input,
+  LongFormInput,
+  MenuContainer,
+  Menu,
+  MenuButton,
+  MenuItem,
+} from "@wine-club/ui";
 import useSWR from "swr";
 import { useBusinessContext } from "@/contexts/business-context";
 
@@ -56,13 +65,20 @@ export const MembershipForm = React.memo(
     const [chargeImmediately, setChargeImmediately] = useState(
       membership?.chargeImmediately ?? true
     );
+    const [billingStartSelection, setBillingStartSelection] = useState<
+      "ROLLING_START" | "COHORT_IMMEDIATE" | "COHORT_DEFERRED" | ""
+    >(() => {
+      if (!membership) return "";
+      if (membership.billingAnchor === "IMMEDIATE") return "ROLLING_START";
+      return membership.chargeImmediately ? "COHORT_IMMEDIATE" : "COHORT_DEFERRED";
+    });
     const [allowMultiplePlans, setAllowMultiplePlans] = useState(
       membership?.allowMultiplePlans || false
     );
     const [maxMembers, setMaxMembers] = useState(
       membership?.maxMembers?.toString() || ""
     );
-    const [status, setStatus] = useState(membership?.status || "DRAFT");
+    const [status, setStatus] = useState(membership?.status || "");
     const [giftEnabled, setGiftEnabled] = useState(
       membership?.giftEnabled ?? true
     );
@@ -78,51 +94,74 @@ export const MembershipForm = React.memo(
     const [skipEnabled, setSkipEnabled] = useState(
       membership?.skipEnabled ?? false
     );
-    const [benefits, setBenefits] = useState<string[]>(
-      membership?.benefits || []
-    );
-    const [newBenefit, setNewBenefit] = useState("");
+    const [benefitRows, setBenefitRows] = useState<string[]>(() => {
+      const existing = Array.isArray(membership?.benefits)
+        ? (membership?.benefits as string[])
+        : [];
+      const minRows = 5;
+      if (existing.length >= minRows) return existing;
+      return [...existing, ...Array(minRows - existing.length).fill("")];
+    });
     const [displayOrder, setDisplayOrder] = useState(
       membership?.displayOrder?.toString() || "0"
     );
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+    const [nameError, setNameError] = useState<string | null>(null);
+    const [slugError, setSlugError] = useState<string | null>(null);
+    const [statusError, setStatusError] = useState<string | null>(null);
+    const [billingStartError, setBillingStartError] = useState<string | null>(null);
 
     // Fetch subscription count for edit mode
-    const { data: subscriptionData, error: swrError } = useSWR(
+    const { data: subscriptionData } = useSWR(
       isEdit && membership?.id
         ? `/api/memberships/${membership.id}/subscription-count`
         : null,
       fetcher
     );
 
-    // Debug logging
-    React.useEffect(() => {
-      if (isEdit) {
-        console.log("[MembershipForm] Edit mode:", {
-          membershipId: membership?.id,
-          subscriptionData,
-          swrError,
-        });
-      }
-    }, [isEdit, membership?.id, subscriptionData, swrError]);
-
     const activeSubscriptionCount = subscriptionData?.count || 0;
     const hasBillingRestriction = isEdit && activeSubscriptionCount > 0;
 
-    // More debug logging
-    console.log("[MembershipForm] Restriction check:", {
-      isEdit,
-      activeSubscriptionCount,
-      hasBillingRestriction,
-      subscriptionData,
-    });
+    const billingStartOptions = [
+      { value: "ROLLING_START", label: "Rolling start" },
+      { value: "COHORT_IMMEDIATE", label: "Cohort billing, immediate start" },
+      { value: "COHORT_DEFERRED", label: "Cohort billing, deferred start" },
+    ] as const;
+    const selectedStatusLabel =
+      status === "DRAFT"
+        ? "Draft"
+        : status === "ACTIVE"
+          ? "Active"
+          : status === "PAUSED"
+            ? "Paused"
+            : status === "ARCHIVED"
+              ? "Archived"
+              : "Select status";
+    const selectedBillingStartLabel =
+      billingStartOptions.find((option) => option.value === billingStartSelection)
+        ?.label ?? "Select billing and start timing";
+    const isStatusPlaceholder = !status;
+    const isBillingStartPlaceholder = !billingStartSelection;
+
+    const handleBillingStartSelection = (value: (typeof billingStartOptions)[number]["value"]) => {
+      setBillingStartSelection(value);
+      if (value === "ROLLING_START") {
+        setBillingAnchor("IMMEDIATE");
+        setChargeImmediately(true);
+        return;
+      }
+
+      setBillingAnchor("NEXT_INTERVAL");
+      setChargeImmediately(value === "COHORT_IMMEDIATE");
+    };
 
     // Auto-generate slug from name
     const handleNameChange = useCallback(
       (value: string) => {
         setName(value);
+        if (nameError) setNameError(null);
         if (!isEdit) {
           const generatedSlug = value
             .toLowerCase()
@@ -134,27 +173,42 @@ export const MembershipForm = React.memo(
       [isEdit]
     );
 
-    // Add benefit
-    const handleAddBenefit = useCallback(() => {
-      if (newBenefit.trim()) {
-        setBenefits((prev) => [...prev, newBenefit.trim()]);
-        setNewBenefit("");
-      }
-    }, [newBenefit]);
-
-    // Remove benefit
-    const handleRemoveBenefit = useCallback((index: number) => {
-      setBenefits((prev) => prev.filter((_, i) => i !== index));
-    }, []);
-
     // Submit form
     const handleSubmit = useCallback(
       async (e: React.FormEvent) => {
         e.preventDefault();
+        const trimmedName = name.trim();
+        const trimmedSlug = slug.trim();
+        let hasValidationError = false;
+
+        if (!trimmedName) {
+          setNameError("Please enter a club name.");
+          hasValidationError = true;
+        }
+        if (!trimmedSlug) {
+          setSlugError("Please enter a slug.");
+          hasValidationError = true;
+        }
+        if (!status) {
+          setStatusError("Please select a status.");
+          hasValidationError = true;
+        }
+        if (!isEdit && !billingStartSelection) {
+          setBillingStartError("Please select billing and start timing.");
+          hasValidationError = true;
+        }
+        if (hasValidationError) {
+          return;
+        }
+
         setError("");
         setIsSubmitting(true);
 
         try {
+          const normalizedBenefits = benefitRows
+            .map((value) => value.trim())
+            .filter((value) => value.length > 0);
+
           const payload = {
             name,
             description: description || null,
@@ -172,7 +226,7 @@ export const MembershipForm = React.memo(
             membersOnlyAccess,
             pauseEnabled,
             skipEnabled,
-            benefits: benefits.length > 0 ? benefits : null,
+            benefits: normalizedBenefits.length > 0 ? normalizedBenefits : null,
             displayOrder: parseInt(displayOrder, 10) || 0,
           };
 
@@ -188,7 +242,7 @@ export const MembershipForm = React.memo(
 
           if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || "Failed to save membership");
+            throw new Error(data.error || "Failed to save club");
           }
 
           // Close drawer or redirect to memberships list
@@ -218,142 +272,160 @@ export const MembershipForm = React.memo(
         membersOnlyAccess,
         pauseEnabled,
         skipEnabled,
-        benefits,
+        benefitRows,
         displayOrder,
         businessId,
         isEdit,
         membership,
         onSuccess,
         router,
+        billingStartSelection,
       ]
     );
 
     return (
-      <form onSubmit={handleSubmit}>
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            {isEdit ? "Edit Membership" : "Create Membership"}
-          </h1>
-          <p className="text-muted-foreground">
-            {isEdit
-              ? "Update your membership details and settings"
-              : "Create a new membership to organize your subscription plans"}
-          </p>
-        </div>
-
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
             <p className="text-sm text-red-800">{error}</p>
           </div>
         )}
 
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-              <CardDescription>
-                Name and describe your membership
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        {/* Details */}
+        <section className="space-y-4">
+          <h3 className="text-base font-semibold">Details</h3>
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Name <span className="text-red-900">*</span>
-                </label>
-                <input
+                <Input
                   type="text"
+                  label="Name"
+                  required
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border rounded-md"
-                  placeholder="e.g., Wine Club, Premium Membership"
+                  placeholder="e.g., Wine Club, Premium Club"
+                  error={nameError || undefined}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Slug <span className="text-red-900">*</span></label>
-                <input
+                <Input
                   type="text"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
+                  label="Slug"
                   required
+                  value={slug}
+                  onChange={(e) => {
+                    setSlug(e.target.value);
+                    if (slugError) setSlugError(null);
+                  }}
                   disabled={isEdit}
-                  className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
+                  className="disabled:bg-gray-100"
                   placeholder="wine-club"
+                  helperText="A unique, user-friendly identifier added to the URL"
+                  error={slugError || undefined}
                 />
-                <p className="text-sm text-muted-foreground mt-1">
-                  {isEdit
-                    ? "Slug cannot be changed after creation"
-                    : "Auto-generated from name, or customize"}
-                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Description
-                </label>
-                <textarea
+                <LongFormInput
+                  label="Description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border rounded-md"
-                  placeholder="Describe what this membership includes..."
+                  placeholder="Describe what this club includes..."
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Display Order
-                </label>
-                <input
-                  type="number"
-                  value={displayOrder}
-                  onChange={(e) => setDisplayOrder(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
-                  placeholder="0"
-                />
-                <p className="text-sm text-muted-foreground mt-1">
-                  Lower numbers appear first
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Status <span className="text-red-900">*</span>
-                </label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
-                >
-                  <option value="DRAFT">Draft</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="PAUSED">Paused</option>
-                  <option value="ARCHIVED">Archived</option>
-                </select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Billing Configuration */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Billing Configuration</CardTitle>
-              <CardDescription>
-                Configure how and when members start and are billed
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Debug info - remove after testing */}
-              {isEdit && (
-                <div className="border border-blue-300 bg-blue-50 text-blue-900 rounded-lg p-3 text-xs mb-4">
-                  <strong>Debug:</strong> isEdit={String(isEdit)}, count={activeSubscriptionCount}, 
-                  hasBillingRestriction={String(hasBillingRestriction)}, 
-                  data={JSON.stringify(subscriptionData)}
+              {false && (
+                <div className="space-y-2">
+                  <p className="block text-sm font-medium text-gray-950">Benefits</p>
+                  <div className="overflow-hidden rounded-md border border-gray-300">
+                    <table className="w-full border-collapse">
+                      <tbody>
+                        {benefitRows.map((benefit, index) => (
+                          <tr
+                            key={index}
+                            className={index < benefitRows.length - 1 ? "border-b border-gray-300" : ""}
+                          >
+                            <td className="p-0">
+                              <Input
+                                type="text"
+                                size="small"
+                                value={benefit}
+                                onChange={(e) =>
+                                  setBenefitRows((prev) =>
+                                    prev.map((row, rowIndex) =>
+                                      rowIndex === index ? e.target.value : row
+                                    )
+                                  )
+                                }
+                                className="border-0 rounded-none shadow-none focus:shadow-none"
+                                placeholder="Add benefit..."
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Status <span className="text-red-900">*</span>
+                </label>
+                <MenuContainer className="w-full">
+                  <MenuButton
+                    type="button"
+                    variant="secondary"
+                    className={`w-full justify-between ${isStatusPlaceholder ? "text-gray-700 dark:text-gray-500" : ""}`}
+                    showChevron
+                  >
+                    {selectedStatusLabel}
+                  </MenuButton>
+                  <Menu width={220}>
+                    <MenuItem
+                      onClick={() => {
+                        setStatus("DRAFT");
+                        if (statusError) setStatusError(null);
+                      }}
+                    >
+                      Draft
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        setStatus("ACTIVE");
+                        if (statusError) setStatusError(null);
+                      }}
+                    >
+                      Active
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        setStatus("PAUSED");
+                        if (statusError) setStatusError(null);
+                      }}
+                    >
+                      Paused
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        setStatus("ARCHIVED");
+                        if (statusError) setStatusError(null);
+                      }}
+                    >
+                      Archived
+                    </MenuItem>
+                  </Menu>
+                </MenuContainer>
+                {statusError && (
+                  <p className="mt-1.5 text-sm text-red-900">{statusError}</p>
+                )}
+              </div>
+        </section>
+
+        {/* Billing */}
+        <section className="space-y-6">
+              <h3 className="text-base font-semibold">Billing</h3>
 
               {/* Warning: Active subscriptions exist */}
               {hasBillingRestriction && (
@@ -391,333 +463,105 @@ export const MembershipForm = React.memo(
 
               {/* Billing Frequency */}
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Billing Frequency <span className="text-red-900">*</span>
+                <label className="block text-sm font-medium mb-1">
+                  Billing frequency <span className="text-red-900">*</span>
                 </label>
-                <select
-                  value={billingInterval}
-                  onChange={(e) => setBillingInterval(e.target.value)}
-                  disabled={hasBillingRestriction}
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    hasBillingRestriction
-                      ? "bg-gray-100 cursor-not-allowed opacity-60"
-                      : ""
-                  }`}
-                >
-                  <option value="MONTH">Monthly</option>
-                  {/* Future: <option value="QUARTER">Quarterly (every 3 months)</option> */}
-                  {/* Future: <option value="YEAR">Annually</option> */}
-                </select>
-                <p className="text-sm text-muted-foreground mt-1">
-                  All plans in this membership will bill at this frequency
+                <MenuContainer className="w-full">
+                  <MenuButton
+                    type="button"
+                    variant="secondary"
+                    className="w-full justify-between"
+                    showChevron
+                    disabled={hasBillingRestriction}
+                  >
+                    {billingInterval === "MONTH" ? "Monthly" : billingInterval}
+                  </MenuButton>
+                  <Menu width={220}>
+                    <MenuItem onClick={() => setBillingInterval("MONTH")}>
+                      Monthly
+                    </MenuItem>
+                  </Menu>
+                </MenuContainer>
+                <p className="text-12 text-gray-600 mt-1">
+                  All plans in this club will bill at this frequency
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-3">
-                  How should members start and be billed? <span className="text-red-900">*</span>
+                <label className="block text-sm font-medium mb-1">
+                  Billing and start timing <span className="text-red-900">*</span>
                 </label>
-                <div className="space-y-4">
-                  {/* Option 1: Rolling Membership */}
-                  <label
-                    className={`flex items-start space-x-3 p-4 border rounded-lg transition-colors ${
-                      hasBillingRestriction
-                        ? "opacity-60 cursor-not-allowed"
-                        : "cursor-pointer hover:bg-accent/50"
-                    }`}
+                <MenuContainer className="w-full">
+                  <MenuButton
+                    type="button"
+                    variant="secondary"
+                    className={`w-full justify-between ${isBillingStartPlaceholder ? "text-gray-700 dark:text-gray-500" : ""}`}
+                    showChevron
+                    disabled={hasBillingRestriction}
                   >
-                    <input
-                      type="radio"
-                      name="billingModel"
-                      checked={billingAnchor === "IMMEDIATE"}
-                      onChange={() => {
-                        setBillingAnchor("IMMEDIATE");
-                        setChargeImmediately(true);
-                      }}
-                      disabled={hasBillingRestriction}
-                      className="mt-1 shrink-0"
-                    />
-                    <div className="flex-1">
-                      <div className="font-semibold mb-1">Rolling Membership</div>
-                      <div className="text-sm text-muted-foreground">
-                        Members start and are charged immediately. Each member is billed monthly on their signup date.
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-2 italic">
-                        Example: April 15 signup → Charged $20 → Billed every 15th
-                      </div>
-                    </div>
-                  </label>
-
-                  {/* Option 2: Cohort (Immediate Access) */}
-                  <label
-                    className={`flex items-start space-x-3 p-4 border rounded-lg transition-colors ${
-                      hasBillingRestriction
-                        ? "opacity-60 cursor-not-allowed"
-                        : "cursor-pointer hover:bg-accent/50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="billingModel"
-                      checked={billingAnchor === "NEXT_INTERVAL" && chargeImmediately}
-                      onChange={() => {
-                        setBillingAnchor("NEXT_INTERVAL");
-                        setChargeImmediately(true);
-                      }}
-                      disabled={hasBillingRestriction}
-                      className="mt-1 shrink-0"
-                    />
-                    <div className="flex-1">
-                      <div className="font-semibold mb-1">Cohort Membership (Immediate Access)</div>
-                      <div className="text-sm text-muted-foreground">
-                        Members start and are charged immediately. All members are then billed together on the 1st of each month.
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-2 italic">
-                        Example: April 15 signup → Charged $20 → Next bill May 1
-                      </div>
-                    </div>
-                  </label>
-
-                  {/* Option 3: Cohort (Deferred Start) */}
-                  <label
-                    className={`flex items-start space-x-3 p-4 border rounded-lg transition-colors ${
-                      hasBillingRestriction
-                        ? "opacity-60 cursor-not-allowed"
-                        : "cursor-pointer hover:bg-accent/50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="billingModel"
-                      checked={billingAnchor === "NEXT_INTERVAL" && !chargeImmediately}
-                      onChange={() => {
-                        setBillingAnchor("NEXT_INTERVAL");
-                        setChargeImmediately(false);
-                      }}
-                      disabled={hasBillingRestriction}
-                      className="mt-1 shrink-0"
-                    />
-                    <div className="flex-1">
-                      <div className="font-semibold mb-1">Cohort Membership (Deferred Start)</div>
-                      <div className="text-sm text-muted-foreground">
-                        Members wait until the next billing date. Payment and access both begin on the 1st of the month.
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-2 italic">
-                        Example: April 15 signup → Starts May 1 → Charged $20
-                      </div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Membership Rules */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Membership Rules</CardTitle>
-              <CardDescription>
-                Configure capacity and plan restrictions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={allowMultiplePlans}
-                    onChange={(e) => setAllowMultiplePlans(e.target.checked)}
-                  />
-                  <div>
-                    <div className="font-medium">Allow Multiple Plans</div>
-                    <div className="text-sm text-muted-foreground">
-                      Members can subscribe to multiple plans within this
-                      membership
-                    </div>
-                  </div>
-                </label>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Maximum Members
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={maxMembers}
-                  onChange={(e) => setMaxMembers(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
-                  placeholder="Leave empty for unlimited"
-                />
-                <p className="text-sm text-muted-foreground mt-1">
-                  Optional capacity limit for this membership
-                </p>
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={waitlistEnabled}
-                    onChange={(e) => setWaitlistEnabled(e.target.checked)}
-                  />
-                  <div>
-                    <div className="font-medium">Enable Waitlist</div>
-                    <div className="text-sm text-muted-foreground">
-                      Allow members to join a waitlist when capacity is reached
-                    </div>
-                  </div>
-                </label>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Member Features */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Member Features</CardTitle>
-              <CardDescription>
-                Enable or disable features for members
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={giftEnabled}
-                    onChange={(e) => setGiftEnabled(e.target.checked)}
-                  />
-                  <div>
-                    <div className="font-medium">Gift Subscriptions</div>
-                    <div className="text-sm text-muted-foreground">
-                      Allow this membership to be purchased as a gift
-                    </div>
-                  </div>
-                </label>
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={pauseEnabled}
-                    onChange={(e) => setPauseEnabled(e.target.checked)}
-                  />
-                  <div>
-                    <div className="font-medium">Allow Pause</div>
-                    <div className="text-sm text-muted-foreground">
-                      Members can pause their subscription (stops billing)
-                    </div>
-                  </div>
-                </label>
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={skipEnabled}
-                    onChange={(e) => setSkipEnabled(e.target.checked)}
-                  />
-                  <div>
-                    <div className="font-medium">Allow Skip</div>
-                    <div className="text-sm text-muted-foreground">
-                      Members can skip individual deliveries
-                    </div>
-                  </div>
-                </label>
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={membersOnlyAccess}
-                    onChange={(e) => setMembersOnlyAccess(e.target.checked)}
-                  />
-                  <div>
-                    <div className="font-medium">Members-Only Access</div>
-                    <div className="text-sm text-muted-foreground">
-                      Hide this membership from non-members
-                    </div>
-                  </div>
-                </label>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Benefits */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Member Benefits</CardTitle>
-              <CardDescription>
-                List the benefits included with this membership
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newBenefit}
-                  onChange={(e) => setNewBenefit(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddBenefit();
-                    }
-                  }}
-                  className="flex-1 px-3 py-2 border rounded-md"
-                  placeholder="e.g., 10% off store purchases"
-                />
-                <Button
-                  variant="secondary"
-                  onClick={handleAddBenefit}
-                >
-                  Add
-                </Button>
-              </div>
-
-              {benefits.length > 0 && (
-                <ul className="space-y-2">
-                  {benefits.map((benefit, index) => (
-                    <li
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-muted rounded-md"
-                    >
-                      <span>{benefit}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveBenefit(index)}
-                        className="text-red-600 hover:text-red-800 text-sm"
+                    {selectedBillingStartLabel}
+                  </MenuButton>
+                  <Menu width={300}>
+                    {billingStartOptions.map((option) => (
+                      <MenuItem
+                        key={option.value}
+                        onClick={() => {
+                          handleBillingStartSelection(option.value);
+                          if (billingStartError) setBillingStartError(null);
+                        }}
                       >
-                        Remove
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </MenuContainer>
+                {billingStartError && (
+                  <p className="mt-1.5 text-sm text-red-900">{billingStartError}</p>
+                )}
+              </div>
+        </section>
 
-          {/* Actions */}
-          <div className="flex items-center justify-between pt-6 border-t">
-            <Button
-              variant="secondary"
-              onClick={() => onCancel ? onCancel() : router.push(`/app/${businessSlug}/memberships`)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting
-                ? "Saving..."
-                : isEdit
-                ? "Update Membership"
-                : "Create Membership"}
-            </Button>
-          </div>
+        {/* Advanced */}
+        <section className="space-y-4">
+          <h3 className="text-base font-semibold">Advanced</h3>
+              <div>
+                <Checkbox
+                  checked={allowMultiplePlans}
+                  onChange={setAllowMultiplePlans}
+                >
+                  Allow members to subscribe to multiple plans
+                </Checkbox>
+              </div>
+
+              <div>
+                <Checkbox
+                  checked={pauseEnabled}
+                  onChange={setPauseEnabled}
+                >
+                  Allow members to pause
+                </Checkbox>
+              </div>
+        </section>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-3">
+          <Button
+            variant="secondary"
+            onClick={() => onCancel ? onCancel() : router.push(`/app/${businessSlug}/memberships`)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || !name.trim() || !slug.trim() || !status || (!isEdit && !billingStartSelection)}
+          >
+            {isSubmitting
+              ? "Saving..."
+              : isEdit
+              ? "Update club"
+              : "Create club"}
+          </Button>
         </div>
       </form>
     );

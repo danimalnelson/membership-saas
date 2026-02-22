@@ -3,7 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@wine-club/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Input,
+  MenuContainer,
+  Menu,
+  MenuButton,
+  MenuItem,
+} from "@wine-club/ui";
 
 export default function OnboardingDetailsPage() {
   const router = useRouter();
@@ -20,6 +32,24 @@ export default function OnboardingDetailsPage() {
     currency: "USD",
     timeZone: "America/New_York",
   });
+  const countryOptions = [
+    { value: "US", label: "United States" },
+    { value: "CA", label: "Canada" },
+    { value: "GB", label: "United Kingdom" },
+    { value: "AU", label: "Australia" },
+  ] as const;
+  const currencyOptions = [
+    { value: "USD", label: "USD ($)" },
+    { value: "CAD", label: "CAD ($)" },
+    { value: "GBP", label: "GBP (£)" },
+    { value: "AUD", label: "AUD ($)" },
+  ] as const;
+  const selectedCountryLabel =
+    countryOptions.find((option) => option.value === formData.country)?.label ??
+    "Select country";
+  const selectedCurrencyLabel =
+    currencyOptions.find((option) => option.value === formData.currency)?.label ??
+    "Select currency";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,109 +140,119 @@ export default function OnboardingDetailsPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium mb-2">
-                    First Name *
-                  </label>
-                  <input
-                    id="firstName"
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 border rounded-md"
-                    placeholder="Dan"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium mb-2">
-                    Last Name *
-                  </label>
-                  <input
-                    id="lastName"
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 border rounded-md"
-                    placeholder="Nelson"
-                  />
-                </div>
+                <Input
+                  id="firstName"
+                  type="text"
+                  label="First Name"
+                  value={formData.firstName}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, firstName: e.target.value }))
+                  }
+                  required
+                  placeholder="Dan"
+                />
+                <Input
+                  id="lastName"
+                  type="text"
+                  label="Last Name"
+                  value={formData.lastName}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, lastName: e.target.value }))
+                  }
+                  required
+                  placeholder="Nelson"
+                />
               </div>
 
               <div>
-                <label htmlFor="name" className="block text-sm font-medium mb-2">
-                  Business Name *
-                </label>
-                <input
+                <Input
                   id="name"
                   type="text"
+                  label="Business Name"
+                  helperText="The name of your wine bar, shop, or business"
                   value={formData.name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   required
-                  className="w-full px-3 py-2 border rounded-md"
                   placeholder="Ruby Tap Wine Bar"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  The name of your wine bar, shop, or business
-                </p>
               </div>
 
               <div>
-                <label htmlFor="slug" className="block text-sm font-medium mb-2">
-                  URL Slug *
-                </label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">vintigo.com/</span>
-                  <input
-                    id="slug"
-                    type="text"
-                    value={formData.slug}
-                    onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                    required
-                    pattern="[a-z0-9-]+"
-                    className="flex-1 px-3 py-2 border rounded-md"
-                    placeholder="ruby-tap"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  This will be your public page URL (lowercase, letters and hyphens only)
-                </p>
+                <Input
+                  id="slug"
+                  type="text"
+                  label="URL Slug"
+                  helperText="This will be your public page URL (lowercase, letters and hyphens only)"
+                  value={formData.slug}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, slug: e.target.value }))
+                  }
+                  required
+                  pattern="[a-z0-9-]+"
+                  prefix={
+                    <span className="text-sm text-muted-foreground">
+                      vintigo.com/
+                    </span>
+                  }
+                  placeholder="ruby-tap"
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="country" className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-1">
                     Country *
                   </label>
-                  <select
-                    id="country"
-                    value={formData.country}
-                    onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
-                    className="w-full px-3 py-2 border rounded-md"
-                  >
-                    <option value="US">United States</option>
-                    <option value="CA">Canada</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="AU">Australia</option>
-                  </select>
+                  <MenuContainer className="w-full">
+                    <MenuButton
+                      type="button"
+                      variant="secondary"
+                      className="w-full justify-between"
+                      showChevron
+                    >
+                      {selectedCountryLabel}
+                    </MenuButton>
+                    <Menu width={220}>
+                      {countryOptions.map((option) => (
+                        <MenuItem
+                          key={option.value}
+                          onClick={() =>
+                            setFormData((prev) => ({ ...prev, country: option.value }))
+                          }
+                        >
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Menu>
+                  </MenuContainer>
                 </div>
 
                 <div>
-                  <label htmlFor="currency" className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-1">
                     Currency *
                   </label>
-                  <select
-                    id="currency"
-                    value={formData.currency}
-                    onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
-                    className="w-full px-3 py-2 border rounded-md"
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="CAD">CAD ($)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="AUD">AUD ($)</option>
-                  </select>
+                  <MenuContainer className="w-full">
+                    <MenuButton
+                      type="button"
+                      variant="secondary"
+                      className="w-full justify-between"
+                      showChevron
+                    >
+                      {selectedCurrencyLabel}
+                    </MenuButton>
+                    <Menu width={220}>
+                      {currencyOptions.map((option) => (
+                        <MenuItem
+                          key={option.value}
+                          onClick={() =>
+                            setFormData((prev) => ({ ...prev, currency: option.value }))
+                          }
+                        >
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Menu>
+                  </MenuContainer>
                 </div>
               </div>
 

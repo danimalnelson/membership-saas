@@ -68,15 +68,15 @@ export default async function CreatePlanPage({
       <div className="max-w-2xl mx-auto">
         <div className="p-6 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
           <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-            Create a Membership First
+            Create a Club First
           </h3>
           <p className="text-sm text-blue-800 dark:text-blue-200 mb-4">
-            Plans are organized within memberships. Create at least one
-            membership before adding plans.
+            Plans are organized within clubs. Create at least one
+            club before adding plans.
           </p>
           <Link href={`/app/${business.slug}/memberships/create`}>
             <Button>
-              Create Membership
+              Create Club
             </Button>
           </Link>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, IconButton, Input, Label } from "@wine-club/ui";
+import { Button, IconButton, Input } from "@wine-club/ui";
 import { Pencil } from "geist-icons";
 import { Cross } from "@/components/icons/Cross";
 
@@ -85,24 +85,22 @@ export function EditMemberInfoDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="email">Email (Read-only)</Label>
             <Input
               id="email"
               type="email"
+              label="Email (Read-only)"
+              helperText="Email cannot be changed as it's the member's login"
               value={email}
               disabled
               className="bg-muted"
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              Email cannot be changed as it's the member's login
-            </p>
           </div>
 
           <div>
-            <Label htmlFor="name">Full Name</Label>
             <Input
               id="name"
               type="text"
+              label="Full Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="John Doe"
@@ -111,10 +109,10 @@ export function EditMemberInfoDialog({
           </div>
 
           <div>
-            <Label htmlFor="phone">Phone Number</Label>
             <Input
               id="phone"
               type="tel"
+              label="Phone Number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+1 (555) 123-4567"

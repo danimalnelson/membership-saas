@@ -19,7 +19,6 @@ interface Plan {
   setupFee: number | null;
   shippingFee: number | null;
   currency: string;
-  pricingType: string;
 }
 
 interface Membership {
@@ -114,25 +113,16 @@ export function CheckoutModal({
               )}
 
               {/* Pricing */}
-              {plan.pricingType === "FIXED" && plan.basePrice ? (
-                <div className="bg-background/80 rounded-lg p-6 mb-6">
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-4xl font-semibold">
-                      {formatCurrency(plan.basePrice, plan.currency)}
-                    </span>
-                    <span className="text-lg text-muted-foreground">
-                      /{membership.billingInterval.toLowerCase()}
-                    </span>
-                  </div>
+              <div className="bg-background/80 rounded-lg p-6 mb-6">
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-4xl font-semibold">
+                    {formatCurrency(plan.basePrice ?? 0, plan.currency)}
+                  </span>
+                  <span className="text-lg text-muted-foreground">
+                    /{membership.billingInterval.toLowerCase()}
+                  </span>
                 </div>
-              ) : (
-                <div className="bg-background/80 rounded-lg p-6 mb-6">
-                  <div className="text-2xl font-semibold mb-2">Dynamic Pricing</div>
-                  <p className="text-sm text-muted-foreground">
-                    Price varies by selection
-                  </p>
-                </div>
-              )}
+              </div>
 
               {/* Plan Description */}
               {plan.description && (

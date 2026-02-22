@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Button } from "@wine-club/ui";
+import { Button, Input } from "@wine-club/ui";
 
 const PASSWORD_REQUIREMENTS = [
   { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
@@ -78,26 +78,18 @@ function SetPasswordForm() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Password field */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-13 font-medium text-gray-950 mb-1"
-              >
-                New Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError("");
-                }}
-                autoComplete="new-password"
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
-                placeholder="Enter your password"
-              />
-            </div>
+            <Input
+              id="password"
+              type="password"
+              label="New Password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
+              autoComplete="new-password"
+              placeholder="Enter your password"
+            />
 
             {/* Password requirements */}
             {password.length > 0 && (
@@ -121,22 +113,16 @@ function SetPasswordForm() {
 
             {/* Confirm password field */}
             <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-13 font-medium text-gray-950 mb-1"
-              >
-                Confirm Password
-              </label>
-              <input
+              <Input
                 id="confirmPassword"
                 type="password"
+                label="Confirm Password"
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
                   setError("");
                 }}
                 autoComplete="new-password"
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-14 text-gray-950 placeholder:text-gray-700 focus:border-gray-950 focus:outline-none focus:ring-1 focus:ring-gray-950"
                 placeholder="Confirm your password"
               />
               {confirmPassword && !passwordsMatch && (

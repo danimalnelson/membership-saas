@@ -24,7 +24,6 @@ export interface Plan {
   membershipName: string;
   price: number | null;
   currency: string;
-  pricingType: string;
   frequency: string;
   subscriptionCount: number;
 }
@@ -49,7 +48,7 @@ function buildFilterConfigs(allMembershipNames: string[]): FilterConfig[] {
     {
       type: "select",
       key: "membership",
-      label: "Membership",
+      label: "Club",
       options: allMembershipNames.map((n) => ({ value: n, label: n })),
     },
   ];
@@ -112,7 +111,7 @@ export function PlansTable({
     },
     {
       key: "membership",
-      label: "Membership",
+      label: "Club",
       render: (p) => p.membershipName,
     },
     {
@@ -120,8 +119,7 @@ export function PlansTable({
       label: "Price",
       align: "right",
       cellClassName: "font-medium",
-      render: (p) =>
-        p.pricingType === "FIXED" && p.price ? formatCurrency(p.price, p.currency) : "Dynamic",
+      render: (p) => formatCurrency(p.price ?? 0, p.currency),
     },
     {
       key: "frequency",
@@ -149,7 +147,7 @@ export function PlansTable({
         window.location.href = `/app/${businessSlug}/plans/${p.id}/edit`;
       }}
       table={table}
-      emptyMessage="No plans yet. Create a membership first, then add plans."
+      emptyMessage="No plans yet. Create a club first, then add plans."
       filteredEmptyMessage="No plans match filters"
       actions={
         <Button
